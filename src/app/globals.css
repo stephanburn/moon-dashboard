@@ -25,11 +25,13 @@
 }
 
 html {
-  background: var(--background);
+  /* Subtle vertical gradient: slightly lighter near the top, darker at the bottom */
+  background: linear-gradient(to bottom, #0d0d28 0%, #0a0a1a 45%, #06060f 100%);
+  min-height: 100%;
 }
 
 body {
-  background: var(--background);
+  background: transparent;
   color: var(--foreground);
   font-family: var(--font-sans);
   min-height: 100dvh;
@@ -39,7 +41,7 @@ body {
   font-family: var(--font-display);
 }
 
-/* Subtle star-field effect via radial gradient */
+/* Atmosphere: soft purple/blue nebula glows */
 body::before {
   content: '';
   position: fixed;
@@ -49,6 +51,64 @@ body::before {
     radial-gradient(ellipse at 80% 20%, rgba(60, 80, 140, 0.07) 0%, transparent 50%);
   pointer-events: none;
   z-index: 0;
+}
+
+/* Starfield: tiny static dots at varied positions and opacities */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    radial-gradient(circle 0.7px at  5%  8%, rgba(255,255,255,0.45), transparent),
+    radial-gradient(circle 0.5px at 12% 22%, rgba(255,255,255,0.25), transparent),
+    radial-gradient(circle 0.6px at 18%  5%, rgba(255,255,255,0.35), transparent),
+    radial-gradient(circle 0.5px at 25% 38%, rgba(255,255,255,0.20), transparent),
+    radial-gradient(circle 0.7px at 30% 12%, rgba(255,255,255,0.40), transparent),
+    radial-gradient(circle 0.5px at 38% 28%, rgba(255,255,255,0.25), transparent),
+    radial-gradient(circle 0.8px at 45%  7%, rgba(255,255,255,0.50), transparent),
+    radial-gradient(circle 0.5px at 52% 18%, rgba(255,255,255,0.30), transparent),
+    radial-gradient(circle 0.4px at 58% 42%, rgba(255,255,255,0.20), transparent),
+    radial-gradient(circle 0.7px at 65% 10%, rgba(255,255,255,0.40), transparent),
+    radial-gradient(circle 0.5px at 72% 30%, rgba(255,255,255,0.25), transparent),
+    radial-gradient(circle 0.6px at 78%  5%, rgba(255,255,255,0.35), transparent),
+    radial-gradient(circle 0.5px at 85% 20%, rgba(255,255,255,0.30), transparent),
+    radial-gradient(circle 0.4px at 92% 13%, rgba(255,255,255,0.20), transparent),
+    radial-gradient(circle 0.5px at 96% 38%, rgba(255,255,255,0.25), transparent),
+    radial-gradient(circle 0.6px at  7% 55%, rgba(255,255,255,0.30), transparent),
+    radial-gradient(circle 0.4px at 20% 68%, rgba(255,255,255,0.20), transparent),
+    radial-gradient(circle 0.5px at 33% 52%, rgba(255,255,255,0.25), transparent),
+    radial-gradient(circle 0.4px at 42% 72%, rgba(255,255,255,0.20), transparent),
+    radial-gradient(circle 0.6px at 55% 60%, rgba(255,255,255,0.30), transparent),
+    radial-gradient(circle 0.4px at 68% 55%, rgba(255,255,255,0.20), transparent),
+    radial-gradient(circle 0.5px at 80% 65%, rgba(255,255,255,0.25), transparent),
+    radial-gradient(circle 0.6px at 91% 50%, rgba(255,255,255,0.30), transparent),
+    radial-gradient(circle 0.4px at 14% 82%, rgba(255,255,255,0.20), transparent),
+    radial-gradient(circle 0.4px at 28% 88%, rgba(255,255,255,0.20), transparent),
+    radial-gradient(circle 0.3px at 48% 93%, rgba(255,255,255,0.15), transparent),
+    radial-gradient(circle 0.5px at 60% 78%, rgba(255,255,255,0.25), transparent),
+    radial-gradient(circle 0.4px at 75% 85%, rgba(255,255,255,0.20), transparent),
+    radial-gradient(circle 0.5px at 88% 72%, rgba(255,255,255,0.25), transparent),
+    radial-gradient(circle 0.3px at 95% 90%, rgba(255,255,255,0.15), transparent);
+}
+
+/* Moon glow / halo — radial luminous bloom behind the moon graphic */
+.moon-glow {
+  position: absolute;
+  width: 320px;
+  height: 320px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    circle,
+    rgba(150, 175, 235, 0.13) 0%,
+    rgba(100, 130, 200, 0.06) 40%,
+    transparent 70%
+  );
+  pointer-events: none;
+  border-radius: 50%;
 }
 
 /* Glass-morphism card */

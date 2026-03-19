@@ -12,7 +12,7 @@ const DEFAULT_TZ = 'Europe/London';
 
 function formatDate(date: Date, timezone: string): string {
   return date.toLocaleDateString('en-GB', {
-    weekday: 'short',
+    weekday: 'long',
     day: 'numeric',
     month: 'long',
     year: 'numeric',
@@ -69,7 +69,7 @@ function ClickableCard({
   const isOpen = expandedKey === itemKey;
   return (
     <div
-      className={`card p-5 space-y-3 cursor-pointer select-none transition-colors hover:border-white/15 ${isOpen ? 'border-amber/20' : ''} ${className}`}
+      className={`card p-5 space-y-3 cursor-pointer select-none transition-all hover:border-white/15 hover:bg-white/3 ${isOpen ? 'border-amber/30 bg-white/3' : ''} ${className}`}
       onClick={() => onToggle(itemKey)}
       role="button"
       aria-expanded={isOpen}
@@ -78,7 +78,7 @@ function ClickableCard({
     >
       {children}
       <div className="flex justify-end">
-        <span className="text-silver/20 text-xs">{isOpen ? '▲' : '▼'}</span>
+        <span className={`text-silver/30 text-xs inline-block transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>▾</span>
       </div>
     </div>
   );
@@ -192,58 +192,69 @@ export default function Dashboard() {
             Moon &amp; Sabbat
           </h1>
         </div>
-        <TimezoneSelector onChange={handleTimezoneChange} />
+        <div className="flex items-center gap-4">
+          {todayLabel && (
+            <span className="hidden sm:block font-display text-xs text-silver/30 tracking-wide">
+              {todayLabel}
+            </span>
+          )}
+          <TimezoneSelector onChange={handleTimezoneChange} />
+        </div>
       </header>
 
       <main className="flex-1 px-4 sm:px-8 py-8 max-w-4xl mx-auto w-full space-y-10">
 
         {/* ── Hero: Moon Phase ── */}
         <section className="fade-in space-y-4">
-          <p className="text-xs tracking-[0.3em] uppercase text-silver/40 text-center">{todayLabel}</p>
 
           {/* Clickable moon hero */}
           <div
-            className={`text-center space-y-4 cursor-pointer rounded-xl p-4 transition-colors hover:bg-white/3 ${expandedKey === 'moon' ? 'bg-white/3' : ''}`}
+            className={`text-center space-y-5 cursor-pointer rounded-xl p-4 transition-colors hover:bg-white/3 ${expandedKey === 'moon' ? 'bg-white/3' : ''}`}
             onClick={() => handleToggle('moon')}
             role="button"
             aria-expanded={expandedKey === 'moon'}
             tabIndex={0}
             onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleToggle('moon'); } }}
           >
-            <div
-              className="text-[100px] sm:text-[120px] leading-none select-none"
-              role="img"
-              aria-label={moon?.name}
-            >
-              {moon?.emoji ?? '🌑'}
+            {/* Moon emoji with glow halo */}
+            <div className="relative inline-flex items-center justify-center">
+              <div className="moon-glow" />
+              <div
+                className="text-[100px] sm:text-[120px] leading-none select-none relative"
+                role="img"
+                aria-label={moon?.name}
+              >
+                {moon?.emoji ?? '🌑'}
+              </div>
             </div>
-            <div className="space-y-1">
+
+            <div className="space-y-3">
               <h2 className="font-display text-4xl sm:text-5xl tracking-wide text-foreground">
                 {moon?.name}
               </h2>
-              <div className="flex items-center justify-center gap-6 text-silver/60 text-sm mt-3 flex-wrap">
+              <div className="flex items-center justify-center gap-5 text-silver/50 text-xs mt-1 flex-wrap">
                 <span>
-                  <span className="text-amber-light font-semibold">{moon?.illumination}%</span>
+                  <span className="text-amber-light text-sm font-medium">{moon?.illumination}%</span>
                   {' '}illuminated
                 </span>
-                <span className="text-white/20">·</span>
+                <span className="text-white/15">·</span>
                 <span>
                   Day{' '}
-                  <span className="text-amber-light font-semibold">{moon?.ageInDays}</span>
+                  <span className="text-amber-light text-sm font-medium">{moon?.ageInDays}</span>
                   {' '}of 29.5
                 </span>
                 {moonPeak && (
                   <>
-                    <span className="text-white/20">·</span>
-                    <span className="text-silver/50">
+                    <span className="text-white/15">·</span>
+                    <span>
                       {moonPeak.phaseName} peaks:{' '}
-                      <span className="text-silver/70">{formatDateTime(moonPeak.peakTime, timezone)}</span>
+                      <span className="text-silver/60">{formatDateTime(moonPeak.peakTime, timezone)}</span>
                     </span>
                   </>
                 )}
               </div>
               <div className="flex justify-center pt-1">
-                <span className="text-silver/20 text-xs">{expandedKey === 'moon' ? '▲' : '▼'}</span>
+                <span className={`text-silver/30 text-xs inline-block transition-transform duration-300 ${expandedKey === 'moon' ? 'rotate-180' : ''}`}>▾</span>
               </div>
             </div>
           </div>
@@ -334,9 +345,7 @@ export default function Dashboard() {
                     <p className="text-sm text-foreground">{event.name}</p>
                     <p className="text-xs text-silver/50">{formatShortDate(event.date, timezone)}</p>
                   </div>
-                  <span className="text-silver/20 text-xs flex-shrink-0">
-                    {expandedKey === event.key ? '▲' : '▼'}
-                  </span>
+                  <span className={`text-silver/30 text-xs flex-shrink-0 inline-block transition-transform duration-300 ${expandedKey === event.key ? 'rotate-180' : ''}`}>▾</span>
                 </div>
 
                 {/* Detail panel for this event */}
@@ -353,8 +362,11 @@ export default function Dashboard() {
 
       </main>
 
-      <footer className="px-6 py-4 text-center text-xs text-white/20 border-t border-white/5">
-        All calculations are local &amp; astronomical — no external APIs.
+      <footer className="px-6 py-5 text-center border-t border-white/5 space-y-1">
+        {todayLabel && (
+          <p className="font-display text-sm text-silver/30 tracking-wide sm:hidden">{todayLabel}</p>
+        )}
+        <p className="text-xs text-white/20">All calculations are local &amp; astronomical — no external APIs.</p>
       </footer>
     </div>
   );

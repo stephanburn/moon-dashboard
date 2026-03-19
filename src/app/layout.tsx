@@ -10,8 +10,13 @@ const cormorant = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  title: 'Moon & Sabbat Dashboard',
-  description: 'A personal dashboard for moon phases and the Wheel of the Year.',
+  title: 'Moon Dashboard',
+  description: 'Moon phases, zodiac transits, and the Wheel of the Year',
+  openGraph: {
+    title: 'Moon Dashboard',
+    description: 'Moon phases, zodiac transits, and the Wheel of the Year',
+    type: 'website',
+  },
 };
 
 export default function RootLayout({

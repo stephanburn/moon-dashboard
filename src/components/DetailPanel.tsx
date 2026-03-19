@@ -28,10 +28,10 @@ export type DetailContent = MoonDetailContent | ZodiacDetailContent | SabbatDeta
 
 function CorrespondenceRow({ label, items }: { label: string; items: string[] }) {
   return (
-    <p className="text-sm text-silver/70 leading-relaxed">
-      <span className="text-silver/40 text-xs uppercase tracking-wider">{label}:</span>{' '}
-      {items.join(', ')}
-    </p>
+    <div>
+      <p className="text-amber/60 text-xs uppercase tracking-wider mb-0.5">{label}</p>
+      <p className="text-silver/65 text-sm leading-relaxed">{items.join(', ')}</p>
+    </div>
   );
 }
 
@@ -46,7 +46,7 @@ function MoonDetail({ phaseName }: { phaseName: string }) {
         <p className="text-amber-light/80 text-xs mt-2 italic">{data.energy}</p>
       </div>
 
-      <div className="space-y-2 pt-1">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-white/5">
         <CorrespondenceRow label="Workings"  items={data.magicalWorkings} />
         <CorrespondenceRow label="Colours"   items={data.colours} />
         <CorrespondenceRow label="Crystals"  items={data.crystals} />
@@ -54,7 +54,7 @@ function MoonDetail({ phaseName }: { phaseName: string }) {
       </div>
 
       {data.esbat && data.esbatNote && (
-        <div className="border-l-2 border-amber/30 pl-3 mt-1">
+        <div className="border-l-2 border-amber/30 pl-3">
           <p className="text-xs text-silver/50 uppercase tracking-wider mb-1">Esbat</p>
           <p className="text-sm text-silver/70 leading-relaxed">{data.esbatNote}</p>
         </div>
@@ -85,7 +85,7 @@ function ZodiacDetail({ signName }: { signName: string }) {
         <p className="text-amber-light/70 text-xs mt-2">{data.qualities.join(' · ')}</p>
       </div>
 
-      <div className="space-y-2 pt-1">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-white/5">
         <CorrespondenceRow label="Colours"  items={data.colours} />
         <CorrespondenceRow label="Crystals" items={data.crystals} />
         <CorrespondenceRow label="Herbs"    items={data.herbs} />
@@ -113,7 +113,7 @@ function SabbatDetail({ sabbatName }: { sabbatName: string }) {
         <p className="text-sm text-silver/70">{data.themes.join(' · ')}</p>
       </div>
 
-      <div className="space-y-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-white/5">
         <CorrespondenceRow label="Colours"  items={data.colours} />
         <CorrespondenceRow label="Crystals" items={data.crystals} />
         <CorrespondenceRow label="Herbs"    items={data.herbs} />
@@ -158,7 +158,7 @@ export default function DetailPanel({ content, onClose }: Props) {
       style={{
         maxHeight: visible ? '600px' : '0',
         opacity: visible ? 1 : 0,
-        transition: 'max-height 0.35s ease, opacity 0.25s ease',
+        transition: 'max-height 0.3s ease, opacity 0.25s ease',
       }}
     >
       <div
