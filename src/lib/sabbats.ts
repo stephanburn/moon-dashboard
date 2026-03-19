@@ -113,9 +113,11 @@ export interface SabbatContext {
   today: Sabbat | null;       // non-null if today IS a sabbat
   nearest: string;            // e.g. "Between Imbolc and Ostara"
   next3: Sabbat[];
+  nextSabbat: Sabbat | null;  // the next upcoming sabbat (after today)
+  daysUntilNext: number;      // calendar days until nextSabbat
 }
 
-function isSameDay(a: Date, b: Date): boolean {
+export function isSameDay(a: Date, b: Date): boolean {
   return (
     a.getFullYear() === b.getFullYear() &&
     a.getMonth() === b.getMonth() &&
@@ -134,11 +136,17 @@ export function getSabbatContext(date: Date = new Date()): SabbatContext {
 
   const today = all.find(s => isSameDay(s.date, date)) ?? null;
 
-  // Next 3 upcoming sabbats (from tomorrow onwards, or later today counts as "upcoming" if not today)
+  // Next 3 upcoming sabbats (from tomorrow onwards, or today if today IS a sabbat)
   const upcoming = all.filter(s => s.date > date || isSameDay(s.date, date));
   const next3 = upcoming.slice(0, 3);
 
-  // Build a "between" label
+  // Next sabbat strictly after today (for countdown)
+  const nextSabbat = all.find(s => s.date > date) ?? null;
+  const daysUntilNext = nextSabbat
+    ? Math.round((nextSabbat.date.getTime() - date.getTime()) / (24 * 60 * 60 * 1000))
+    : 0;
+
+  // Build a "between" label (kept for any legacy use)
   let nearest = '';
   if (today) {
     const displayName = today.altName ? `${today.name} — ${today.altName}` : today.name;
@@ -153,5 +161,21 @@ export function getSabbatContext(date: Date = new Date()): SabbatContext {
     }
   }
 
-  return { today, nearest, next3 };
+  return { today, nearest, next3, nextSabbat, daysUntilNext };
+}
+
+/**
+ * Get upcoming sabbats from `from` for the next `upToMonths` months.
+ * Used for the unified Coming Up list.
+ */
+export function getUpcomingSabbats(from: Date, upToMonths = 6): Sabbat[] {
+  const year = from.getFullYear();
+  const cutoff = new Date(from.getTime() + upToMonths * 30 * 24 * 60 * 60 * 1000);
+
+  const all = [
+    ...getSabbatsForYear(year),
+    ...getSabbatsForYear(year + 1),
+  ].sort((a, b) => a.date.getTime() - b.date.getTime());
+
+  return all.filter(s => s.date > from && s.date <= cutoff);
 }

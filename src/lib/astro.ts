@@ -45,6 +45,12 @@ function dateMatchesSign(month: number, day: number, sign: ZodiacSign): boolean 
   return cur >= start && cur <= end;
 }
 
+function getSignForDate(date: Date): ZodiacSign {
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
+  return ZODIAC_SIGNS.find(s => dateMatchesSign(month, day, s))!;
+}
+
 export function getCurrentSunSign(date: Date = new Date()): SunSignInfo {
   const month = date.getMonth() + 1;
   const day = date.getDate();
@@ -89,4 +95,26 @@ export function getNextSunSignIngress(date: Date = new Date()): NextIngress {
     sign: nextSign,
     date: new Date(nextYear, nextSign.startMonth - 1, nextSign.startDay),
   };
+}
+
+/**
+ * Get the next `count` sun sign ingresses starting from `from`.
+ * Iterates day-by-day and detects sign transitions.
+ */
+export function getUpcomingSunIngresses(from: Date, count = 8): NextIngress[] {
+  const results: NextIngress[] = [];
+  let prevSign = getSignForDate(from);
+
+  for (let day = 1; day <= 200 && results.length < count; day++) {
+    const d = new Date(from.getTime() + day * 24 * 60 * 60 * 1000);
+    const currSign = getSignForDate(d);
+
+    if (currSign.name !== prevSign.name) {
+      results.push({ sign: currSign, date: d });
+    }
+
+    prevSign = currSign;
+  }
+
+  return results;
 }
