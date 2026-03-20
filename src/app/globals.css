@@ -138,3 +138,14 @@ body::after {
 .detail-panel {
   will-change: max-height, opacity;
 }
+
+/* Coming Up card on mobile — same styling as .card but only below sm breakpoint */
+@media (max-width: 639px) {
+  .coming-up-mobile-card {
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    backdrop-filter: blur(8px);
+    padding: 1.25rem;
+  }
+}

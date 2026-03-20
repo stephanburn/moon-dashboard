@@ -377,31 +377,33 @@ export default function Dashboard() {
 
         {/* ── Coming Up ── */}
         <section className="fade-in fade-in-delay-2 space-y-3 pt-2">
-          <h3 className="font-display text-xl tracking-widest text-silver/40 uppercase">
-            Coming Up
-          </h3>
+          <div className="coming-up-mobile-card space-y-3">
+            <h3 className="font-display text-xl tracking-widest text-silver/40 uppercase">
+              Coming Up
+            </h3>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {upcomingEvents.map(event => (
-              <div
-                key={event.key}
-                className={`flex items-center gap-4 px-4 py-3 rounded-xl cursor-pointer transition-colors hover:bg-white/4 ${expandedKey === event.key ? 'bg-white/4 border border-white/8' : 'border border-transparent'}`}
-                onClick={() => handleToggle(event.key)}
-                role="button"
-                aria-expanded={expandedKey === event.key}
-                tabIndex={0}
-                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleToggle(event.key); } }}
-              >
-                <span className="text-xl w-8 text-center flex-shrink-0 select-none" aria-hidden>
-                  {event.icon}
-                </span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-foreground">{event.name}</p>
-                  <p className="text-xs text-silver/50">{formatShortDate(event.date, timezone)}</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {upcomingEvents.map(event => (
+                <div
+                  key={event.key}
+                  className={`flex items-center gap-4 px-4 py-3 rounded-xl cursor-pointer transition-colors hover:bg-white/4 ${expandedKey === event.key ? 'bg-white/4 border border-white/8' : 'border border-transparent'}`}
+                  onClick={() => handleToggle(event.key)}
+                  role="button"
+                  aria-expanded={expandedKey === event.key}
+                  tabIndex={0}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleToggle(event.key); } }}
+                >
+                  <span className="text-xl w-8 text-center flex-shrink-0 select-none" aria-hidden>
+                    {event.icon}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-foreground">{event.name}</p>
+                    <p className="text-xs text-silver/50">{formatShortDate(event.date, timezone)}</p>
+                  </div>
+                  <span className={`text-silver/30 text-xs flex-shrink-0 inline-block transition-transform duration-300 ${expandedKey === event.key ? 'rotate-180' : ''}`}>▾</span>
                 </div>
-                <span className={`text-silver/30 text-xs flex-shrink-0 inline-block transition-transform duration-300 ${expandedKey === event.key ? 'rotate-180' : ''}`}>▾</span>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
 
           {/* Detail panel spans full width below the grid */}
