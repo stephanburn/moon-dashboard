@@ -19,35 +19,9 @@ export interface UpcomingMoonPhase {
   date: Date;
 }
 
-function getPhaseName(phase: number): { emoji: string; name: string } {
-  if (phase < 0.02 || phase >= 0.98) return { emoji: '🌑', name: 'New Moon' };
-  if (phase < 0.23) return { emoji: '🌒', name: 'Waxing Crescent' };
-  if (phase < 0.27) return { emoji: '🌓', name: 'First Quarter' };
-  if (phase < 0.48) return { emoji: '🌔', name: 'Waxing Gibbous' };
-  if (phase < 0.52) return { emoji: '🌕', name: 'Full Moon' };
-  if (phase < 0.73) return { emoji: '🌖', name: 'Waning Gibbous' };
-  if (phase < 0.77) return { emoji: '🌗', name: 'Last Quarter' };
-  return { emoji: '🌘', name: 'Waning Crescent' };
-}
-
-// Map the DISPLAYED phase name to the nearest major phase target.
-// Using the name (rather than the raw phase at "now") avoids a mismatch when the
-// phase has advanced past a threshold since midnight — e.g. phase was 0.99 at
-// midnight (New Moon display) but is 0.03 by evening, which would incorrectly
-// target First Quarter if we re-derived the target from the live phase value.
-function phaseNameToTarget(name: string): { target: number; name: 'New Moon' | 'First Quarter' | 'Full Moon' | 'Last Quarter' } {
-  switch (name) {
-    case 'New Moon':        return { target: 0,    name: 'New Moon' };
-    case 'Waxing Crescent': return { target: 0.25, name: 'First Quarter' };
-    case 'First Quarter':   return { target: 0.25, name: 'First Quarter' };
-    case 'Waxing Gibbous':  return { target: 0.5,  name: 'Full Moon' };
-    case 'Full Moon':       return { target: 0.5,  name: 'Full Moon' };
-    case 'Waning Gibbous':  return { target: 0.75, name: 'Last Quarter' };
-    case 'Last Quarter':    return { target: 0.75, name: 'Last Quarter' };
-    case 'Waning Crescent': return { target: 0,    name: 'New Moon' };
-    default:                return { target: 0,    name: 'New Moon' };
-  }
-}
+const HOUR = 60 * 60 * 1000;
+const DAY  = 24 * HOUR;
+const MINUTE = 60 * 1000;
 
 // Circular distance between two phase values (handles the 0/1 wrap for New Moon)
 function circularDist(a: number, b: number): number {
@@ -55,14 +29,110 @@ function circularDist(a: number, b: number): number {
   return Math.min(d, 1 - d);
 }
 
-// Lunar cycle is ~29.53 days. Estimate age from phase value.
 function getMoonAgeInDays(phase: number): number {
   return phase * 29.53;
 }
 
-export function getMoonPhaseInfo(date: Date = new Date()): MoonPhaseInfo {
-  const { phase, fraction } = SunCalc.getMoonIllumination(date);
-  const { emoji, name } = getPhaseName(phase);
+/**
+ * Find the precise moment nearest to `center` (within ±15 days) when the moon
+ * reaches the given phase target (0 = New Moon, 0.25 = FQ, 0.5 = FM, 0.75 = LQ).
+ * Uses hourly resolution then refines to the minute.
+ */
+function findNearestPeakTime(center: Date, target: number): Date {
+  let bestTime = center;
+  let bestDist = Infinity;
+
+  for (let dt = -15 * DAY; dt <= 15 * DAY; dt += HOUR) {
+    const candidate = new Date(center.getTime() + dt);
+    const { phase: p } = SunCalc.getMoonIllumination(candidate);
+    const dist = circularDist(p, target);
+    if (dist < bestDist) { bestDist = dist; bestTime = candidate; }
+  }
+
+  // Minute refinement over ±2 hours around the coarse best
+  const coarseBest = bestTime;
+  for (let dt = -2 * HOUR; dt <= 2 * HOUR; dt += MINUTE) {
+    const candidate = new Date(coarseBest.getTime() + dt);
+    const { phase: p } = SunCalc.getMoonIllumination(candidate);
+    const dist = circularDist(p, target);
+    if (dist < bestDist) { bestDist = dist; bestTime = candidate; }
+  }
+
+  return bestTime;
+}
+
+/**
+ * Find the next future occurrence of the given phase target, searching up to
+ * 30 days ahead of `after`. Used to find upcoming peaks for transitional phases.
+ */
+function findNextFuturePeakTime(after: Date, target: number): Date {
+  let bestTime = new Date(after.getTime() + DAY);
+  let bestDist = Infinity;
+
+  for (let dt = HOUR; dt <= 30 * DAY; dt += HOUR) {
+    const candidate = new Date(after.getTime() + dt);
+    const { phase: p } = SunCalc.getMoonIllumination(candidate);
+    const dist = circularDist(p, target);
+    if (dist < bestDist) { bestDist = dist; bestTime = candidate; }
+  }
+
+  // Minute refinement
+  const coarseBest = bestTime;
+  for (let dt = -2 * HOUR; dt <= 2 * HOUR; dt += MINUTE) {
+    const candidate = new Date(coarseBest.getTime() + dt);
+    if (candidate.getTime() <= after.getTime()) continue;
+    const { phase: p } = SunCalc.getMoonIllumination(candidate);
+    const dist = circularDist(p, target);
+    if (dist < bestDist) { bestDist = dist; bestTime = candidate; }
+  }
+
+  return bestTime;
+}
+
+// Major phase definitions with their widened practitioner windows
+const MAJOR_PHASES = [
+  { name: 'New Moon'      as const, emoji: '🌑', target: 0,    halfWindowDays: 1.5 },
+  { name: 'First Quarter' as const, emoji: '🌓', target: 0.25, halfWindowDays: 1.0 },
+  { name: 'Full Moon'     as const, emoji: '🌕', target: 0.5,  halfWindowDays: 1.5 },
+  { name: 'Last Quarter'  as const, emoji: '🌗', target: 0.75, halfWindowDays: 1.0 },
+];
+
+// For each transitional phase, the next major phase to display a peak for
+const TRANSITIONAL_NEXT: Record<string, typeof MAJOR_PHASES[number]> = {
+  'Waxing Crescent': MAJOR_PHASES[1], // → First Quarter
+  'Waxing Gibbous':  MAJOR_PHASES[2], // → Full Moon
+  'Waning Gibbous':  MAJOR_PHASES[3], // → Last Quarter
+  'Waning Crescent': MAJOR_PHASES[0], // → New Moon
+};
+
+/**
+ * Determine the current moon phase using widened practitioner windows around
+ * each major phase peak. Transitional phases fill the gaps between windows.
+ */
+export function getMoonPhaseInfo(now: Date = new Date()): MoonPhaseInfo {
+  const { phase, fraction } = SunCalc.getMoonIllumination(now);
+
+  // Check each major phase window
+  for (const mp of MAJOR_PHASES) {
+    const peakTime = findNearestPeakTime(now, mp.target);
+    if (Math.abs(now.getTime() - peakTime.getTime()) <= mp.halfWindowDays * DAY) {
+      return {
+        emoji: mp.emoji,
+        name: mp.name,
+        illumination: Math.round(fraction * 100),
+        ageInDays: parseFloat(getMoonAgeInDays(phase).toFixed(1)),
+        phase,
+      };
+    }
+  }
+
+  // Not in any major window — transitional phase from raw phase value
+  let emoji: string, name: string;
+  if (phase < 0.25)      { emoji = '🌒'; name = 'Waxing Crescent'; }
+  else if (phase < 0.5)  { emoji = '🌔'; name = 'Waxing Gibbous';  }
+  else if (phase < 0.75) { emoji = '🌖'; name = 'Waning Gibbous';  }
+  else                   { emoji = '🌘'; name = 'Waning Crescent';  }
+
   return {
     emoji,
     name,
@@ -73,44 +143,18 @@ export function getMoonPhaseInfo(date: Date = new Date()): MoonPhaseInfo {
 }
 
 /**
- * Find the precise moment of the current phase's peak (e.g. exact Full Moon, exact New Moon).
- * Searches ±15 days with hourly resolution, then refines to minute resolution.
- * Uses the actual current moment (not just today's date) for accurate results.
+ * Find the relevant phase peak for display:
+ * - Major phases (New Moon etc.): the nearest peak for that phase (may be past or future)
+ * - Transitional phases: the next future peak of the upcoming major phase
  */
 export function getMoonPhasePeak(now: Date, displayedPhaseName: string): MoonPhasePeak {
-  const { target, name: phaseName } = phaseNameToTarget(displayedPhaseName);
-
-  const HOUR = 60 * 60 * 1000;
-  const DAY = 24 * HOUR;
-  const SEARCH_WINDOW = 15 * DAY;
-
-  // Hourly search over ±15 days
-  let bestTime = now;
-  let bestDist = Infinity;
-
-  for (let dt = -SEARCH_WINDOW; dt <= SEARCH_WINDOW; dt += HOUR) {
-    const candidate = new Date(now.getTime() + dt);
-    const { phase: p } = SunCalc.getMoonIllumination(candidate);
-    const dist = circularDist(p, target);
-    if (dist < bestDist) {
-      bestDist = dist;
-      bestTime = candidate;
-    }
+  const own = MAJOR_PHASES.find(mp => mp.name === displayedPhaseName);
+  if (own) {
+    return { phaseName: own.name, peakTime: findNearestPeakTime(now, own.target) };
   }
 
-  // Minute refinement over ±2 hours around the best candidate
-  const MINUTE = 60 * 1000;
-  for (let dt = -2 * HOUR; dt <= 2 * HOUR; dt += MINUTE) {
-    const candidate = new Date(bestTime.getTime() + dt);
-    const { phase: p } = SunCalc.getMoonIllumination(candidate);
-    const dist = circularDist(p, target);
-    if (dist < bestDist) {
-      bestDist = dist;
-      bestTime = candidate;
-    }
-  }
-
-  return { phaseName, peakTime: bestTime };
+  const next = TRANSITIONAL_NEXT[displayedPhaseName] ?? MAJOR_PHASES[0];
+  return { phaseName: next.name, peakTime: findNextFuturePeakTime(now, next.target) };
 }
 
 /**

@@ -29,15 +29,37 @@ function formatShortDate(date: Date, timezone: string): string {
   });
 }
 
-function formatDateTime(date: Date, timezone: string): string {
-  return date.toLocaleString('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
+function formatTime(date: Date, timezone: string): string {
+  return date.toLocaleTimeString('en-GB', {
     hour: '2-digit',
     minute: '2-digit',
     timeZone: timezone,
   });
+}
+
+// Convert a UTC Date to the day index (ms since epoch at local midnight) for comparison
+function toLocalDayMs(date: Date, timezone: string): number {
+  return toLocalDate(date, timezone).getTime();
+}
+
+function formatPeakText(phaseName: string, peakTime: Date, now: Date, timezone: string): string {
+  const peakDayMs  = toLocalDayMs(peakTime, timezone);
+  const todayMs    = toLocalDayMs(now, timezone);
+  const isPast     = peakTime < now;
+  const isToday    = peakDayMs === todayMs;
+  const isYesterday = peakDayMs === todayMs - 86_400_000;
+  const timeStr    = formatTime(peakTime, timezone);
+
+  if (isToday) {
+    return isPast
+      ? `${phaseName} peaked today at ${timeStr}`
+      : `${phaseName} peaks today at ${timeStr}`;
+  }
+  if (isYesterday) return `${phaseName} peaked yesterday at ${timeStr}`;
+
+  const verb    = isPast ? 'peaked' : 'peaks';
+  const dateStr = formatShortDate(peakTime, timezone);
+  return `${phaseName} ${verb}: ${dateStr} at ${timeStr}`;
 }
 
 // Convert a UTC Date to a local midnight Date in the given timezone
@@ -101,12 +123,12 @@ export default function Dashboard() {
     const now = new Date();
     const localDate = toLocalDate(now, tz);
 
-    const moonInfo = getMoonPhaseInfo(localDate);
+    const moonInfo = getMoonPhaseInfo(now);
     setMoon(moonInfo);
     setMoonPeak(getMoonPhasePeak(now, moonInfo.name));
     setSunSign(getCurrentSunSign(localDate));
     setSabbatCtx(getSabbatContext(localDate));
-    setUpcomingEvents(getUpcomingEvents(localDate));
+    setUpcomingEvents(getUpcomingEvents(localDate, 8));
     setTodayLabel(formatDate(now, tz));
   }, []);
 
@@ -247,8 +269,7 @@ export default function Dashboard() {
                   <>
                     <span className="text-white/15">·</span>
                     <span>
-                      {moonPeak.phaseName} peaks:{' '}
-                      <span className="text-silver/60">{formatDateTime(moonPeak.peakTime, timezone)}</span>
+                      {formatPeakText(moonPeak.phaseName, moonPeak.peakTime, new Date(), timezone)}
                     </span>
                   </>
                 )}
@@ -297,7 +318,7 @@ export default function Dashboard() {
             <p className="text-xs tracking-[0.25em] uppercase text-silver/40">Wheel of the Year</p>
             {sabbatCardContent && (
               <>
-                <p className={`font-display text-2xl leading-snug ${sabbatCardContent.isToday ? 'text-amber-light' : 'text-foreground'}`}>
+                <p className={`font-display text-3xl leading-snug ${sabbatCardContent.isToday ? 'text-amber-light' : 'text-foreground'}`}>
                   {sabbatCardContent.primary}
                 </p>
                 <p className="text-xs text-silver/50">{sabbatCardContent.sub}</p>
@@ -326,38 +347,36 @@ export default function Dashboard() {
             Coming Up
           </h3>
 
-          <ul className="space-y-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {upcomingEvents.map(event => (
-              <li key={event.key}>
-                {/* Event row */}
-                <div
-                  className={`flex items-center gap-4 px-4 py-3 rounded-xl cursor-pointer transition-colors hover:bg-white/4 ${expandedKey === event.key ? 'bg-white/4 border border-white/8' : 'border border-transparent'}`}
-                  onClick={() => handleToggle(event.key)}
-                  role="button"
-                  aria-expanded={expandedKey === event.key}
-                  tabIndex={0}
-                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleToggle(event.key); } }}
-                >
-                  <span className="text-xl w-8 text-center flex-shrink-0 select-none" aria-hidden>
-                    {event.icon}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-foreground">{event.name}</p>
-                    <p className="text-xs text-silver/50">{formatShortDate(event.date, timezone)}</p>
-                  </div>
-                  <span className={`text-silver/30 text-xs flex-shrink-0 inline-block transition-transform duration-300 ${expandedKey === event.key ? 'rotate-180' : ''}`}>▾</span>
+              <div
+                key={event.key}
+                className={`flex items-center gap-4 px-4 py-3 rounded-xl cursor-pointer transition-colors hover:bg-white/4 ${expandedKey === event.key ? 'bg-white/4 border border-white/8' : 'border border-transparent'}`}
+                onClick={() => handleToggle(event.key)}
+                role="button"
+                aria-expanded={expandedKey === event.key}
+                tabIndex={0}
+                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleToggle(event.key); } }}
+              >
+                <span className="text-xl w-8 text-center flex-shrink-0 select-none" aria-hidden>
+                  {event.icon}
+                </span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-foreground">{event.name}</p>
+                  <p className="text-xs text-silver/50">{formatShortDate(event.date, timezone)}</p>
                 </div>
-
-                {/* Detail panel for this event */}
-                <div className="px-2">
-                  <DetailPanel
-                    content={expandedKey === event.key ? panelContent : null}
-                    onClose={() => setExpandedKey(null)}
-                  />
-                </div>
-              </li>
+                <span className={`text-silver/30 text-xs flex-shrink-0 inline-block transition-transform duration-300 ${expandedKey === event.key ? 'rotate-180' : ''}`}>▾</span>
+              </div>
             ))}
-          </ul>
+          </div>
+
+          {/* Detail panel spans full width below the grid */}
+          {upcomingEvents.some(e => e.key === expandedKey) && (
+            <DetailPanel
+              content={panelContent}
+              onClose={() => setExpandedKey(null)}
+            />
+          )}
         </section>
 
       </main>
