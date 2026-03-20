@@ -4,12 +4,17 @@ import { useEffect, useRef, useState } from 'react';
 import { MOON_CORRESPONDENCES } from '@/data/moonCorrespondences';
 import { ZODIAC_CORRESPONDENCES } from '@/data/zodiacCorrespondences';
 import { SABBAT_CORRESPONDENCES } from '@/data/sabbatCorrespondences';
+import { MOON_SIGN_CORRESPONDENCES } from '@/data/moonSignCorrespondences';
+import { VENUS_CORRESPONDENCES } from '@/data/venusCorrespondences';
+import type { MoonSignChange } from '@/lib/astro';
 
 // ── Content shape discriminated union ──────────────────────────────────────
 
 export interface MoonDetailContent {
   type: 'moon';
   phaseName: string;
+  moonSignChanges?: MoonSignChange[];
+  timezone?: string;
 }
 
 export interface ZodiacDetailContent {
@@ -22,9 +27,25 @@ export interface SabbatDetailContent {
   sabbatName: string;
 }
 
-export type DetailContent = MoonDetailContent | ZodiacDetailContent | SabbatDetailContent;
+export interface VenusDetailContent {
+  type: 'venus';
+  signName: string;
+}
 
-// ── Sub-renderers ──────────────────────────────────────────────────────────
+export interface MercuryRetroDetailContent {
+  type: 'mercury-retrograde';
+  signs: string;
+  signFlavour: string;
+}
+
+export type DetailContent =
+  | MoonDetailContent
+  | ZodiacDetailContent
+  | SabbatDetailContent
+  | VenusDetailContent
+  | MercuryRetroDetailContent;
+
+// ── Helpers ────────────────────────────────────────────────────────────────
 
 function CorrespondenceRow({ label, items }: { label: string; items: string[] }) {
   return (
@@ -35,7 +56,24 @@ function CorrespondenceRow({ label, items }: { label: string; items: string[] })
   );
 }
 
-function MoonDetail({ phaseName }: { phaseName: string }) {
+function formatTransitTime(date: Date, timezone: string): string {
+  const datePart = date.toLocaleDateString('en-GB', {
+    weekday: 'short', day: 'numeric', month: 'short', timeZone: timezone,
+  });
+  const timePart = date.toLocaleTimeString('en-GB', {
+    hour: '2-digit', minute: '2-digit', timeZone: timezone,
+  });
+  return `${datePart}, ${timePart}`;
+}
+
+// ── Sub-renderers ──────────────────────────────────────────────────────────
+
+function MoonDetail({ phaseName, moonSignChanges, timezone }: {
+  phaseName: string;
+  moonSignChanges?: MoonSignChange[];
+  timezone?: string;
+}) {
+  const [expandedTransit, setExpandedTransit] = useState<string | null>(null);
   const data = MOON_CORRESPONDENCES[phaseName];
   if (!data) return <p className="text-silver/40 text-sm">No data found for {phaseName}.</p>;
 
@@ -57,6 +95,41 @@ function MoonDetail({ phaseName }: { phaseName: string }) {
         <div className="border-l-2 border-amber/30 pl-3">
           <p className="text-xs text-silver/50 uppercase tracking-wider mb-1">Esbat</p>
           <p className="text-sm text-silver/70 leading-relaxed">{data.esbatNote}</p>
+        </div>
+      )}
+
+      {/* Lunar Transits */}
+      {moonSignChanges && moonSignChanges.length > 0 && timezone && (
+        <div className="pt-2 border-t border-white/5 space-y-1">
+          <p className="text-amber/60 text-xs uppercase tracking-wider mb-2">Lunar Transits</p>
+          {moonSignChanges.map(change => {
+            const key = `${change.name}-${change.enterTime.getTime()}`;
+            const isOpen = expandedTransit === key;
+            const corr = MOON_SIGN_CORRESPONDENCES[change.name];
+            return (
+              <div key={key}>
+                <div
+                  className={`flex items-center justify-between gap-3 px-3 py-2 rounded-lg cursor-pointer transition-colors hover:bg-white/4 ${isOpen ? 'bg-white/4' : ''}`}
+                  onClick={() => setExpandedTransit(isOpen ? null : key)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setExpandedTransit(isOpen ? null : key); } }}
+                >
+                  <span className="text-sm text-silver/70">
+                    Moon enters <span className="text-foreground">{change.name} {change.symbol}</span>
+                  </span>
+                  <span className="text-xs text-silver/40 flex-shrink-0">
+                    {formatTransitTime(change.enterTime, timezone)}
+                  </span>
+                </div>
+                {isOpen && corr && (
+                  <div className="mx-3 mb-1 px-3 py-2 rounded-lg bg-white/3 border border-white/6">
+                    <p className="text-xs text-silver/65 leading-relaxed">{corr.energy}</p>
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>
@@ -128,6 +201,61 @@ function SabbatDetail({ sabbatName }: { sabbatName: string }) {
   );
 }
 
+function VenusDetail({ signName }: { signName: string }) {
+  const data = VENUS_CORRESPONDENCES[signName];
+  const zodiac = ZODIAC_CORRESPONDENCES[signName];
+  if (!data) return <p className="text-silver/40 text-sm">No data found for Venus in {signName}.</p>;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <span className="font-display text-3xl text-amber-light">♀</span>
+        {zodiac && (
+          <div className="flex items-center gap-2">
+            <span className="font-display text-2xl text-foreground">{zodiac.symbol}</span>
+            <span className="font-display text-2xl text-foreground">{signName}</span>
+          </div>
+        )}
+      </div>
+
+      <p className="text-foreground/90 text-sm leading-relaxed">{data.energy}</p>
+
+      {zodiac && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-white/5">
+          <CorrespondenceRow label="Colours"  items={zodiac.colours} />
+          <CorrespondenceRow label="Crystals" items={zodiac.crystals} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+function MercuryRetroDetail({ signs, signFlavour }: { signs: string; signFlavour: string }) {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <span className="font-display text-3xl text-amber-light">☿℞</span>
+        <span className="text-sm text-silver/60">{signs}</span>
+      </div>
+
+      <div>
+        <p className="text-foreground/90 text-sm leading-relaxed">
+          Mercury retrograde is a period when the planet appears to travel backwards across the sky.
+          In astrological tradition, this time calls for review rather than forward motion — revisit,
+          reflect, and revise. Communications, travel, technology, and agreements are prone to delays
+          and misunderstandings. Back up important data, read the small print, and hold space for
+          things to be clarified before they are resolved.
+        </p>
+      </div>
+
+      <div className="border-l-2 border-amber/30 pl-3">
+        <p className="text-xs text-silver/50 uppercase tracking-wider mb-1">{signs}</p>
+        <p className="text-sm text-silver/70 leading-relaxed">{signFlavour}</p>
+      </div>
+    </div>
+  );
+}
+
 // ── Main Panel ─────────────────────────────────────────────────────────────
 
 interface Props {
@@ -141,7 +269,6 @@ export default function DetailPanel({ content, onClose }: Props) {
 
   useEffect(() => {
     if (content) {
-      // Small delay so the element is in the DOM before we animate in
       const id = requestAnimationFrame(() => setVisible(true));
       return () => cancelAnimationFrame(id);
     } else {
@@ -156,7 +283,7 @@ export default function DetailPanel({ content, onClose }: Props) {
       ref={panelRef}
       className="detail-panel overflow-hidden"
       style={{
-        maxHeight: visible ? '600px' : '0',
+        maxHeight: visible ? '900px' : '0',
         opacity: visible ? 1 : 0,
         transition: 'max-height 0.3s ease, opacity 0.25s ease',
       }}
@@ -179,9 +306,11 @@ export default function DetailPanel({ content, onClose }: Props) {
 
         {/* Content */}
         <div className="pr-6">
-          {content.type === 'moon'    && <MoonDetail    phaseName={content.phaseName} />}
-          {content.type === 'zodiac'  && <ZodiacDetail  signName={content.signName} />}
-          {content.type === 'sabbat'  && <SabbatDetail  sabbatName={content.sabbatName} />}
+          {content.type === 'moon'               && <MoonDetail         phaseName={content.phaseName} moonSignChanges={content.moonSignChanges} timezone={content.timezone} />}
+          {content.type === 'zodiac'             && <ZodiacDetail       signName={content.signName} />}
+          {content.type === 'sabbat'             && <SabbatDetail       sabbatName={content.sabbatName} />}
+          {content.type === 'venus'              && <VenusDetail        signName={content.signName} />}
+          {content.type === 'mercury-retrograde' && <MercuryRetroDetail signs={content.signs} signFlavour={content.signFlavour} />}
         </div>
       </div>
     </div>

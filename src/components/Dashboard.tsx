@@ -4,9 +4,10 @@ import { useCallback, useEffect, useState } from 'react';
 import TimezoneSelector from './TimezoneSelector';
 import DetailPanel, { DetailContent } from './DetailPanel';
 import { getMoonPhaseInfo, getMoonPhasePeak, MoonPhaseInfo, MoonPhasePeak } from '@/lib/moon';
-import { getCurrentSunSign, SunSignInfo } from '@/lib/astro';
+import { getCurrentSunSign, getCurrentMoonSign, getUpcomingMoonSignChanges, SunSignInfo, MoonSignChange } from '@/lib/astro';
 import { getSabbatContext, SabbatContext } from '@/lib/sabbats';
 import { getUpcomingEvents, UpcomingEvent } from '@/lib/upcomingEvents';
+import { getMercuryStatus, getCurrentVenusSign, MercuryInfo } from '@/lib/planets';
 
 const DEFAULT_TZ = 'Europe/London';
 
@@ -112,7 +113,11 @@ export default function Dashboard() {
   const [timezone, setTimezone] = useState(DEFAULT_TZ);
   const [moon, setMoon] = useState<MoonPhaseInfo | null>(null);
   const [moonPeak, setMoonPeak] = useState<MoonPhasePeak | null>(null);
+  const [moonSign, setMoonSign] = useState<{ name: string; symbol: string } | null>(null);
+  const [moonSignChanges, setMoonSignChanges] = useState<MoonSignChange[]>([]);
   const [sunSign, setSunSign] = useState<SunSignInfo | null>(null);
+  const [venusSign, setVenusSign] = useState<{ name: string; symbol: string } | null>(null);
+  const [mercuryInfo, setMercuryInfo] = useState<MercuryInfo | null>(null);
   const [sabbatCtx, setSabbatCtx] = useState<SabbatContext | null>(null);
   const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>([]);
   const [todayLabel, setTodayLabel] = useState('');
@@ -126,7 +131,11 @@ export default function Dashboard() {
     const moonInfo = getMoonPhaseInfo(now);
     setMoon(moonInfo);
     setMoonPeak(getMoonPhasePeak(now, moonInfo.name));
+    setMoonSign(getCurrentMoonSign(now));
+    setMoonSignChanges(getUpcomingMoonSignChanges(now, 3));
     setSunSign(getCurrentSunSign(localDate));
+    setVenusSign(getCurrentVenusSign(now));
+    setMercuryInfo(getMercuryStatus(now));
     setSabbatCtx(getSabbatContext(localDate));
     setUpcomingEvents(getUpcomingEvents(localDate, 8));
     setTodayLabel(formatDate(now, tz));
@@ -157,7 +166,7 @@ export default function Dashboard() {
       return;
     }
     if (expandedKey === 'moon' && moon) {
-      setPanelContent({ type: 'moon', phaseName: moon.name });
+      setPanelContent({ type: 'moon', phaseName: moon.name, moonSignChanges, timezone });
     } else if (expandedKey === 'sunSign' && sunSign) {
       setPanelContent({ type: 'zodiac', signName: sunSign.sign.name });
     } else if (expandedKey === 'sabbat' && sabbatCtx) {
@@ -174,11 +183,15 @@ export default function Dashboard() {
         setPanelContent({ type: 'zodiac', signName: event.zodiacSignName });
       } else if (event.type === 'sabbat' && event.sabbatName) {
         setPanelContent({ type: 'sabbat', sabbatName: event.sabbatName });
+      } else if (event.type === 'venus' && event.venusSignName) {
+        setPanelContent({ type: 'venus', signName: event.venusSignName });
+      } else if (event.type === 'mercury-retrograde' && event.mercuryRetroSigns) {
+        setPanelContent({ type: 'mercury-retrograde', signs: event.mercuryRetroSigns, signFlavour: event.mercuryRetroSignFlavour ?? '' });
       } else {
         setPanelContent(null);
       }
     }
-  }, [expandedKey, moon, sunSign, sabbatCtx, upcomingEvents]);
+  }, [expandedKey, moon, sunSign, sabbatCtx, upcomingEvents, moonSignChanges, timezone]);
 
   // ── Sabbat card display ──────────────────────────────────────────────────
   const sabbatCardContent = (() => {
@@ -214,24 +227,35 @@ export default function Dashboard() {
             Moon &amp; Sabbat
           </h1>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3 flex-wrap justify-end">
           {todayLabel && (
             <span className="hidden sm:block font-display text-xs text-silver/30 tracking-wide">
               {todayLabel}
             </span>
           )}
+          {mercuryInfo?.status === 'retrograde' && mercuryInfo.period && (
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-950/60 border border-red-700/40 text-xs text-red-300/90">
+              <span>☿℞</span>
+              <span className="hidden sm:inline">until {formatShortDate(mercuryInfo.period.retrogradeEnd, timezone)}</span>
+            </div>
+          )}
+          {mercuryInfo?.status === 'pre-shadow' && (
+            <div className="flex items-center gap-1 px-2 py-0.5 rounded-full border border-orange-700/25 text-xs text-orange-400/50">
+              <span>☿ pre-shadow</span>
+            </div>
+          )}
           <TimezoneSelector onChange={handleTimezoneChange} />
         </div>
       </header>
 
-      <main className="flex-1 px-4 sm:px-8 py-8 max-w-4xl mx-auto w-full space-y-10">
+      <main className="flex-1 px-4 sm:px-8 py-8 max-w-4xl mx-auto w-full space-y-4">
 
         {/* ── Hero: Moon Phase ── */}
         <section className="fade-in space-y-4">
 
           {/* Clickable moon hero */}
           <div
-            className={`text-center space-y-5 cursor-pointer rounded-xl p-4 transition-colors hover:bg-white/3 ${expandedKey === 'moon' ? 'bg-white/3' : ''}`}
+            className={`text-center space-y-5 cursor-pointer rounded-xl px-4 pt-4 pb-2 transition-colors hover:bg-white/3 ${expandedKey === 'moon' ? 'bg-white/3' : ''}`}
             onClick={() => handleToggle('moon')}
             role="button"
             aria-expanded={expandedKey === 'moon'}
@@ -274,6 +298,11 @@ export default function Dashboard() {
                   </>
                 )}
               </div>
+              {moonSign && (
+                <p className="text-xs text-silver/35 mt-0.5">
+                  Moon in {moonSign.name} {moonSign.symbol}
+                </p>
+              )}
               <div className="flex justify-center pt-1">
                 <span className={`text-silver/30 text-xs inline-block transition-transform duration-300 ${expandedKey === 'moon' ? 'rotate-180' : ''}`}>▾</span>
               </div>
@@ -309,6 +338,11 @@ export default function Dashboard() {
                 <p className="text-xs text-silver/50">
                   until {formatShortDate(sunSign.transitEnd, timezone)}
                 </p>
+                {venusSign && (
+                  <p className="text-xs text-silver/35 mt-1">
+                    Venus in {venusSign.name} {venusSign.symbol}
+                  </p>
+                )}
               </>
             )}
           </ClickableCard>
@@ -342,7 +376,7 @@ export default function Dashboard() {
         <div className="fade-in fade-in-delay-2 border-t border-white/5" />
 
         {/* ── Coming Up ── */}
-        <section className="fade-in fade-in-delay-2 space-y-3">
+        <section className="fade-in fade-in-delay-2 space-y-3 pt-2">
           <h3 className="font-display text-xl tracking-widest text-silver/40 uppercase">
             Coming Up
           </h3>

@@ -1,3 +1,9 @@
+export interface MoonSignChange {
+  name: string;
+  symbol: string;
+  enterTime: Date;
+}
+
 export interface ZodiacSign {
   name: string;
   symbol: string;
@@ -114,6 +120,106 @@ export function getUpcomingSunIngresses(from: Date, count = 8): NextIngress[] {
     }
 
     prevSign = currSign;
+  }
+
+  return results;
+}
+
+// ── Moon sign by ecliptic longitude ────────────────────────────────────────
+
+// Tropical zodiac sign order (Aries = 0°, each 30°)
+const ECLIPTIC_SIGNS = [
+  { name: 'Aries',       symbol: '♈' },
+  { name: 'Taurus',      symbol: '♉' },
+  { name: 'Gemini',      symbol: '♊' },
+  { name: 'Cancer',      symbol: '♋' },
+  { name: 'Leo',         symbol: '♌' },
+  { name: 'Virgo',       symbol: '♍' },
+  { name: 'Libra',       symbol: '♎' },
+  { name: 'Scorpio',     symbol: '♏' },
+  { name: 'Sagittarius', symbol: '♐' },
+  { name: 'Capricorn',   symbol: '♑' },
+  { name: 'Aquarius',    symbol: '♒' },
+  { name: 'Pisces',      symbol: '♓' },
+];
+
+/**
+ * Calculate the Moon's ecliptic longitude (degrees, 0–360) using a simplified
+ * version of the Meeus algorithm. Accurate to ~1–2° — sufficient for sign
+ * determination, though the sign boundary may be off by a few hours.
+ */
+function getMoonEclipticLongitude(date: Date): number {
+  const JD = date.getTime() / 86_400_000 + 2_440_587.5;
+  const T  = (JD - 2_451_545.0) / 36_525;
+
+  const r = Math.PI / 180;
+  const norm = (x: number) => ((x % 360) + 360) % 360;
+
+  const L  = norm(218.3164477 + 481267.88123421 * T); // Moon mean longitude (°)
+  const Mp = r * norm(134.9633964 + 477198.8675055 * T); // Moon mean anomaly
+  const M  = r * norm(357.5291092 +  35999.0502909 * T); // Sun  mean anomaly
+  const D  = r * norm(297.8501921 + 445267.1114034 * T); // Moon elongation
+  const F  = r * norm(93.2720950  + 483202.0175233 * T); // Moon arg of latitude
+
+  // Main periodic longitude corrections (degrees)
+  const dL =
+      6.288774 * Math.sin(Mp)
+    + 1.274027 * Math.sin(2 * D - Mp)
+    + 0.658314 * Math.sin(2 * D)
+    + 0.213618 * Math.sin(2 * Mp)
+    - 0.185116 * Math.sin(M)
+    - 0.114332 * Math.sin(2 * F)
+    + 0.058793 * Math.sin(2 * D - 2 * Mp)
+    + 0.057066 * Math.sin(2 * D - M - Mp)
+    + 0.053322 * Math.sin(2 * D + Mp)
+    + 0.045758 * Math.sin(2 * D - M)
+    - 0.040923 * Math.sin(M - Mp)
+    - 0.034720 * Math.sin(D)
+    - 0.030383 * Math.sin(M + Mp)
+    + 0.015327 * Math.sin(2 * D - 2 * F)
+    + 0.010980 * Math.sin(2 * F - Mp);
+
+  return norm(L + dL);
+}
+
+function moonSignFromLongitude(lon: number): { name: string; symbol: string } {
+  return ECLIPTIC_SIGNS[Math.floor(lon / 30)];
+}
+
+export function getCurrentMoonSign(now: Date = new Date()): { name: string; symbol: string } {
+  return moonSignFromLongitude(getMoonEclipticLongitude(now));
+}
+
+/**
+ * Return the next `count` times the Moon changes zodiac sign after `from`.
+ * Searches hourly then refines to the nearest minute.
+ */
+export function getUpcomingMoonSignChanges(from: Date, count = 3): MoonSignChange[] {
+  const HOUR   = 60 * 60 * 1000;
+  const MINUTE = 60 * 1000;
+  const results: MoonSignChange[] = [];
+
+  let prevIdx = Math.floor(getMoonEclipticLongitude(from) / 30);
+
+  for (let h = 1; h <= 24 * 30 && results.length < count; h++) {
+    const t      = new Date(from.getTime() + h * HOUR);
+    const lon    = getMoonEclipticLongitude(t);
+    const signIdx = Math.floor(lon / 30);
+
+    if (signIdx !== prevIdx) {
+      // Refine: find the first minute within the preceding hour where the sign is already new
+      let exactTime = t;
+      for (let m = 59; m >= 0; m--) {
+        const candidate = new Date(t.getTime() - m * MINUTE);
+        if (Math.floor(getMoonEclipticLongitude(candidate) / 30) !== signIdx) {
+          exactTime = new Date(candidate.getTime() + MINUTE);
+          break;
+        }
+      }
+      const sign = ECLIPTIC_SIGNS[signIdx];
+      results.push({ name: sign.name, symbol: sign.symbol, enterTime: exactTime });
+      prevIdx = signIdx;
+    }
   }
 
   return results;
