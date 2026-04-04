@@ -44,13 +44,18 @@ export interface MoonSignDetailContent {
   signSymbol: string;
 }
 
+export interface DataExpiryDetailContent {
+  type: 'data-expiry';
+}
+
 export type DetailContent =
   | MoonDetailContent
   | ZodiacDetailContent
   | SabbatDetailContent
   | VenusDetailContent
   | MercuryRetroDetailContent
-  | MoonSignDetailContent;
+  | MoonSignDetailContent
+  | DataExpiryDetailContent;
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -285,6 +290,23 @@ function MercuryRetroDetail({ signs, signFlavour }: { signs: string; signFlavour
   );
 }
 
+function DataExpiryDetail() {
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-3">
+        <span className="text-amber-light text-xl">⚠</span>
+        <p className="font-display text-lg text-foreground">Planetary data expiring</p>
+      </div>
+      <p className="text-foreground/90 text-sm leading-relaxed">
+        The Venus and Mercury lookup tables in this dashboard cover up to 31 December 2027.
+        After that date, planetary positions will be incorrect. To keep the dashboard accurate,
+        the data in <code className="text-amber/70 text-xs">src/lib/planets.ts</code> needs
+        to be extended with ephemeris data for 2028 and beyond.
+      </p>
+    </div>
+  );
+}
+
 // ── Main Panel ─────────────────────────────────────────────────────────────
 
 interface Props {
@@ -341,6 +363,7 @@ export default function DetailPanel({ content, onClose }: Props) {
           {content.type === 'sabbat'             && <SabbatDetail       sabbatName={content.sabbatName} />}
           {content.type === 'venus'              && <VenusDetail        signName={content.signName} />}
           {content.type === 'mercury-retrograde' && <MercuryRetroDetail signs={content.signs} signFlavour={content.signFlavour} />}
+          {content.type === 'data-expiry'        && <DataExpiryDetail />}
         </div>
       </div>
     </div>

@@ -66,7 +66,7 @@ export const MERCURY_RETROGRADES: MercuryRetrogradePeriod[] = [
     'Negotiations and agreements are prone to reversal. Buried resentments in partnerships may surface. Revisit commitments rather than making new ones, and resist the urge to expose secrets before all the facts are known.'),
 ];
 
-export type MercuryStatus = 'retrograde' | 'pre-shadow' | 'direct';
+export type MercuryStatus = 'retrograde' | 'pre-shadow' | 'post-shadow' | 'direct';
 
 export interface MercuryInfo {
   status: MercuryStatus;
@@ -80,6 +80,9 @@ export function getMercuryStatus(now: Date): MercuryInfo {
     }
     if (now >= period.shadowStart && now < period.retrogradeStart) {
       return { status: 'pre-shadow', period };
+    }
+    if (now > period.retrogradeEnd && now <= period.shadowEnd) {
+      return { status: 'post-shadow', period };
     }
   }
   return { status: 'direct', period: null };
@@ -118,35 +121,35 @@ export const VENUS_INGRESSES: VenusIngress[] = [
   { sign: { name: 'Sagittarius', symbol: '♐' }, date: d(2025, 12, 27) },
 
   // 2026
-  { sign: { name: 'Aquarius',    symbol: '♒' }, date: d(2026, 1,  4)  },
-  { sign: { name: 'Pisces',      symbol: '♓' }, date: d(2026, 1, 28)  },
-  { sign: { name: 'Aries',       symbol: '♈' }, date: d(2026, 2, 22)  },
-  { sign: { name: 'Taurus',      symbol: '♉' }, date: d(2026, 3, 18)  },
-  { sign: { name: 'Gemini',      symbol: '♊' }, date: d(2026, 4, 12)  },
-  { sign: { name: 'Cancer',      symbol: '♋' }, date: d(2026, 5,  7)  },
-  { sign: { name: 'Leo',         symbol: '♌' }, date: d(2026, 6,  3)  },
-  { sign: { name: 'Virgo',       symbol: '♍' }, date: d(2026, 6, 29)  },
-  { sign: { name: 'Libra',       symbol: '♎' }, date: d(2026, 7, 25)  },
-  { sign: { name: 'Scorpio',     symbol: '♏' }, date: d(2026, 8, 21)  },
-  { sign: { name: 'Sagittarius', symbol: '♐' }, date: d(2026, 9, 18)  },
-  { sign: { name: 'Capricorn',   symbol: '♑' }, date: d(2026, 10, 17) },
-  { sign: { name: 'Aquarius',    symbol: '♒' }, date: d(2026, 11, 14) },
-  { sign: { name: 'Pisces',      symbol: '♓' }, date: d(2026, 12, 12) },
+  { sign: { name: 'Capricorn',   symbol: '♑' }, date: d(2026, 1,  4)  },
+  { sign: { name: 'Aquarius',    symbol: '♒' }, date: d(2026, 1, 28)  },
+  { sign: { name: 'Pisces',      symbol: '♓' }, date: d(2026, 2, 22)  },
+  { sign: { name: 'Aries',       symbol: '♈' }, date: d(2026, 3, 18)  },
+  { sign: { name: 'Taurus',      symbol: '♉' }, date: d(2026, 4, 12)  },
+  { sign: { name: 'Gemini',      symbol: '♊' }, date: d(2026, 5,  7)  },
+  { sign: { name: 'Cancer',      symbol: '♋' }, date: d(2026, 6,  3)  },
+  { sign: { name: 'Leo',         symbol: '♌' }, date: d(2026, 6, 29)  },
+  { sign: { name: 'Virgo',       symbol: '♍' }, date: d(2026, 7, 25)  },
+  { sign: { name: 'Libra',       symbol: '♎' }, date: d(2026, 8, 21)  },
+  { sign: { name: 'Scorpio',     symbol: '♏' }, date: d(2026, 9, 18)  },
+  { sign: { name: 'Sagittarius', symbol: '♐' }, date: d(2026, 10, 17) },
+  { sign: { name: 'Capricorn',   symbol: '♑' }, date: d(2026, 11, 14) },
+  { sign: { name: 'Aquarius',    symbol: '♒' }, date: d(2026, 12, 12) },
 
   // 2027 (approximate — no retrograde expected this year)
-  { sign: { name: 'Aries',       symbol: '♈' }, date: d(2027, 1,  8)  },
-  { sign: { name: 'Taurus',      symbol: '♉' }, date: d(2027, 2,  5)  },
-  { sign: { name: 'Gemini',      symbol: '♊' }, date: d(2027, 3,  5)  },
-  { sign: { name: 'Cancer',      symbol: '♋' }, date: d(2027, 4,  4)  },
-  { sign: { name: 'Leo',         symbol: '♌' }, date: d(2027, 5,  6)  },
-  { sign: { name: 'Virgo',       symbol: '♍' }, date: d(2027, 6,  2)  },
-  { sign: { name: 'Libra',       symbol: '♎' }, date: d(2027, 6, 28)  },
-  { sign: { name: 'Scorpio',     symbol: '♏' }, date: d(2027, 7, 24)  },
-  { sign: { name: 'Sagittarius', symbol: '♐' }, date: d(2027, 8, 20)  },
-  { sign: { name: 'Capricorn',   symbol: '♑' }, date: d(2027, 9, 17)  },
-  { sign: { name: 'Aquarius',    symbol: '♒' }, date: d(2027, 10, 14) },
-  { sign: { name: 'Pisces',      symbol: '♓' }, date: d(2027, 11, 11) },
-  { sign: { name: 'Aries',       symbol: '♈' }, date: d(2027, 12, 10) },
+  { sign: { name: 'Pisces',      symbol: '♓' }, date: d(2027, 1,  8)  },
+  { sign: { name: 'Aries',       symbol: '♈' }, date: d(2027, 2,  5)  },
+  { sign: { name: 'Taurus',      symbol: '♉' }, date: d(2027, 3,  5)  },
+  { sign: { name: 'Gemini',      symbol: '♊' }, date: d(2027, 4,  4)  },
+  { sign: { name: 'Cancer',      symbol: '♋' }, date: d(2027, 5,  6)  },
+  { sign: { name: 'Leo',         symbol: '♌' }, date: d(2027, 6,  2)  },
+  { sign: { name: 'Virgo',       symbol: '♍' }, date: d(2027, 6, 28)  },
+  { sign: { name: 'Libra',       symbol: '♎' }, date: d(2027, 7, 24)  },
+  { sign: { name: 'Scorpio',     symbol: '♏' }, date: d(2027, 8, 20)  },
+  { sign: { name: 'Sagittarius', symbol: '♐' }, date: d(2027, 9, 17)  },
+  { sign: { name: 'Capricorn',   symbol: '♑' }, date: d(2027, 10, 14) },
+  { sign: { name: 'Aquarius',    symbol: '♒' }, date: d(2027, 11, 11) },
+  { sign: { name: 'Pisces',      symbol: '♓' }, date: d(2027, 12, 10) },
 ];
 
 export function getCurrentVenusSign(now: Date): { name: string; symbol: string } | null {

@@ -233,7 +233,7 @@ export function getSabbatContext(
   if (today) {
     nearest = today.displayName;
   } else {
-    const prev = [...all].reverse().find(s => s.date < date);
+    const prev = all.findLast(s => s.date < date);
     const next = all.find(s => s.date > date);
     if (prev && next) {
       nearest = `Between ${prev.displayName} and ${next.displayName}`;

@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { DEFAULT_TZ } from '@/lib/config';
 
 const TIMEZONE_GROUPS: { label: string; zones: string[] }[] = [
   {
@@ -77,7 +78,6 @@ const TIMEZONE_GROUPS: { label: string; zones: string[] }[] = [
 ];
 
 const STORAGE_KEY = 'moon-dashboard-timezone';
-const DEFAULT_TZ = 'Europe/London';
 
 interface Props {
   onChange: (tz: string) => void;

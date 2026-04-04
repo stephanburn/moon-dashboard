@@ -8,8 +8,7 @@ import { getCurrentSunSign, getCurrentMoonSign, getUpcomingMoonSignChanges, SunS
 import { getSabbatContext, SabbatContext } from '@/lib/sabbats';
 import { getUpcomingEvents, UpcomingEvent } from '@/lib/upcomingEvents';
 import { getMercuryStatus, getCurrentVenusSign, MercuryInfo } from '@/lib/planets';
-
-const DEFAULT_TZ = 'Europe/London';
+import { DEFAULT_TZ } from '@/lib/config';
 
 type Hemisphere = 'north' | 'south';
 
@@ -144,18 +143,23 @@ export default function Dashboard() {
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
   const [panelContent, setPanelContent] = useState<DetailContent | null>(null);
 
-  const recalculate = useCallback((tz: string, hem: Hemisphere) => {
+  // Timezone-independent: moon phase, moon sign, venus, mercury
+  const recalculateAstro = useCallback(() => {
     const now = new Date();
-    const localDate = toLocalDate(now, tz);
-
     const moonInfo = getMoonPhaseInfo(now);
     setMoon(moonInfo);
     setMoonPeak(getMoonPhasePeak(now, moonInfo.name));
     setMoonSign(getCurrentMoonSign(now));
     setMoonSignChanges(getUpcomingMoonSignChanges(now, 3));
-    setSunSign(getCurrentSunSign(localDate));
     setVenusSign(getCurrentVenusSign(now));
     setMercuryInfo(getMercuryStatus(now));
+  }, []);
+
+  // Timezone-dependent: sun sign, sabbat, upcoming events, date label
+  const recalculateTz = useCallback((tz: string, hem: Hemisphere) => {
+    const now = new Date();
+    const localDate = toLocalDate(now, tz);
+    setSunSign(getCurrentSunSign(localDate));
     setSabbatCtx(getSabbatContext(localDate, hem));
     setUpcomingEvents(getUpcomingEvents(localDate, 8, hem));
     setTodayLabel(formatDate(now, tz));
@@ -163,16 +167,17 @@ export default function Dashboard() {
 
   const handleTimezoneChange = useCallback((tz: string) => {
     setTimezone(tz);
-    recalculate(tz, hemisphereFromTimezone(tz));
-  }, [recalculate]);
+    recalculateTz(tz, hemisphereFromTimezone(tz));
+  }, [recalculateTz]);
 
   useEffect(() => {
     const storedTz = typeof window !== 'undefined'
       ? (localStorage.getItem('moon-dashboard-timezone') ?? DEFAULT_TZ)
       : DEFAULT_TZ;
     setTimezone(storedTz);
-    recalculate(storedTz, hemisphereFromTimezone(storedTz));
-  }, [recalculate]);
+    recalculateAstro();
+    recalculateTz(storedTz, hemisphereFromTimezone(storedTz));
+  }, [recalculateAstro, recalculateTz]);
 
   // Toggle expand/collapse for a given item key
   const handleToggle = useCallback((key: string) => {
@@ -209,6 +214,8 @@ export default function Dashboard() {
         setPanelContent({ type: 'venus', signName: event.venusSignName });
       } else if (event.type === 'mercury-retrograde' && event.mercuryRetroSigns) {
         setPanelContent({ type: 'mercury-retrograde', signs: event.mercuryRetroSigns, signFlavour: event.mercuryRetroSignFlavour ?? '' });
+      } else if (event.type === 'data-expiry') {
+        setPanelContent({ type: 'data-expiry' });
       } else {
         setPanelContent(null);
       }
@@ -260,6 +267,11 @@ export default function Dashboard() {
           {mercuryInfo?.status === 'pre-shadow' && (
             <div className="flex items-center gap-1 px-2 py-0.5 rounded-full border border-orange-700/25 text-xs text-orange-400/50">
               <span>☿ pre-shadow</span>
+            </div>
+          )}
+          {mercuryInfo?.status === 'post-shadow' && (
+            <div className="flex items-center gap-1 px-2 py-0.5 rounded-full border border-orange-700/20 text-xs text-orange-400/40">
+              <span>☿ post-shadow</span>
             </div>
           )}
           <TimezoneSelector onChange={handleTimezoneChange} />

@@ -2,8 +2,9 @@ import { getUpcomingMajorPhases } from './moon';
 import { getUpcomingSunIngresses } from './astro';
 import { getUpcomingSabbats } from './sabbats';
 import { getUpcomingVenusIngresses, getUpcomingMercuryRetrogrades } from './planets';
+import { PLANET_DATA_EXPIRY } from './config';
 
-export type UpcomingEventType = 'moon' | 'ingress' | 'sabbat' | 'venus' | 'mercury-retrograde';
+export type UpcomingEventType = 'moon' | 'ingress' | 'sabbat' | 'venus' | 'mercury-retrograde' | 'data-expiry';
 
 export interface UpcomingEvent {
   type: UpcomingEventType;
@@ -74,6 +75,18 @@ export function getUpcomingEvents(
       mercuryRetroSignFlavour: rx.signFlavour,
     })),
   ];
+
+  // Append data-expiry warning if within 90 days
+  const ninetyDaysMs = 90 * 24 * 60 * 60 * 1000;
+  if (PLANET_DATA_EXPIRY.getTime() - from.getTime() <= ninetyDaysMs) {
+    events.push({
+      type: 'data-expiry' as const,
+      name: 'Planetary data expires — update needed',
+      icon: '⚠',
+      date: PLANET_DATA_EXPIRY,
+      key: 'data-expiry',
+    });
+  }
 
   return events
     .sort((a, b) => a.date.getTime() - b.date.getTime())
