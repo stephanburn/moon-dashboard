@@ -38,12 +38,19 @@ export interface MercuryRetroDetailContent {
   signFlavour: string;
 }
 
+export interface MoonSignDetailContent {
+  type: 'moonSign';
+  signName: string;
+  signSymbol: string;
+}
+
 export type DetailContent =
   | MoonDetailContent
   | ZodiacDetailContent
   | SabbatDetailContent
   | VenusDetailContent
-  | MercuryRetroDetailContent;
+  | MercuryRetroDetailContent
+  | MoonSignDetailContent;
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 
@@ -132,6 +139,28 @@ function MoonDetail({ phaseName, moonSignChanges, timezone }: {
           })}
         </div>
       )}
+    </div>
+  );
+}
+
+function MoonSignDetail({ signName, signSymbol }: { signName: string; signSymbol: string }) {
+  const data = MOON_SIGN_CORRESPONDENCES[signName];
+  const zodiac = ZODIAC_CORRESPONDENCES[signName];
+  if (!data) return <p className="text-silver/40 text-sm">No data found for Moon in {signName}.</p>;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3 flex-wrap">
+        <span className="text-silver/50 text-xl select-none">☽</span>
+        <span className="font-display text-3xl text-amber-light">{signSymbol}</span>
+        <div>
+          <p className="font-display text-xl text-foreground">Moon in {signName}</p>
+          {zodiac && (
+            <p className="text-xs text-silver/40 mt-0.5">{zodiac.element} · {zodiac.modality}</p>
+          )}
+        </div>
+      </div>
+      <p className="text-foreground/90 text-sm leading-relaxed">{data.energy}</p>
     </div>
   );
 }
@@ -307,6 +336,7 @@ export default function DetailPanel({ content, onClose }: Props) {
         {/* Content */}
         <div className="pr-6">
           {content.type === 'moon'               && <MoonDetail         phaseName={content.phaseName} moonSignChanges={content.moonSignChanges} timezone={content.timezone} />}
+          {content.type === 'moonSign'           && <MoonSignDetail     signName={content.signName} signSymbol={content.signSymbol} />}
           {content.type === 'zodiac'             && <ZodiacDetail       signName={content.signName} />}
           {content.type === 'sabbat'             && <SabbatDetail       sabbatName={content.sabbatName} />}
           {content.type === 'venus'              && <VenusDetail        signName={content.signName} />}

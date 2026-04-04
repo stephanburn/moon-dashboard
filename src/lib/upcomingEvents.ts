@@ -20,10 +20,14 @@ export interface UpcomingEvent {
   mercuryRetroSignFlavour?: string;
 }
 
-export function getUpcomingEvents(from: Date, count = 5): UpcomingEvent[] {
+export function getUpcomingEvents(
+  from: Date,
+  count = 5,
+  hemisphere: 'north' | 'south' = 'north',
+): UpcomingEvent[] {
   const moonPhases  = getUpcomingMajorPhases(from, 6);
   const ingresses   = getUpcomingSunIngresses(from, 10);
-  const sabbats     = getUpcomingSabbats(from, 6);
+  const sabbats     = getUpcomingSabbats(from, 6, hemisphere);
   const venusEvents = getUpcomingVenusIngresses(from, 14);
   const mercuryRx   = getUpcomingMercuryRetrogrades(from, 6);
 
@@ -46,11 +50,11 @@ export function getUpcomingEvents(from: Date, count = 5): UpcomingEvent[] {
     })),
     ...sabbats.map(s => ({
       type: 'sabbat' as const,
-      name: s.name,
+      name: s.displayName,         // shown in the Coming Up list
       icon: '☀️',
       date: s.date,
       key: `sabbat-${s.name}-${s.date.getFullYear()}`,
-      sabbatName: s.name,
+      sabbatName: s.name,          // key for SABBAT_CORRESPONDENCES lookup
     })),
     ...venusEvents.map(v => ({
       type: 'venus' as const,

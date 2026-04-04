@@ -33,16 +33,16 @@ export const SABBAT_CORRESPONDENCES: Record<string, SabbatCorrespondence> = {
     name: 'Ostara',
     alternateNames: ['Spring Equinox', 'Vernal Equinox', 'Eostre'],
     subtitle: 'The Spring Equinox',
-    dateDescription: 'Astronomical — the Vernal Equinox (approximately 20–21 March)',
+    dateDescription: 'Astronomical — the Vernal Equinox (approximately 20–21 March in the Northern Hemisphere)',
     mythology:
-      'At Ostara, day and night stand in perfect balance before the light overcomes the dark. The goddess of spring and dawn, Eostre — from whom Easter borrows its name and imagery — bestows her blessings on a world awakening with wildflowers and birdsong. The hare and the egg, symbols of fertility and new life, are sacred to this sabbat, and the young sun god dances with increasing vigour across the lengthening days.',
-    themes: ['balance', 'renewal', 'fertility', 'growth', 'planting intentions'],
+      'At the spring equinox, day and night are held in brief, precise balance before the light begins to prevail. It is one of only two moments in the year when the sun rises exactly due east and sets exactly due west — a hinge in the turning of the seasons that has been marked by cultures across the world. Monuments align to it; festivals gather around it; the natural world makes it unmistakably felt. The name Ostara comes from a Germanic goddess of spring and dawn; Easter draws on the same root, along with its symbols of eggs and hares. Across traditions, this is a time of awakening, renewal, and the first genuine warmth returning to the world.',
+    themes: ['balance', 'renewal', 'awakening', 'growth', 'new beginnings'],
     colours: ['pastel green', 'soft yellow', 'lavender', 'light blue', 'blush pink'],
     crystals: ['rose quartz', 'amazonite', 'green aventurine', 'aquamarine'],
     herbs: ['daffodil', 'jasmine', 'violet', 'rose', 'primrose'],
-    foods: ['decorated eggs', 'spring greens', 'honey', 'hot cross buns', 'fresh flowers'],
+    foods: ['decorated eggs', 'spring greens', 'honey', 'hot cross buns', 'fresh herbs'],
     ritualFocus:
-      'Decorate eggs with symbols of your intentions and plant seeds — literally or symbolically. Perform a spring cleaning ritual with citrus and rosemary to clear stagnant energy. Walk barefoot on the earth and give thanks for the balance that makes all life possible.',
+      'Go outside and notice the particular quality of spring light — longer, warmer, more insistent each day. Plant seeds, literally or as intentions for the months ahead. Clear out what no longer belongs in your space and welcome the season of opening. Eggs, traditionally decorated at this time, are a simple and ancient way to hold a wish.',
   },
 
   Beltane: {
@@ -64,17 +64,17 @@ export const SABBAT_CORRESPONDENCES: Record<string, SabbatCorrespondence> = {
   Litha: {
     name: 'Litha',
     alternateNames: ['Summer Solstice', 'Midsummer', 'Alban Hefin'],
-    subtitle: 'The Peak of the Sun',
-    dateDescription: 'Astronomical — the Summer Solstice (approximately 20–21 June)',
+    subtitle: 'The Summer Solstice',
+    dateDescription: 'Astronomical — the Summer Solstice (approximately 20–21 June in the Northern Hemisphere)',
     mythology:
-      'Litha is the longest day, the apex of the solar year, when the Sun God reaches the height of his power before beginning the slow decline toward darkness. In many traditions, this is the battle between the Oak King and the Holly King — with the Holly King now victorious, ruling the waning half of the year. The land hums with the fullness of summer and the faeries are said to walk openly in the long golden light.',
-    themes: ['solar power', 'abundance', 'fulfilment', 'strength', 'fire', 'the peak'],
+      'The summer solstice is the longest day of the year — the sun reaches its highest arc in the sky and seems to hang there, reluctant to descend. From this point, the days begin to shorten, almost imperceptibly at first. Ancient monuments across the world were built to frame this precise solar alignment: Stonehenge, Newgrange, and dozens of others suggest how deeply human beings have always felt the significance of the turning. In cultures across the Northern Hemisphere, midsummer bonfires have been lit on hilltops for millennia — celebrations of light at its fullest, before the long return to dark. The name Litha is an old English term for the summer months; midsummer festivities persist today in Scandinavia, the British Isles, and beyond.',
+    themes: ['abundance', 'fulfilment', 'vitality', 'gratitude', 'the turning point'],
     colours: ['gold', 'bright yellow', 'orange', 'white', 'vibrant green'],
     crystals: ['sunstone', 'citrine', 'amber', 'carnelian', 'tiger\'s eye'],
     herbs: ['St John\'s wort', 'lavender', 'chamomile', 'elder flower', 'oak', 'rose'],
     foods: ['summer fruits', 'strawberries', 'honey mead', 'garden salads', 'fire-cooked foods'],
     ritualFocus:
-      'Rise for the dawn and greet the sun at its peak. Create a sun wheel or spiral of herbs and flowers as an offering. Gather medicinal herbs at midday when their potency is greatest, and dry them for the year\'s magical work. Give gratitude for all that has grown and flourished this season.',
+      'Rise early and watch the dawn — on the solstice the sun rises at its most northerly point, and the quality of the light is unique. Spend time outdoors at the height of the day. Gather herbs and flowers that are at their peak and dry them for later use. In the evening, light a fire or candles and sit with gratitude for what has grown and flourished this season — knowing the wheel is already beginning to turn.',
   },
 
   Lughnasadh: {
@@ -96,17 +96,17 @@ export const SABBAT_CORRESPONDENCES: Record<string, SabbatCorrespondence> = {
   Mabon: {
     name: 'Mabon',
     alternateNames: ['Autumn Equinox', 'Second Harvest', 'Alban Elfed'],
-    subtitle: 'The Second Harvest',
-    dateDescription: 'Astronomical — the Autumnal Equinox (approximately 22–23 September)',
+    subtitle: 'The Autumn Equinox',
+    dateDescription: 'Astronomical — the Autumnal Equinox (approximately 22–23 September in the Northern Hemisphere)',
     mythology:
-      'Mabon honours the balance point of autumn, when light and dark again stand equal before the darkness prevails. The name comes from the Welsh deity Mabon ap Modron — "the great son of the great mother" — a god of youth held in the otherworld, echoing the myth of Persephone descending into the underworld. The harvest is gathered and stored; the world prepares for its descent into the long dark.',
-    themes: ['balance', 'second harvest', 'gratitude', 'preparation', 'letting go', 'the ancestors'],
+      'The autumn equinox is the second balance point of the year — once again, day and night stand briefly equal before the darkness begins to take the lead. The light has a particular golden quality at this time, slant and warm, even as it shortens. The natural world is completing its cycle: the harvest is gathered, leaves begin to turn, and there is a bittersweet edge to the air that is unlike any other season. The name Mabon, used in some modern traditions, comes from a Welsh mythological figure — the Great Son of the Great Mother — whose story echoes broader themes of descent and return. Cultures across the world have marked the autumn balance point with harvest festivals, thanksgiving, and a turning inward toward reflection.',
+    themes: ['balance', 'gratitude', 'completion', 'preparation', 'letting go', 'turning inward'],
     colours: ['deep red', 'burnt orange', 'harvest gold', 'brown', 'russet'],
     crystals: ['smoky quartz', 'amber', 'carnelian', 'jasper', 'peridot'],
     herbs: ['apple', 'blackberry', 'hazel', 'ivy', 'myrrh', 'sage'],
-    foods: ['apples', 'root vegetables', 'squash', 'red wine', 'nuts', 'late harvest fruit'],
+    foods: ['apples', 'root vegetables', 'squash', 'cider', 'nuts', 'late harvest fruit'],
     ritualFocus:
-      'Create an altar with the fruits and colours of the harvest. Make a warming drink — cider or spiced wine — as a shared offering. Reflect on what you are grateful for and what you are ready to release as the world turns inward. Walk in the autumn landscape and honour the beautiful melancholy of the turning year.',
+      'Walk in the autumn landscape and let the season speak for itself — the quality of this light is fleeting and worth attention. Gather the last of the harvest from your garden or the hedgerows. Make a warming drink and sit with genuine gratitude for what has come to fruition this year. Reflect on what is ready to be released as the world turns inward, and make space for the quieter months ahead.',
   },
 
   Samhain: {
@@ -128,16 +128,16 @@ export const SABBAT_CORRESPONDENCES: Record<string, SabbatCorrespondence> = {
   Yule: {
     name: 'Yule',
     alternateNames: ['Winter Solstice', 'Midwinter', 'Alban Arthan'],
-    subtitle: 'The Return of the Light',
-    dateDescription: 'Astronomical — the Winter Solstice (approximately 21–22 December)',
+    subtitle: 'The Winter Solstice',
+    dateDescription: 'Astronomical — the Winter Solstice (approximately 21–22 December in the Northern Hemisphere)',
     mythology:
-      'Yule is the longest night and the turning point of the solar year — from this night, the sun is reborn and the days grow longer again. The Holly King, who has ruled since Litha, is overcome by the Oak King, who carries the promise of returning warmth. The old tradition of the Yule log — a great piece of oak or ash burned through the longest night — symbolises the enduring spark of life even in the deepest dark.',
-    themes: ['rebirth', 'the returning light', 'hope', 'endurance', 'family', 'the wheel turning'],
+      'The winter solstice is the longest night of the year — after which, almost imperceptibly at first, the sun begins to return. It has been observed across human history as the great turning point: a moment of darkness that contains within it the promise of returning light. Stonehenge was oriented to the winter solstice sunset. Roman Saturnalia, the Norse Yule, the Persian Yalda night, and eventually Christmas all cluster around this point on the wheel, each expressing in its own way the deep human need to mark the dark and welcome the return of warmth. The name Yule comes from Old Norse traditions of feasting and fire-keeping through the longest dark. Burning a great log through the night — oak or ash — kept the flame alive as a symbol of the enduring sun.',
+    themes: ['endurance', 'the returning light', 'hope', 'rest', 'gathering', 'renewal'],
     colours: ['deep red', 'forest green', 'bright gold', 'silver', 'white', 'midnight blue'],
     crystals: ['clear quartz', 'bloodstone', 'ruby', 'garnet', 'emerald'],
     herbs: ['holly', 'ivy', 'mistletoe', 'pine', 'fir', 'frankincense', 'myrrh'],
-    foods: ['mulled wine', 'roasted meats', 'gingerbread', 'dried fruits', 'nuts', 'wassail'],
+    foods: ['mulled wine', 'roasted foods', 'gingerbread', 'dried fruits', 'nuts', 'wassail'],
     ritualFocus:
-      'Burn a Yule log or sit vigil with candles through the longest night, keeping the flame alive as a symbol of the sun\'s return. Decorate with evergreens and light every candle in your home. At dawn, go outside to greet the newborn sun and welcome the returning light with gratitude, joy, and the warmth of gathered loved ones.',
+      'Sit with candles through the longest night — not as ritual obligation, but as quiet company with the dark. Decorate with evergreens, which hold their green through winter as a reminder that life persists. At dawn, go outside and greet the returning sun. Gather with people you love, eat well, and rest deeply. The wheel turns whether we mark it or not; marking it makes the turning felt.',
   },
 };

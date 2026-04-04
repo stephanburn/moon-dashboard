@@ -11,6 +11,25 @@ import { getMercuryStatus, getCurrentVenusSign, MercuryInfo } from '@/lib/planet
 
 const DEFAULT_TZ = 'Europe/London';
 
+type Hemisphere = 'north' | 'south';
+
+const SOUTHERN_TIMEZONES = new Set([
+  'America/Lima',
+  'America/Santiago',
+  'America/Sao_Paulo',
+  'America/Buenos_Aires',
+  'Australia/Sydney',
+  'Australia/Melbourne',
+  'Australia/Perth',
+  'Pacific/Auckland',
+  'Pacific/Fiji',
+  'Africa/Johannesburg',
+]);
+
+function hemisphereFromTimezone(tz: string): Hemisphere {
+  return SOUTHERN_TIMEZONES.has(tz) ? 'south' : 'north';
+}
+
 function formatDate(date: Date, timezone: string): string {
   return date.toLocaleDateString('en-GB', {
     weekday: 'long',
@@ -111,6 +130,7 @@ function ClickableCard({
 
 export default function Dashboard() {
   const [timezone, setTimezone] = useState(DEFAULT_TZ);
+  const hemisphere: Hemisphere = hemisphereFromTimezone(timezone);
   const [moon, setMoon] = useState<MoonPhaseInfo | null>(null);
   const [moonPeak, setMoonPeak] = useState<MoonPhasePeak | null>(null);
   const [moonSign, setMoonSign] = useState<{ name: string; symbol: string } | null>(null);
@@ -124,7 +144,7 @@ export default function Dashboard() {
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
   const [panelContent, setPanelContent] = useState<DetailContent | null>(null);
 
-  const recalculate = useCallback((tz: string) => {
+  const recalculate = useCallback((tz: string, hem: Hemisphere) => {
     const now = new Date();
     const localDate = toLocalDate(now, tz);
 
@@ -136,22 +156,22 @@ export default function Dashboard() {
     setSunSign(getCurrentSunSign(localDate));
     setVenusSign(getCurrentVenusSign(now));
     setMercuryInfo(getMercuryStatus(now));
-    setSabbatCtx(getSabbatContext(localDate));
-    setUpcomingEvents(getUpcomingEvents(localDate, 8));
+    setSabbatCtx(getSabbatContext(localDate, hem));
+    setUpcomingEvents(getUpcomingEvents(localDate, 8, hem));
     setTodayLabel(formatDate(now, tz));
   }, []);
 
   const handleTimezoneChange = useCallback((tz: string) => {
     setTimezone(tz);
-    recalculate(tz);
+    recalculate(tz, hemisphereFromTimezone(tz));
   }, [recalculate]);
 
   useEffect(() => {
-    const stored = typeof window !== 'undefined'
+    const storedTz = typeof window !== 'undefined'
       ? (localStorage.getItem('moon-dashboard-timezone') ?? DEFAULT_TZ)
       : DEFAULT_TZ;
-    setTimezone(stored);
-    recalculate(stored);
+    setTimezone(storedTz);
+    recalculate(storedTz, hemisphereFromTimezone(storedTz));
   }, [recalculate]);
 
   // Toggle expand/collapse for a given item key
@@ -167,6 +187,8 @@ export default function Dashboard() {
     }
     if (expandedKey === 'moon' && moon) {
       setPanelContent({ type: 'moon', phaseName: moon.name, moonSignChanges, timezone });
+    } else if (expandedKey === 'moonSign' && moonSign) {
+      setPanelContent({ type: 'moonSign', signName: moonSign.name, signSymbol: moonSign.symbol });
     } else if (expandedKey === 'sunSign' && sunSign) {
       setPanelContent({ type: 'zodiac', signName: sunSign.sign.name });
     } else if (expandedKey === 'sabbat' && sabbatCtx) {
@@ -191,17 +213,14 @@ export default function Dashboard() {
         setPanelContent(null);
       }
     }
-  }, [expandedKey, moon, sunSign, sabbatCtx, upcomingEvents, moonSignChanges, timezone]);
+  }, [expandedKey, moon, moonSign, sunSign, sabbatCtx, upcomingEvents, moonSignChanges, timezone]);
 
   // ── Sabbat card display ──────────────────────────────────────────────────
   const sabbatCardContent = (() => {
     if (!sabbatCtx) return null;
     if (sabbatCtx.today) {
       return {
-        primary: `Blessed ${sabbatCtx.today.name}`,
-        secondary: sabbatCtx.today.altName
-          ? `${sabbatCtx.today.name} — ${sabbatCtx.today.altName}`
-          : sabbatCtx.today.name,
+        primary: `Blessed ${sabbatCtx.today.displayName}`,
         sub: formatShortDate(sabbatCtx.today.date, timezone),
         isToday: true,
       };
@@ -209,8 +228,7 @@ export default function Dashboard() {
     if (sabbatCtx.nextSabbat) {
       const days = sabbatCtx.daysUntilNext;
       return {
-        primary: `${days} day${days !== 1 ? 's' : ''} until ${sabbatCtx.nextSabbat.name}`,
-        secondary: null,
+        primary: `${days} day${days !== 1 ? 's' : ''} until ${sabbatCtx.nextSabbat.displayName}`,
         sub: formatShortDate(sabbatCtx.nextSabbat.date, timezone),
         isToday: false,
       };
@@ -253,65 +271,84 @@ export default function Dashboard() {
         {/* ── Hero: Moon Phase ── */}
         <section className="fade-in space-y-4">
 
-          {/* Clickable moon hero */}
-          <div
-            className={`text-center space-y-5 cursor-pointer rounded-xl px-4 pt-4 pb-2 transition-colors hover:bg-white/3 ${expandedKey === 'moon' ? 'bg-white/3' : ''}`}
-            onClick={() => handleToggle('moon')}
-            role="button"
-            aria-expanded={expandedKey === 'moon'}
-            tabIndex={0}
-            onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleToggle('moon'); } }}
-          >
-            {/* Moon emoji with glow halo */}
-            <div className="relative inline-flex items-center justify-center">
-              <div className="moon-glow" />
-              <div
-                className="text-[100px] sm:text-[120px] leading-none select-none relative"
-                role="img"
-                aria-label={moon?.name}
-              >
-                {moon?.emoji ?? '🌑'}
+          {/* Moon hero + sign row grouped together */}
+          <div className="space-y-1">
+
+            {/* Clickable moon hero */}
+            <div
+              className={`text-center space-y-5 cursor-pointer rounded-xl px-4 pt-4 pb-2 transition-colors hover:bg-white/3 ${expandedKey === 'moon' ? 'bg-white/3' : ''}`}
+              onClick={() => handleToggle('moon')}
+              role="button"
+              aria-expanded={expandedKey === 'moon'}
+              tabIndex={0}
+              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleToggle('moon'); } }}
+            >
+              {/* Moon emoji with glow halo */}
+              <div className="relative inline-flex items-center justify-center">
+                <div className="moon-glow" />
+                <div
+                  className="text-[100px] sm:text-[120px] leading-none select-none relative"
+                  role="img"
+                  aria-label={moon?.name}
+                >
+                  {moon?.emoji ?? '🌑'}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <h2 className="font-display text-4xl sm:text-5xl tracking-wide text-foreground">
+                  {moon?.name}
+                </h2>
+                <div className="flex items-center justify-center gap-5 text-silver/50 text-xs mt-1 flex-wrap">
+                  <span>
+                    <span className="text-amber-light text-sm font-medium">{moon?.illumination}%</span>
+                    {' '}illuminated
+                  </span>
+                  <span className="text-white/15">·</span>
+                  <span>
+                    Day{' '}
+                    <span className="text-amber-light text-sm font-medium">{moon?.ageInDays}</span>
+                    {' '}of 29.5
+                  </span>
+                  {moonPeak && (
+                    <>
+                      <span className="text-white/15">·</span>
+                      <span>
+                        {formatPeakText(moonPeak.phaseName, moonPeak.peakTime, new Date(), timezone)}
+                      </span>
+                    </>
+                  )}
+                </div>
+                <div className="flex justify-center pt-1">
+                  <span className={`text-silver/30 text-xs inline-block transition-transform duration-300 ${expandedKey === 'moon' ? 'rotate-180' : ''}`}>▾</span>
+                </div>
               </div>
             </div>
 
-            <div className="space-y-3">
-              <h2 className="font-display text-4xl sm:text-5xl tracking-wide text-foreground">
-                {moon?.name}
-              </h2>
-              <div className="flex items-center justify-center gap-5 text-silver/50 text-xs mt-1 flex-wrap">
-                <span>
-                  <span className="text-amber-light text-sm font-medium">{moon?.illumination}%</span>
-                  {' '}illuminated
+            {/* Moon sign — separate clickable row */}
+            {moonSign && (
+              <div
+                className={`text-center py-2 px-4 rounded-lg cursor-pointer transition-colors hover:bg-white/4 ${expandedKey === 'moonSign' ? 'bg-white/4' : ''}`}
+                onClick={() => handleToggle('moonSign')}
+                role="button"
+                aria-expanded={expandedKey === 'moonSign'}
+                tabIndex={0}
+                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleToggle('moonSign'); } }}
+              >
+                <span className="text-xs text-silver/35">
+                  Moon in{' '}
+                  <span className={`transition-colors ${expandedKey === 'moonSign' ? 'text-silver/65' : 'text-silver/50'}`}>
+                    {moonSign.name} {moonSign.symbol}
+                  </span>
                 </span>
-                <span className="text-white/15">·</span>
-                <span>
-                  Day{' '}
-                  <span className="text-amber-light text-sm font-medium">{moon?.ageInDays}</span>
-                  {' '}of 29.5
-                </span>
-                {moonPeak && (
-                  <>
-                    <span className="text-white/15">·</span>
-                    <span>
-                      {formatPeakText(moonPeak.phaseName, moonPeak.peakTime, new Date(), timezone)}
-                    </span>
-                  </>
-                )}
+                <span className={`ml-1.5 text-silver/25 text-xs inline-block transition-transform duration-300 ${expandedKey === 'moonSign' ? 'rotate-180' : ''}`}>▾</span>
               </div>
-              {moonSign && (
-                <p className="text-xs text-silver/35 mt-0.5">
-                  Moon in {moonSign.name} {moonSign.symbol}
-                </p>
-              )}
-              <div className="flex justify-center pt-1">
-                <span className={`text-silver/30 text-xs inline-block transition-transform duration-300 ${expandedKey === 'moon' ? 'rotate-180' : ''}`}>▾</span>
-              </div>
-            </div>
+            )}
           </div>
 
-          {/* Moon detail panel */}
+          {/* Detail panel — shown for moon phase or moon sign */}
           <DetailPanel
-            content={expandedKey === 'moon' ? panelContent : null}
+            content={(expandedKey === 'moon' || expandedKey === 'moonSign') ? panelContent : null}
             onClose={() => setExpandedKey(null)}
           />
         </section>
