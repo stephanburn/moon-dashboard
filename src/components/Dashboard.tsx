@@ -471,6 +471,9 @@ export default function Dashboard() {
           <p className="font-display text-sm text-silver/30 tracking-wide sm:hidden">{todayLabel}</p>
         )}
         <p className="text-xs text-white/20">All calculations are local &amp; astronomical — no external APIs.</p>
+        {process.env.NEXT_PUBLIC_COMMIT && (
+          <p className="text-xs text-white/10 font-mono">{process.env.NEXT_PUBLIC_COMMIT}</p>
+        )}
       </footer>
     </div>
   );
