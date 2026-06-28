@@ -14,10 +14,11 @@ export default function TimezoneSelector({ value, onChange }: Props) {
       <select
         value={value}
         onChange={e => onChange(e.target.value)}
+        aria-label="Timezone"
         className="
           text-xs bg-white/5 border border-white/10 rounded-md
-          text-silver/70 px-2 py-1
-          hover:border-white/20 focus:outline-none focus:border-amber/40
+          text-silver/70 px-2 py-2.5 min-h-[44px]
+          hover:border-white/20 focus-visible:outline-none focus-visible:border-amber/40 focus-visible:ring-2 focus-visible:ring-amber/40
           transition-colors cursor-pointer
         "
       >

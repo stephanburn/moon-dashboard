@@ -12,6 +12,11 @@ import { DEFAULT_TZ } from '@/lib/config';
 import { formatCalendarDate } from '@/lib/format';
 import { STORAGE_KEY, normalizeTimezone, hemisphereFromTimezone, type Hemisphere } from '@/lib/timezones';
 
+// Stable IDs linking each disclosure trigger to its detail panel via aria-controls.
+const PANEL_HERO     = 'detail-panel-hero';
+const PANEL_CARDS    = 'detail-panel-cards';
+const PANEL_UPCOMING = 'detail-panel-upcoming';
+
 function formatDate(date: Date, timezone: string): string {
   return date.toLocaleDateString('en-GB', {
     weekday: 'long',
@@ -83,36 +88,67 @@ function toLocalDate(date: Date, timezone: string): Date {
   return new Date(get('year'), get('month') - 1, get('day'));
 }
 
+// ── Disclosure button ──────────────────────────────────────────────────────
+// Native <button> handles Enter/Space natively; no onKeyDown needed.
+// focus-visible ring is baked into the base class and follows the element's
+// own border-radius via box-shadow (Tailwind ring implementation).
+
+function Disclosure({
+  isOpen,
+  onToggle,
+  panelId,
+  children,
+  className = '',
+}: {
+  isOpen: boolean;
+  onToggle: () => void;
+  panelId?: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-expanded={isOpen}
+      aria-controls={panelId}
+      className={`w-full bg-transparent border-0 appearance-none cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/40 ${className}`}
+    >
+      {children}
+    </button>
+  );
+}
+
 // ── Clickable card wrapper ─────────────────────────────────────────────────
 
 function ClickableCard({
   itemKey,
   expandedKey,
   onToggle,
+  panelId,
   children,
   className = '',
 }: {
   itemKey: string;
   expandedKey: string | null;
   onToggle: (key: string) => void;
+  panelId?: string;
   children: React.ReactNode;
   className?: string;
 }) {
   const isOpen = expandedKey === itemKey;
   return (
-    <div
-      className={`card p-5 space-y-3 cursor-pointer select-none transition-all hover:border-white/15 hover:bg-white/3 ${isOpen ? 'border-amber/30 bg-white/3' : ''} ${className}`}
-      onClick={() => onToggle(itemKey)}
-      role="button"
-      aria-expanded={isOpen}
-      tabIndex={0}
-      onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onToggle(itemKey); } }}
+    <Disclosure
+      isOpen={isOpen}
+      onToggle={() => onToggle(itemKey)}
+      panelId={panelId}
+      className={`card p-5 space-y-3 text-left cursor-pointer select-none transition-all hover:border-white/15 hover:bg-hover-surface ${isOpen ? 'border-amber/30 bg-hover-surface' : ''} ${className}`}
     >
       {children}
       <div className="flex justify-end">
-        <span className={`text-silver/30 text-xs inline-block transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>▾</span>
+        <span className={`text-silver/50 text-xs inline-block transition-transform duration-300 motion-reduce:transition-none ${isOpen ? 'rotate-180' : ''}`}>▾</span>
       </div>
-    </div>
+    </Disclosure>
   );
 }
 
@@ -121,13 +157,21 @@ function ClickableCard({
 export default function Dashboard() {
   const [timezone, setTimezone] = useState(DEFAULT_TZ);
   const hemisphere: Hemisphere = hemisphereFromTimezone(timezone);
-  const [moon, setMoon] = useState<MoonPhaseInfo | null>(null);
-  const [moonPeak, setMoonPeak] = useState<MoonPhasePeak | null>(null);
-  const [moonSign, setMoonSign] = useState<{ name: string; symbol: string } | null>(null);
-  const [moonSignChanges, setMoonSignChanges] = useState<MoonSignChange[]>([]);
+
+  // TZ-independent state: initialised eagerly so the hero is populated on
+  // first paint without waiting for the mount effect.
+  const [moon, setMoon] = useState<MoonPhaseInfo | null>(() => getMoonPhaseInfo(new Date()));
+  const [moonPeak, setMoonPeak] = useState<MoonPhasePeak | null>(() => {
+    const now = new Date();
+    return getMoonPhasePeak(now, getMoonPhaseInfo(now).name);
+  });
+  const [moonSign, setMoonSign] = useState<{ name: string; symbol: string } | null>(() => getCurrentMoonSign(new Date()));
+  const [moonSignChanges, setMoonSignChanges] = useState<MoonSignChange[]>(() => getUpcomingMoonSignChanges(new Date(), 3));
+  const [venusSign, setVenusSign] = useState<{ name: string; symbol: string } | null>(() => getCurrentVenusSign(new Date()));
+  const [mercuryInfo, setMercuryInfo] = useState<MercuryInfo | null>(() => getMercuryStatus(new Date()));
+
+  // TZ-dependent state: populated after mount when localStorage is readable.
   const [sunSign, setSunSign] = useState<SunSignInfo | null>(null);
-  const [venusSign, setVenusSign] = useState<{ name: string; symbol: string } | null>(null);
-  const [mercuryInfo, setMercuryInfo] = useState<MercuryInfo | null>(null);
   const [sabbatCtx, setSabbatCtx] = useState<SabbatContext | null>(null);
   const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>([]);
   const [todayLabel, setTodayLabel] = useState('');
@@ -202,6 +246,14 @@ export default function Dashboard() {
     setExpandedKey(prev => (prev === key ? null : key));
   }, []);
 
+  // Which layout section owns the currently expanded key — determines where the
+  // single <DetailPanel> instance is placed.
+  const activeSection: 'hero' | 'cards' | 'upcoming' | null =
+    expandedKey === 'moon' || expandedKey === 'moonSign' ? 'hero'
+    : expandedKey === 'sunSign' || expandedKey === 'sabbat' ? 'cards'
+    : upcomingEvents.some(e => e.key === expandedKey) ? 'upcoming'
+    : null;
+
   // Derive panel content from the currently expanded key (pure: computed during
   // render rather than via an effect, so it never lags a frame behind expandedKey).
   const panelContent = useMemo<DetailContent | null>(() => {
@@ -265,63 +317,61 @@ export default function Dashboard() {
     return null;
   })();
 
+  const closePanel = useCallback(() => setExpandedKey(null), []);
+
   return (
     <div className="relative z-10 min-h-dvh flex flex-col">
-      {/* Header */}
-      <header className="flex items-center justify-between px-6 py-4 border-b border-white/5">
-        <div>
-          <h1 className="font-display text-lg tracking-widest text-silver/60 uppercase">
-            Moon &amp; Sabbat
-          </h1>
-        </div>
-        <div className="flex items-center gap-3 flex-wrap justify-end">
-          {todayLabel && (
-            <span className="hidden sm:block font-display text-xs text-silver/30 tracking-wide">
-              {todayLabel}
-            </span>
-          )}
-          {mercuryInfo?.status === 'retrograde' && mercuryInfo.period && (
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-950/60 border border-red-700/40 text-xs text-red-300/90">
-              <span>☿℞</span>
-              <span className="hidden sm:inline">until {formatCalendarDate(mercuryInfo.period.retrogradeEnd)}</span>
-            </div>
-          )}
-          {mercuryInfo?.status === 'pre-shadow' && (
-            <div className="flex items-center gap-1 px-2 py-0.5 rounded-full border border-orange-700/25 text-xs text-orange-400/50">
-              <span>☿ pre-shadow</span>
-            </div>
-          )}
-          {mercuryInfo?.status === 'post-shadow' && (
-            <div className="flex items-center gap-1 px-2 py-0.5 rounded-full border border-orange-700/20 text-xs text-orange-400/40">
-              <span>☿ post-shadow</span>
-            </div>
-          )}
-          <TimezoneSelector value={timezone} onChange={handleTimezoneChange} />
+      {/* Header — full-bleed border, content constrained to match main */}
+      <header className="border-b border-white/5">
+        <div className="flex items-center justify-between px-4 sm:px-8 py-4 max-w-4xl lg:max-w-5xl mx-auto w-full">
+          <div>
+            <h1 className="font-display text-base sm:text-lg tracking-wider sm:tracking-widest text-text-secondary uppercase whitespace-nowrap">
+              Moon &amp; Sabbat
+            </h1>
+          </div>
+          {/* Right side: flex-nowrap prevents wrapping to two rows at 360px */}
+          <div className="flex items-center gap-2 sm:gap-3 flex-nowrap">
+            {todayLabel && (
+              <span className="hidden sm:block font-display text-xs text-text-tertiary tracking-wide">
+                {todayLabel}
+              </span>
+            )}
+            {/* Retrograde badge: informational, not interactive. Pre/post-shadow
+                states are visible in "Coming Up" and removed here to reduce clutter. */}
+            {mercuryInfo?.status === 'retrograde' && mercuryInfo.period && (
+              <div
+                aria-label={`Mercury retrograde until ${formatCalendarDate(mercuryInfo.period.retrogradeEnd)}`}
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-950/60 border border-red-700/50 text-xs text-red-300 flex-shrink-0"
+              >
+                <span aria-hidden>☿℞</span>
+                <span className="hidden sm:inline">until {formatCalendarDate(mercuryInfo.period.retrogradeEnd)}</span>
+              </div>
+            )}
+            <TimezoneSelector value={timezone} onChange={handleTimezoneChange} />
+          </div>
         </div>
       </header>
 
-      <main className="flex-1 px-4 sm:px-8 py-8 max-w-4xl mx-auto w-full space-y-4">
+      <main className="flex-1 px-4 sm:px-8 py-8 max-w-4xl lg:max-w-5xl mx-auto w-full space-y-4">
 
         {/* ── Hero: Moon Phase ── */}
-        <section className="fade-in space-y-4">
+        <section className="fade-in space-y-4" aria-label="Moon phase">
 
           {/* Moon hero + sign row grouped together */}
           <div className="space-y-1">
 
             {/* Clickable moon hero */}
-            <div
-              className={`text-center space-y-5 cursor-pointer rounded-xl px-4 pt-4 pb-2 transition-colors hover:bg-white/3 ${expandedKey === 'moon' ? 'bg-white/3' : ''}`}
-              onClick={() => handleToggle('moon')}
-              role="button"
-              aria-expanded={expandedKey === 'moon'}
-              tabIndex={0}
-              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleToggle('moon'); } }}
+            <Disclosure
+              isOpen={expandedKey === 'moon'}
+              onToggle={() => handleToggle('moon')}
+              panelId={PANEL_HERO}
+              className={`text-center space-y-5 rounded-xl px-4 pt-4 pb-2 transition-colors hover:bg-hover-surface ${expandedKey === 'moon' ? 'bg-hover-surface' : ''}`}
             >
               {/* Moon emoji with glow halo */}
               <div className="relative inline-flex items-center justify-center">
                 <div className="moon-glow" />
                 <div
-                  className="text-[100px] sm:text-[120px] leading-none select-none relative"
+                  className="text-[100px] sm:text-[120px] lg:text-[150px] leading-none select-none relative"
                   role="img"
                   aria-label={moon?.name}
                 >
@@ -330,10 +380,34 @@ export default function Dashboard() {
               </div>
 
               <div className="space-y-3">
-                <h2 className="font-display text-4xl sm:text-5xl tracking-wide text-foreground">
+                {/* role="heading" avoids nesting a block-level <h2> inside <button> */}
+                <p role="heading" aria-level={2} className="font-display text-4xl sm:text-5xl tracking-wide text-foreground">
                   {moon?.name}
-                </h2>
-                <div className="flex items-center justify-center gap-5 text-silver/50 text-xs mt-1 flex-wrap">
+                </p>
+
+                {/* Mobile: stats on one line, peak on its own line — no orphaned dots */}
+                <div className="sm:hidden space-y-1 mt-1">
+                  <div className="flex items-center justify-center gap-4 text-text-secondary text-xs">
+                    <span>
+                      <span className="text-amber-light text-sm font-medium">{moon?.illumination}%</span>
+                      {' '}illuminated
+                    </span>
+                    <span className="text-white/15">·</span>
+                    <span>
+                      Day{' '}
+                      <span className="text-amber-light text-sm font-medium">{moon?.ageInDays}</span>
+                      {' '}of 29.5
+                    </span>
+                  </div>
+                  {moonPeak && (
+                    <p className="text-text-secondary text-xs text-center">
+                      {formatPeakText(moonPeak.phaseName, moonPeak.peakTime, new Date(), timezone)}
+                    </p>
+                  )}
+                </div>
+
+                {/* Desktop: single inline row with middot separators */}
+                <div className="hidden sm:flex items-center justify-center gap-5 text-text-secondary text-xs mt-1">
                   <span>
                     <span className="text-amber-light text-sm font-medium">{moon?.illumination}%</span>
                     {' '}illuminated
@@ -353,49 +427,47 @@ export default function Dashboard() {
                     </>
                   )}
                 </div>
+
                 <div className="flex justify-center pt-1">
-                  <span className={`text-silver/30 text-xs inline-block transition-transform duration-300 ${expandedKey === 'moon' ? 'rotate-180' : ''}`}>▾</span>
+                  <span className={`text-silver/50 text-xs inline-block transition-transform duration-300 motion-reduce:transition-none ${expandedKey === 'moon' ? 'rotate-180' : ''}`}>▾</span>
                 </div>
               </div>
-            </div>
+            </Disclosure>
 
-            {/* Moon sign — separate clickable row */}
+            {/* Moon sign — separate clickable row; min-h-[44px] ensures touch target */}
             {moonSign && (
-              <div
-                className={`text-center py-2 px-4 rounded-lg cursor-pointer transition-colors hover:bg-white/4 ${expandedKey === 'moonSign' ? 'bg-white/4' : ''}`}
-                onClick={() => handleToggle('moonSign')}
-                role="button"
-                aria-expanded={expandedKey === 'moonSign'}
-                tabIndex={0}
-                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleToggle('moonSign'); } }}
+              <Disclosure
+                isOpen={expandedKey === 'moonSign'}
+                onToggle={() => handleToggle('moonSign')}
+                panelId={PANEL_HERO}
+                className={`min-h-[44px] flex items-center justify-center py-1 px-4 rounded-lg transition-colors hover:bg-hover-surface ${expandedKey === 'moonSign' ? 'bg-hover-surface' : ''}`}
               >
-                <span className="text-xs text-silver/35">
+                <span className="text-xs text-text-tertiary">
                   Moon in{' '}
-                  <span className={`transition-colors ${expandedKey === 'moonSign' ? 'text-silver/65' : 'text-silver/50'}`}>
+                  <span className="text-text-secondary">
                     {moonSign.name} {moonSign.symbol}
                   </span>
                 </span>
-                <span className={`ml-1.5 text-silver/25 text-xs inline-block transition-transform duration-300 ${expandedKey === 'moonSign' ? 'rotate-180' : ''}`}>▾</span>
-              </div>
+                <span className={`ml-1.5 text-silver/50 text-xs inline-block transition-transform duration-300 motion-reduce:transition-none ${expandedKey === 'moonSign' ? 'rotate-180' : ''}`}>▾</span>
+              </Disclosure>
             )}
           </div>
 
           {/* Detail panel — shown for moon phase or moon sign */}
-          <DetailPanel
-            content={(expandedKey === 'moon' || expandedKey === 'moonSign') ? panelContent : null}
-            onClose={() => setExpandedKey(null)}
-          />
+          {activeSection === 'hero' && (
+            <DetailPanel id={PANEL_HERO} content={panelContent} onClose={closePanel} />
+          )}
         </section>
 
         {/* ── Subtle divider ── */}
         <div className="fade-in fade-in-delay-1 border-t border-white/5" />
 
         {/* ── Current Info Row ── */}
-        <section className="fade-in fade-in-delay-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <section className="fade-in fade-in-delay-1 grid grid-cols-1 sm:grid-cols-2 gap-4" aria-label="Current astrology">
 
           {/* Sun Sign card */}
-          <ClickableCard itemKey="sunSign" expandedKey={expandedKey} onToggle={handleToggle}>
-            <p className="text-xs tracking-[0.25em] uppercase text-silver/40">Current Sun Sign</p>
+          <ClickableCard itemKey="sunSign" expandedKey={expandedKey} onToggle={handleToggle} panelId={PANEL_CARDS}>
+            <p role="heading" aria-level={3} className="text-xs tracking-[0.25em] uppercase text-text-tertiary">Current Sun Sign</p>
             {sunSign && (
               <>
                 <div className="flex items-baseline gap-3">
@@ -406,11 +478,11 @@ export default function Dashboard() {
                     {sunSign.sign.name}
                   </span>
                 </div>
-                <p className="text-xs text-silver/50">
+                <p className="text-xs text-text-secondary">
                   until {formatCalendarDate(sunSign.transitEnd)}
                 </p>
                 {venusSign && (
-                  <p className="text-xs text-silver/35 mt-1">
+                  <p className="text-xs text-text-tertiary mt-1">
                     Venus in {venusSign.name} {venusSign.symbol}
                   </p>
                 )}
@@ -419,70 +491,61 @@ export default function Dashboard() {
           </ClickableCard>
 
           {/* Sabbat card */}
-          <ClickableCard itemKey="sabbat" expandedKey={expandedKey} onToggle={handleToggle}>
-            <p className="text-xs tracking-[0.25em] uppercase text-silver/40">Wheel of the Year</p>
+          <ClickableCard itemKey="sabbat" expandedKey={expandedKey} onToggle={handleToggle} panelId={PANEL_CARDS}>
+            <p role="heading" aria-level={3} className="text-xs tracking-[0.25em] uppercase text-text-tertiary">Wheel of the Year</p>
             {sabbatCardContent && (
               <>
                 <p className={`font-display text-3xl leading-snug ${sabbatCardContent.isToday ? 'text-amber-light' : 'text-foreground'}`}>
                   {sabbatCardContent.primary}
                 </p>
-                <p className="text-xs text-silver/50">{sabbatCardContent.sub}</p>
+                <p className="text-xs text-text-secondary">{sabbatCardContent.sub}</p>
               </>
             )}
           </ClickableCard>
 
         </section>
 
-        {/* Panels for current-row cards (appear below the row, full width) */}
-        {(expandedKey === 'sunSign' || expandedKey === 'sabbat') && (
-          <div className="fade-in-delay-1">
-            <DetailPanel
-              content={panelContent}
-              onClose={() => setExpandedKey(null)}
-            />
-          </div>
+        {/* Panel for current-row cards (appears below the row, full width) */}
+        {activeSection === 'cards' && (
+          <DetailPanel id={PANEL_CARDS} content={panelContent} onClose={closePanel} />
         )}
 
         {/* ── Divider ── */}
         <div className="fade-in fade-in-delay-2 border-t border-white/5" />
 
         {/* ── Coming Up ── */}
-        <section className="fade-in fade-in-delay-2 space-y-3 pt-2">
-          <div className="coming-up-mobile-card space-y-3">
-            <h3 className="font-display text-xl tracking-widest text-silver/40 uppercase">
+        <section className="fade-in fade-in-delay-2 space-y-3 pt-2" aria-labelledby="coming-up-heading">
+          {/* Card styling applied consistently at all widths */}
+          <div className="card p-5 space-y-3">
+            <h3 id="coming-up-heading" className="font-display text-xl tracking-widest text-text-tertiary uppercase">
               Coming Up
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {upcomingEvents.map(event => (
-                <div
+                <Disclosure
                   key={event.key}
-                  className={`flex items-center gap-4 px-4 py-3 rounded-xl cursor-pointer transition-colors hover:bg-white/4 ${expandedKey === event.key ? 'bg-white/4 border border-white/8' : 'border border-transparent'}`}
-                  onClick={() => handleToggle(event.key)}
-                  role="button"
-                  aria-expanded={expandedKey === event.key}
-                  tabIndex={0}
-                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleToggle(event.key); } }}
+                  isOpen={expandedKey === event.key}
+                  onToggle={() => handleToggle(event.key)}
+                  panelId={PANEL_UPCOMING}
+                  className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-colors hover:bg-hover-surface ${expandedKey === event.key ? 'bg-hover-surface border border-white/8' : 'border border-transparent'}`}
                 >
                   <span className="text-xl w-8 text-center flex-shrink-0 select-none" aria-hidden>
                     {event.icon}
                   </span>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-foreground">{event.name}</p>
-                    <p className="text-xs text-silver/50">{formatCalendarDate(event.date)}</p>
+                    <p className="text-xs text-text-secondary">{formatCalendarDate(event.date)}</p>
                   </div>
-                  <span className={`text-silver/30 text-xs flex-shrink-0 inline-block transition-transform duration-300 ${expandedKey === event.key ? 'rotate-180' : ''}`}>▾</span>
-                </div>
+                  <span className={`text-silver/50 text-xs flex-shrink-0 inline-block transition-transform duration-300 motion-reduce:transition-none ${expandedKey === event.key ? 'rotate-180' : ''}`}>▾</span>
+                </Disclosure>
               ))}
             </div>
           </div>
 
           {/* Detail panel spans full width below the grid */}
-          {upcomingEvents.some(e => e.key === expandedKey) && (
-            <DetailPanel
-              content={panelContent}
-              onClose={() => setExpandedKey(null)}
-            />
+          {activeSection === 'upcoming' && (
+            <DetailPanel id={PANEL_UPCOMING} content={panelContent} onClose={closePanel} />
           )}
         </section>
 
@@ -490,9 +553,9 @@ export default function Dashboard() {
 
       <footer className="px-6 py-5 text-center border-t border-white/5 space-y-1">
         {todayLabel && (
-          <p className="font-display text-sm text-silver/30 tracking-wide sm:hidden">{todayLabel}</p>
+          <p className="font-display text-sm text-text-tertiary tracking-wide sm:hidden">{todayLabel}</p>
         )}
-        <p className="text-xs text-white/20">All calculations are local &amp; astronomical — no external APIs.</p>
+        <p className="text-xs text-silver/40">Calculated locally — no tracking, no APIs.</p>
         {process.env.NEXT_PUBLIC_COMMIT && (
           <p className="text-xs text-white/10 font-mono">{process.env.NEXT_PUBLIC_COMMIT}</p>
         )}

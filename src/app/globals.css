@@ -8,14 +8,24 @@
   --amber-light: #e8b85a;
   --card-bg: rgba(255, 255, 255, 0.04);
   --card-border: rgba(255, 255, 255, 0.08);
+
+  /* Semantic text tokens — silver (#c8c8d8) at calibrated opacities */
+  --text-secondary: rgba(200, 200, 216, 0.70); /* body / supporting text  */
+  --text-tertiary:  rgba(200, 200, 216, 0.60); /* eyebrow labels / captions */
+
+  /* Unified hover surface for all interactive elements */
+  --hover-surface: rgba(255, 255, 255, 0.04);
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --color-silver: var(--silver);
-  --color-amber: var(--amber);
-  --color-amber-light: var(--amber-light);
+  --color-background:    var(--background);
+  --color-foreground:    var(--foreground);
+  --color-silver:        var(--silver);
+  --color-amber:         var(--amber);
+  --color-amber-light:   var(--amber-light);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-tertiary:  var(--text-tertiary);
+  --color-hover-surface:  var(--hover-surface);
   --font-display: var(--font-cormorant), 'Cormorant Garamond', Georgia, serif;
   --font-sans: ui-sans-serif, system-ui, sans-serif;
 }
@@ -111,6 +121,13 @@ body::after {
   border-radius: 50%;
 }
 
+@media (min-width: 1024px) {
+  .moon-glow {
+    width: 400px;
+    height: 400px;
+  }
+}
+
 /* Glass-morphism card */
 .card {
   background: var(--card-bg);
@@ -131,21 +148,23 @@ body::after {
 
 .fade-in-delay-1 { animation-delay: 0.1s; }
 .fade-in-delay-2 { animation-delay: 0.2s; }
-.fade-in-delay-3 { animation-delay: 0.3s; }
-.fade-in-delay-4 { animation-delay: 0.4s; }
 
 /* Detail panel slide animation */
 .detail-panel {
-  will-change: max-height, opacity;
+  will-change: grid-template-rows, opacity;
 }
 
-/* Coming Up card on mobile — same styling as .card but only below sm breakpoint */
-@media (max-width: 639px) {
-  .coming-up-mobile-card {
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: 12px;
-    backdrop-filter: blur(8px);
-    padding: 1.25rem;
+@media (prefers-reduced-motion: reduce) {
+  .fade-in,
+  .fade-in-delay-1,
+  .fade-in-delay-2 {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .detail-panel {
+    transition: none;
   }
 }
+
