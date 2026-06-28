@@ -323,6 +323,9 @@ export default function DetailPanel({ content, onClose }: Props) {
       const id = requestAnimationFrame(() => setVisible(true));
       return () => cancelAnimationFrame(id);
     } else {
+      // Reset the enter-animation flag when the panel closes so it replays on the
+      // next open; this drives a CSS transition, an external-system sync.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setVisible(false);
     }
   }, [content]);

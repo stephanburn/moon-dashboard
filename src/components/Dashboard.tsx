@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import TimezoneSelector from './TimezoneSelector';
 import DetailPanel, { DetailContent } from './DetailPanel';
 import { getMoonPhaseInfo, getMoonPhasePeak, MoonPhaseInfo, MoonPhasePeak } from '@/lib/moon';
@@ -10,6 +10,7 @@ import { getUpcomingEvents, UpcomingEvent } from '@/lib/upcomingEvents';
 import { getMercuryStatus, getCurrentVenusSign, MercuryInfo } from '@/lib/planets';
 import { DEFAULT_TZ } from '@/lib/config';
 import { formatCalendarDate } from '@/lib/format';
+import { STORAGE_KEY, normalizeTimezone } from '@/lib/timezones';
 
 type Hemisphere = 'north' | 'south';
 
@@ -144,7 +145,6 @@ export default function Dashboard() {
   const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>([]);
   const [todayLabel, setTodayLabel] = useState('');
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
-  const [panelContent, setPanelContent] = useState<DetailContent | null>(null);
 
   // Timezone-independent: moon phase, moon sign, venus, mercury
   const recalculateAstro = useCallback(() => {
@@ -169,60 +169,92 @@ export default function Dashboard() {
   }, []);
 
   const handleTimezoneChange = useCallback((tz: string) => {
-    setTimezone(tz);
-    recalculateTz(tz, hemisphereFromTimezone(tz));
+    const safeTz = normalizeTimezone(tz);
+    setTimezone(safeTz);
+    localStorage.setItem(STORAGE_KEY, safeTz);
+    recalculateTz(safeTz, hemisphereFromTimezone(safeTz));
   }, [recalculateTz]);
 
+  // Initial load: restore the (validated) stored timezone and compute everything.
   useEffect(() => {
-    const storedTz = typeof window !== 'undefined'
-      ? (localStorage.getItem('moon-dashboard-timezone') ?? DEFAULT_TZ)
-      : DEFAULT_TZ;
+    const storedTz = normalizeTimezone(
+      typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEY) : DEFAULT_TZ,
+    );
+    // localStorage is only readable after mount, so restoring the persisted
+    // timezone necessarily happens here; the initial render uses DEFAULT_TZ to
+    // stay hydration-safe.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setTimezone(storedTz);
     recalculateAstro();
     recalculateTz(storedTz, hemisphereFromTimezone(storedTz));
   }, [recalculateAstro, recalculateTz]);
+
+  // Keep the view fresh on long-open tabs: recompute on an interval and whenever
+  // the tab regains focus, so phase peaks, the date label, and "Coming Up" don't
+  // go stale across midnight or a phase/sign change.
+  useEffect(() => {
+    const refresh = () => {
+      recalculateAstro();
+      recalculateTz(timezone, hemisphere);
+    };
+    const interval = setInterval(refresh, 5 * 60 * 1000);
+    const onFocus = () => {
+      if (document.visibilityState === 'visible') refresh();
+    };
+    document.addEventListener('visibilitychange', onFocus);
+    window.addEventListener('focus', onFocus);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onFocus);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [timezone, hemisphere, recalculateAstro, recalculateTz]);
 
   // Toggle expand/collapse for a given item key
   const handleToggle = useCallback((key: string) => {
     setExpandedKey(prev => (prev === key ? null : key));
   }, []);
 
-  // Derive panel content from the currently expanded key
-  useEffect(() => {
-    if (!expandedKey) {
-      setPanelContent(null);
-      return;
-    }
+  // Derive panel content from the currently expanded key (pure: computed during
+  // render rather than via an effect, so it never lags a frame behind expandedKey).
+  const panelContent = useMemo<DetailContent | null>(() => {
+    if (!expandedKey) return null;
     if (expandedKey === 'moon' && moon) {
-      setPanelContent({ type: 'moon', phaseName: moon.name, moonSignChanges, timezone });
-    } else if (expandedKey === 'moonSign' && moonSign) {
-      setPanelContent({ type: 'moonSign', signName: moonSign.name, signSymbol: moonSign.symbol });
-    } else if (expandedKey === 'sunSign' && sunSign) {
-      setPanelContent({ type: 'zodiac', signName: sunSign.sign.name });
-    } else if (expandedKey === 'sabbat' && sabbatCtx) {
+      return { type: 'moon', phaseName: moon.name, moonSignChanges, timezone };
+    }
+    if (expandedKey === 'moonSign' && moonSign) {
+      return { type: 'moonSign', signName: moonSign.name, signSymbol: moonSign.symbol };
+    }
+    if (expandedKey === 'sunSign' && sunSign) {
+      return { type: 'zodiac', signName: sunSign.sign.name };
+    }
+    if (expandedKey === 'sabbat' && sabbatCtx) {
       // Show the relevant sabbat: today's if it's a sabbat, else the next one
       const name = sabbatCtx.today?.name ?? sabbatCtx.nextSabbat?.name ?? null;
-      setPanelContent(name ? { type: 'sabbat', sabbatName: name } : null);
-    } else {
-      // Upcoming event key
-      const event = upcomingEvents.find(e => e.key === expandedKey);
-      if (!event) { setPanelContent(null); return; }
-      if (event.type === 'moon' && event.moonPhaseName) {
-        setPanelContent({ type: 'moon', phaseName: event.moonPhaseName });
-      } else if (event.type === 'ingress' && event.zodiacSignName) {
-        setPanelContent({ type: 'zodiac', signName: event.zodiacSignName });
-      } else if (event.type === 'sabbat' && event.sabbatName) {
-        setPanelContent({ type: 'sabbat', sabbatName: event.sabbatName });
-      } else if (event.type === 'venus' && event.venusSignName) {
-        setPanelContent({ type: 'venus', signName: event.venusSignName });
-      } else if (event.type === 'mercury-retrograde' && event.mercuryRetroSigns) {
-        setPanelContent({ type: 'mercury-retrograde', signs: event.mercuryRetroSigns, signFlavour: event.mercuryRetroSignFlavour ?? '' });
-      } else if (event.type === 'data-expiry') {
-        setPanelContent({ type: 'data-expiry' });
-      } else {
-        setPanelContent(null);
-      }
+      return name ? { type: 'sabbat', sabbatName: name } : null;
     }
+    // Upcoming event key
+    const event = upcomingEvents.find(e => e.key === expandedKey);
+    if (!event) return null;
+    if (event.type === 'moon' && event.moonPhaseName) {
+      return { type: 'moon', phaseName: event.moonPhaseName };
+    }
+    if (event.type === 'ingress' && event.zodiacSignName) {
+      return { type: 'zodiac', signName: event.zodiacSignName };
+    }
+    if (event.type === 'sabbat' && event.sabbatName) {
+      return { type: 'sabbat', sabbatName: event.sabbatName };
+    }
+    if (event.type === 'venus' && event.venusSignName) {
+      return { type: 'venus', signName: event.venusSignName };
+    }
+    if (event.type === 'mercury-retrograde' && event.mercuryRetroSigns) {
+      return { type: 'mercury-retrograde', signs: event.mercuryRetroSigns, signFlavour: event.mercuryRetroSignFlavour ?? '' };
+    }
+    if (event.type === 'data-expiry') {
+      return { type: 'data-expiry' };
+    }
+    return null;
   }, [expandedKey, moon, moonSign, sunSign, sabbatCtx, upcomingEvents, moonSignChanges, timezone]);
 
   // ── Sabbat card display ──────────────────────────────────────────────────
@@ -277,7 +309,7 @@ export default function Dashboard() {
               <span>☿ post-shadow</span>
             </div>
           )}
-          <TimezoneSelector onChange={handleTimezoneChange} />
+          <TimezoneSelector value={timezone} onChange={handleTimezoneChange} />
         </div>
       </header>
 
