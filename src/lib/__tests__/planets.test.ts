@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { VENUS_INGRESSES, MERCURY_RETROGRADES } from '../planets';
+import { VENUS_INGRESSES, MERCURY_RETROGRADES, getMercuryStatus } from '../planets';
 import { PLANET_DATA_EXPIRY } from '../config';
 
 // These tables are hand-maintained (see AGENTS.md). getCurrentVenusSign() assumes
@@ -46,5 +46,34 @@ describe('planet lookup tables — data integrity', () => {
     for (const p of MERCURY_RETROGRADES) {
       expect(p.shadowEnd.getTime()).toBeLessThanOrEqual(PLANET_DATA_EXPIRY.getTime());
     }
+  });
+});
+
+// 2026 Pisces retrograde: shadow 12 Feb, retrograde 26 Feb – 20 Mar, shadow end
+// 3 Apr. Guards review finding L1 (status flipping a day early at the boundary).
+describe('getMercuryStatus — day-boundary handling', () => {
+  it('is still retrograde at midday on the stated end date', () => {
+    expect(getMercuryStatus(new Date(2026, 2, 20, 12)).status).toBe('retrograde');
+  });
+
+  it('is retrograde from the start of the stated start date', () => {
+    expect(getMercuryStatus(new Date(2026, 1, 26, 0, 0)).status).toBe('retrograde');
+  });
+
+  it('becomes post-shadow only after the end date has fully passed', () => {
+    expect(getMercuryStatus(new Date(2026, 2, 21, 0, 0)).status).toBe('post-shadow');
+  });
+
+  it('reports pre-shadow during the shadow window before the station', () => {
+    expect(getMercuryStatus(new Date(2026, 1, 13, 12)).status).toBe('pre-shadow');
+  });
+
+  it('includes the final shadow day, then returns to direct', () => {
+    expect(getMercuryStatus(new Date(2026, 3, 3, 12)).status).toBe('post-shadow');
+    expect(getMercuryStatus(new Date(2026, 3, 6, 12)).status).toBe('direct');
+  });
+
+  it('is direct well outside any retrograde window', () => {
+    expect(getMercuryStatus(new Date(2026, 0, 1, 12)).status).toBe('direct');
   });
 });

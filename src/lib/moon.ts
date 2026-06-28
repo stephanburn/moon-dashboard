@@ -62,6 +62,49 @@ function findNearestPeakTime(center: Date, target: number): Date {
 }
 
 /**
+ * Find the nearest peak time for ALL four major phase targets in a single coarse
+ * scan of the ±15-day window, then refine each to the minute. Equivalent to
+ * calling findNearestPeakTime once per target, but shares the expensive hourly
+ * SunCalc sweep instead of repeating it four times.
+ */
+const PEAK_TARGETS = [0, 0.25, 0.5, 0.75] as const;
+
+function findNearestPeakTimes(center: Date): Map<number, Date> {
+  const best = new Map<number, { dist: number; time: Date }>(
+    PEAK_TARGETS.map(t => [t, { dist: Infinity, time: center }]),
+  );
+
+  // One shared coarse sweep, tracking the closest candidate per target.
+  for (let dt = -15 * DAY; dt <= 15 * DAY; dt += HOUR) {
+    const candidate = new Date(center.getTime() + dt);
+    const { phase: p } = SunCalc.getMoonIllumination(candidate);
+    for (const target of PEAK_TARGETS) {
+      const dist = circularDist(p, target);
+      const cur = best.get(target)!;
+      if (dist < cur.dist) { cur.dist = dist; cur.time = candidate; }
+    }
+  }
+
+  // Minute refinement over ±2 hours around each coarse best.
+  const result = new Map<number, Date>();
+  for (const target of PEAK_TARGETS) {
+    const cur = best.get(target)!;
+    let bestDist = cur.dist;
+    let bestTime = cur.time;
+    const coarseBest = cur.time;
+    for (let dt = -2 * HOUR; dt <= 2 * HOUR; dt += MINUTE) {
+      const candidate = new Date(coarseBest.getTime() + dt);
+      const { phase: p } = SunCalc.getMoonIllumination(candidate);
+      const dist = circularDist(p, target);
+      if (dist < bestDist) { bestDist = dist; bestTime = candidate; }
+    }
+    result.set(target, bestTime);
+  }
+
+  return result;
+}
+
+/**
  * Find the next future occurrence of the given phase target, searching up to
  * 30 days ahead of `after`. Used to find upcoming peaks for transitional phases.
  */
@@ -112,9 +155,10 @@ const TRANSITIONAL_NEXT: Record<string, typeof MAJOR_PHASES[number]> = {
 export function getMoonPhaseInfo(now: Date = new Date()): MoonPhaseInfo {
   const { phase, fraction } = SunCalc.getMoonIllumination(now);
 
-  // Check each major phase window
+  // Check each major phase window against a single shared peak scan
+  const peakTimes = findNearestPeakTimes(now);
   for (const mp of MAJOR_PHASES) {
-    const peakTime = findNearestPeakTime(now, mp.target);
+    const peakTime = peakTimes.get(mp.target)!;
     if (Math.abs(now.getTime() - peakTime.getTime()) <= mp.halfWindowDays * DAY) {
       return {
         emoji: mp.emoji,

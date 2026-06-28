@@ -74,14 +74,20 @@ export interface MercuryInfo {
 }
 
 export function getMercuryStatus(now: Date): MercuryInfo {
+  const t = now.getTime();
   for (const period of MERCURY_RETROGRADES) {
-    if (now >= period.retrogradeStart && now <= period.retrogradeEnd) {
+    // End dates are local-midnight markers, but a period runs through the END of
+    // its end day. Extend each end bound by one day so the status doesn't flip a
+    // day early (e.g. at 00:00 on the stated retrograde-end date).
+    const retrogradeEnd = period.retrogradeEnd.getTime() + DAY;
+    const shadowEnd     = period.shadowEnd.getTime() + DAY;
+    if (t >= period.retrogradeStart.getTime() && t < retrogradeEnd) {
       return { status: 'retrograde', period };
     }
-    if (now >= period.shadowStart && now < period.retrogradeStart) {
+    if (t >= period.shadowStart.getTime() && t < period.retrogradeStart.getTime()) {
       return { status: 'pre-shadow', period };
     }
-    if (now > period.retrogradeEnd && now <= period.shadowEnd) {
+    if (t >= retrogradeEnd && t < shadowEnd) {
       return { status: 'post-shadow', period };
     }
   }
