@@ -10,26 +10,7 @@ import { getUpcomingEvents, UpcomingEvent } from '@/lib/upcomingEvents';
 import { getMercuryStatus, getCurrentVenusSign, MercuryInfo } from '@/lib/planets';
 import { DEFAULT_TZ } from '@/lib/config';
 import { formatCalendarDate } from '@/lib/format';
-import { STORAGE_KEY, normalizeTimezone } from '@/lib/timezones';
-
-type Hemisphere = 'north' | 'south';
-
-const SOUTHERN_TIMEZONES = new Set([
-  'America/Lima',
-  'America/Santiago',
-  'America/Sao_Paulo',
-  'America/Buenos_Aires',
-  'Australia/Sydney',
-  'Australia/Melbourne',
-  'Australia/Perth',
-  'Pacific/Auckland',
-  'Pacific/Fiji',
-  'Africa/Johannesburg',
-]);
-
-function hemisphereFromTimezone(tz: string): Hemisphere {
-  return SOUTHERN_TIMEZONES.has(tz) ? 'south' : 'north';
-}
+import { STORAGE_KEY, normalizeTimezone, hemisphereFromTimezone, type Hemisphere } from '@/lib/timezones';
 
 function formatDate(date: Date, timezone: string): string {
   return date.toLocaleDateString('en-GB', {
@@ -92,7 +73,13 @@ function toLocalDate(date: Date, timezone: string): Date {
     year: 'numeric', month: '2-digit', day: '2-digit',
   }).formatToParts(date);
 
-  const get = (type: string) => parseInt(parts.find(p => p.type === type)?.value ?? '0');
+  const get = (type: string) => {
+    const value = parts.find(p => p.type === type)?.value;
+    // timezone is validated upstream (normalizeTimezone), so every part is
+    // present; throw rather than silently building a bogus date if that breaks.
+    if (value === undefined) throw new Error(`Missing "${type}" part for timezone ${timezone}`);
+    return parseInt(value, 10);
+  };
   return new Date(get('year'), get('month') - 1, get('day'));
 }
 

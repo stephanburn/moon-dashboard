@@ -6,7 +6,9 @@ export interface Sabbat {
   date: Date;
 }
 
-// Approximate solstice/equinox dates for 2025-2030.
+// Approximate solstice/equinox dates through 2030 (see SABBAT_DATA_EXPIRY in
+// config.ts). Beyond that, approxDate clamps to the nearest known year; drift is
+// ~1 day/decade, and the planet-data expiry banner fires first as a reminder.
 // These are close enough for a personal dashboard.
 type YearApprox = Record<number, { month: number; day: number }>;
 

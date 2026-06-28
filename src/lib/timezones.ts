@@ -83,6 +83,29 @@ export const SUPPORTED_TIMEZONES: ReadonlySet<string> = new Set(
   TIMEZONE_GROUPS.flatMap(group => group.zones),
 );
 
+export type Hemisphere = 'north' | 'south';
+
+// Southern-hemisphere zones, used to flip the Wheel of the Year by six months.
+// IMPORTANT: every entry must also appear in TIMEZONE_GROUPS above (guarded by a
+// test). When adding a southern zone to the selector, add it here too, or its
+// sabbats will silently render with northern seasons.
+export const SOUTHERN_TIMEZONES: ReadonlySet<string> = new Set([
+  'America/Lima',
+  'America/Santiago',
+  'America/Sao_Paulo',
+  'America/Buenos_Aires',
+  'Australia/Sydney',
+  'Australia/Melbourne',
+  'Australia/Perth',
+  'Pacific/Auckland',
+  'Pacific/Fiji',
+  'Africa/Johannesburg',
+]);
+
+export function hemisphereFromTimezone(tz: string): Hemisphere {
+  return SOUTHERN_TIMEZONES.has(tz) ? 'south' : 'north';
+}
+
 /**
  * Coerce a possibly-untrusted timezone (e.g. a stale or hand-edited localStorage
  * value) to a known-good one. Anything not in the selector list falls back to
