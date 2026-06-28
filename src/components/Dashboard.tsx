@@ -9,6 +9,7 @@ import { getSabbatContext, SabbatContext } from '@/lib/sabbats';
 import { getUpcomingEvents, UpcomingEvent } from '@/lib/upcomingEvents';
 import { getMercuryStatus, getCurrentVenusSign, MercuryInfo } from '@/lib/planets';
 import { DEFAULT_TZ } from '@/lib/config';
+import { formatCalendarDate } from '@/lib/format';
 
 type Hemisphere = 'north' | 'south';
 
@@ -39,19 +40,21 @@ function formatDate(date: Date, timezone: string): string {
   });
 }
 
-function formatShortDate(date: Date, timezone: string): string {
-  return date.toLocaleDateString('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    timeZone: timezone,
-  });
-}
-
 function formatTime(date: Date, timezone: string): string {
   return date.toLocaleTimeString('en-GB', {
     hour: '2-digit',
     minute: '2-digit',
+    timeZone: timezone,
+  });
+}
+
+// Short date for a true instant (e.g. a moon-phase peak), shown in the viewer's
+// selected timezone. For calendar "this day" values use formatCalendarDate.
+function formatInstantDate(date: Date, timezone: string): string {
+  return date.toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
     timeZone: timezone,
   });
 }
@@ -77,7 +80,7 @@ function formatPeakText(phaseName: string, peakTime: Date, now: Date, timezone: 
   if (isYesterday) return `${phaseName} peaked yesterday at ${timeStr}`;
 
   const verb    = isPast ? 'peaked' : 'peaks';
-  const dateStr = formatShortDate(peakTime, timezone);
+  const dateStr = formatInstantDate(peakTime, timezone);
   return `${phaseName} ${verb}: ${dateStr} at ${timeStr}`;
 }
 
@@ -228,7 +231,7 @@ export default function Dashboard() {
     if (sabbatCtx.today) {
       return {
         primary: `Blessed ${sabbatCtx.today.displayName}`,
-        sub: formatShortDate(sabbatCtx.today.date, timezone),
+        sub: formatCalendarDate(sabbatCtx.today.date),
         isToday: true,
       };
     }
@@ -236,7 +239,7 @@ export default function Dashboard() {
       const days = sabbatCtx.daysUntilNext;
       return {
         primary: `${days} day${days !== 1 ? 's' : ''} until ${sabbatCtx.nextSabbat.displayName}`,
-        sub: formatShortDate(sabbatCtx.nextSabbat.date, timezone),
+        sub: formatCalendarDate(sabbatCtx.nextSabbat.date),
         isToday: false,
       };
     }
@@ -261,7 +264,7 @@ export default function Dashboard() {
           {mercuryInfo?.status === 'retrograde' && mercuryInfo.period && (
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-950/60 border border-red-700/40 text-xs text-red-300/90">
               <span>☿℞</span>
-              <span className="hidden sm:inline">until {formatShortDate(mercuryInfo.period.retrogradeEnd, timezone)}</span>
+              <span className="hidden sm:inline">until {formatCalendarDate(mercuryInfo.period.retrogradeEnd)}</span>
             </div>
           )}
           {mercuryInfo?.status === 'pre-shadow' && (
@@ -385,7 +388,7 @@ export default function Dashboard() {
                   </span>
                 </div>
                 <p className="text-xs text-silver/50">
-                  until {formatShortDate(sunSign.transitEnd, timezone)}
+                  until {formatCalendarDate(sunSign.transitEnd)}
                 </p>
                 {venusSign && (
                   <p className="text-xs text-silver/35 mt-1">
@@ -447,7 +450,7 @@ export default function Dashboard() {
                   </span>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm text-foreground">{event.name}</p>
-                    <p className="text-xs text-silver/50">{formatShortDate(event.date, timezone)}</p>
+                    <p className="text-xs text-silver/50">{formatCalendarDate(event.date)}</p>
                   </div>
                   <span className={`text-silver/30 text-xs flex-shrink-0 inline-block transition-transform duration-300 ${expandedKey === event.key ? 'rotate-180' : ''}`}>▾</span>
                 </div>
