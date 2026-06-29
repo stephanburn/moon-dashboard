@@ -19,3 +19,35 @@ export function formatCalendarDate(date: Date): string {
     year: 'numeric',
   });
 }
+
+// The local-day index (UTC ms at the start of the day in `timezone`) for a Date,
+// mirroring toLocalDate in Dashboard. Using Date.UTC keeps the diff free of DST
+// hour shifts so day counts stay exact.
+function localDayIndex(date: Date, timezone: string): number {
+  const parts = new Intl.DateTimeFormat('en-GB', {
+    timeZone: timezone,
+    year: 'numeric', month: '2-digit', day: '2-digit',
+  }).formatToParts(date);
+  const get = (type: string) => {
+    const value = parts.find(p => p.type === type)?.value;
+    if (value === undefined) throw new Error(`Missing "${type}" part for timezone ${timezone}`);
+    return parseInt(value, 10);
+  };
+  return Date.UTC(get('year'), get('month') - 1, get('day'));
+}
+
+/**
+ * Relative distance from `now` to `target` in whole local days, phrased for the
+ * cycle spine: `Today` / `Tomorrow` / `in N days`, switching to `in N weeks`
+ * once past a fortnight. Pure — day boundaries are evaluated in `timezone`.
+ */
+export function formatRelativeDays(target: Date, now: Date, timezone: string): string {
+  const diffDays = Math.round(
+    (localDayIndex(target, timezone) - localDayIndex(now, timezone)) / 86_400_000,
+  );
+  if (diffDays <= 0) return 'Today';
+  if (diffDays === 1) return 'Tomorrow';
+  if (diffDays <= 14) return `in ${diffDays} days`;
+  const weeks = Math.round(diffDays / 7);
+  return `in ${weeks} weeks`;
+}

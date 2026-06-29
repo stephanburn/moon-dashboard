@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import TimezoneSelector from './TimezoneSelector';
 import MoonDisc from './MoonDisc';
+import CycleSpine from './CycleSpine';
 import DetailPanel, { DetailContent } from './DetailPanel';
 import { getMoonPhaseInfo, getMoonPhasePeak, MoonPhaseInfo, MoonPhasePeak } from '@/lib/moon';
 import { getCurrentSunSign, getCurrentMoonSign, getUpcomingMoonSignChanges, SunSignInfo, MoonSignChange } from '@/lib/astro';
@@ -14,9 +15,7 @@ import { formatCalendarDate } from '@/lib/format';
 import { STORAGE_KEY, normalizeTimezone, hemisphereFromTimezone, type Hemisphere } from '@/lib/timezones';
 
 // Stable IDs linking each disclosure trigger to its detail panel via aria-controls.
-const PANEL_HERO     = 'detail-panel-hero';
-const PANEL_CARDS    = 'detail-panel-cards';
-const PANEL_UPCOMING = 'detail-panel-upcoming';
+const PANEL_HERO = 'detail-panel-hero';
 
 function formatDate(date: Date, timezone: string): string {
   return date.toLocaleDateString('en-GB', {
@@ -120,39 +119,6 @@ function Disclosure({
   );
 }
 
-// ── Clickable card wrapper ─────────────────────────────────────────────────
-
-function ClickableCard({
-  itemKey,
-  expandedKey,
-  onToggle,
-  panelId,
-  children,
-  className = '',
-}: {
-  itemKey: string;
-  expandedKey: string | null;
-  onToggle: (key: string) => void;
-  panelId?: string;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  const isOpen = expandedKey === itemKey;
-  return (
-    <Disclosure
-      isOpen={isOpen}
-      onToggle={() => onToggle(itemKey)}
-      panelId={panelId}
-      className={`card p-5 space-y-3 text-left cursor-pointer select-none transition-all hover:border-white/15 hover:bg-hover-surface ${isOpen ? 'border-amber/30 bg-hover-surface' : ''} ${className}`}
-    >
-      {children}
-      <div className="flex justify-end">
-        <span className={`text-silver/50 text-xs inline-block transition-transform duration-300 motion-reduce:transition-none ${isOpen ? 'rotate-180' : ''}`}>▾</span>
-      </div>
-    </Disclosure>
-  );
-}
-
 // ── Dashboard ──────────────────────────────────────────────────────────────
 
 export default function Dashboard() {
@@ -247,13 +213,12 @@ export default function Dashboard() {
     setExpandedKey(prev => (prev === key ? null : key));
   }, []);
 
-  // Which layout section owns the currently expanded key — determines where the
-  // single <DetailPanel> instance is placed.
-  const activeSection: 'hero' | 'cards' | 'upcoming' | null =
-    expandedKey === 'moon' || expandedKey === 'moonSign' ? 'hero'
-    : expandedKey === 'sunSign' || expandedKey === 'sabbat' ? 'cards'
-    : upcomingEvents.some(e => e.key === expandedKey) ? 'upcoming'
-    : null;
+  // Which region owns the currently expanded key. The hero renders its own
+  // panel; the spine renders its panel inline beneath the active node.
+  const activeSection: 'hero' | 'spine' | null =
+    !expandedKey ? null
+    : expandedKey === 'moon' || expandedKey === 'moonSign' ? 'hero'
+    : 'spine';
 
   // Derive panel content from the currently expanded key (pure: computed during
   // render rather than via an effect, so it never lags a frame behind expandedKey).
@@ -304,28 +269,32 @@ export default function Dashboard() {
     return null;
   }, [expandedKey, moon, moonSign, sunSign, sabbatCtx, upcomingEvents, moonSignChanges, timezone]);
 
-  // ── Sabbat card display ──────────────────────────────────────────────────
-  const sabbatCardContent = (() => {
-    if (!sabbatCtx) return null;
-    if (sabbatCtx.today) {
-      return {
-        primary: `Blessed ${sabbatCtx.today.displayName}`,
-        sub: formatCalendarDate(sabbatCtx.today.date),
-        isToday: true,
-      };
-    }
-    if (sabbatCtx.nextSabbat) {
-      const days = sabbatCtx.daysUntilNext;
-      return {
-        primary: `${days} day${days !== 1 ? 's' : ''} until ${sabbatCtx.nextSabbat.displayName}`,
-        sub: formatCalendarDate(sabbatCtx.nextSabbat.date),
-        isToday: false,
-      };
-    }
-    return null;
-  })();
-
   const closePanel = useCallback(() => setExpandedKey(null), []);
+
+  // Compact "Mon 29 Jun" label for the spine's Now node, in the viewer's zone.
+  const nowShort = new Date().toLocaleDateString('en-GB', {
+    weekday: 'short', day: 'numeric', month: 'short', timeZone: timezone,
+  });
+
+  // The hero already announces the current/next phase peak (moonPeak). Drop the
+  // upcoming node that refers to that same peak — same phase, and within a few
+  // days of it (the spine's day-resolution date differs slightly from the hero's
+  // minute-resolution peak) — so the same Full Moon isn't shown twice. A genuine
+  // next-cycle occurrence (~a month away) falls outside the window and is kept.
+  const spineEvents = useMemo(() => {
+    if (!moonPeak) return upcomingEvents;
+    const peakMs = moonPeak.peakTime.getTime();
+    const window = 3 * 24 * 60 * 60 * 1000;
+    let dropped = false;
+    return upcomingEvents.filter(e => {
+      if (!dropped && e.type === 'moon' && e.moonPhaseName === moonPeak.phaseName
+          && Math.abs(e.date.getTime() - peakMs) <= window) {
+        dropped = true;
+        return false;
+      }
+      return true;
+    });
+  }, [upcomingEvents, moonPeak]);
 
   return (
     <div className="relative z-10 min-h-dvh flex flex-col">
@@ -434,91 +403,20 @@ export default function Dashboard() {
         {/* ── Subtle divider ── */}
         <div className="fade-in fade-in-delay-1 border-t border-white/5" />
 
-        {/* ── Current Info Row ── */}
-        <section className="fade-in fade-in-delay-1 grid grid-cols-1 sm:grid-cols-2 gap-4" aria-label="Current astrology">
-
-          {/* Sun Sign card */}
-          <ClickableCard itemKey="sunSign" expandedKey={expandedKey} onToggle={handleToggle} panelId={PANEL_CARDS}>
-            <p role="heading" aria-level={3} className="text-xs tracking-[0.25em] uppercase text-text-tertiary">Current Sun Sign</p>
-            {sunSign && (
-              <>
-                <div className="flex items-baseline gap-3">
-                  <span className="font-display text-4xl text-amber-light">
-                    {sunSign.sign.symbol}
-                  </span>
-                  <span className="font-display text-3xl text-foreground">
-                    {sunSign.sign.name}
-                  </span>
-                </div>
-                <p className="text-xs text-text-secondary">
-                  until {formatCalendarDate(sunSign.transitEnd)}
-                </p>
-                {venusSign && (
-                  <p className="text-xs text-text-tertiary mt-1">
-                    Venus in {venusSign.name} {venusSign.symbol}
-                  </p>
-                )}
-              </>
-            )}
-          </ClickableCard>
-
-          {/* Sabbat card */}
-          <ClickableCard itemKey="sabbat" expandedKey={expandedKey} onToggle={handleToggle} panelId={PANEL_CARDS}>
-            <p role="heading" aria-level={3} className="text-xs tracking-[0.25em] uppercase text-text-tertiary">Wheel of the Year</p>
-            {sabbatCardContent && (
-              <>
-                <p className={`font-display text-3xl leading-snug ${sabbatCardContent.isToday ? 'text-amber-light' : 'text-foreground'}`}>
-                  {sabbatCardContent.primary}
-                </p>
-                <p className="text-xs text-text-secondary">{sabbatCardContent.sub}</p>
-              </>
-            )}
-          </ClickableCard>
-
-        </section>
-
-        {/* Panel for current-row cards (appears below the row, full width) */}
-        {activeSection === 'cards' && (
-          <DetailPanel id={PANEL_CARDS} content={panelContent} onClose={closePanel} />
-        )}
-
-        {/* ── Divider ── */}
-        <div className="fade-in fade-in-delay-2 border-t border-white/5" />
-
-        {/* ── Coming Up ── */}
-        <section className="fade-in fade-in-delay-2 space-y-3 pt-2" aria-labelledby="coming-up-heading">
-          {/* Card styling applied consistently at all widths */}
-          <div className="card p-5 space-y-3">
-            <h3 id="coming-up-heading" className="font-display text-xl tracking-widest text-text-tertiary uppercase">
-              Coming Up
-            </h3>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {upcomingEvents.map(event => (
-                <Disclosure
-                  key={event.key}
-                  isOpen={expandedKey === event.key}
-                  onToggle={() => handleToggle(event.key)}
-                  panelId={PANEL_UPCOMING}
-                  className={`flex items-center gap-4 px-4 py-3 rounded-xl transition-colors hover:bg-hover-surface ${expandedKey === event.key ? 'bg-hover-surface border border-white/8' : 'border border-transparent'}`}
-                >
-                  <span className="text-xl w-8 text-center flex-shrink-0 select-none" aria-hidden>
-                    {event.icon}
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm text-foreground">{event.name}</p>
-                    <p className="text-xs text-text-secondary">{formatCalendarDate(event.date)}</p>
-                  </div>
-                  <span className={`text-silver/50 text-xs flex-shrink-0 inline-block transition-transform duration-300 motion-reduce:transition-none ${expandedKey === event.key ? 'rotate-180' : ''}`}>▾</span>
-                </Disclosure>
-              ))}
-            </div>
-          </div>
-
-          {/* Detail panel spans full width below the grid */}
-          {activeSection === 'upcoming' && (
-            <DetailPanel id={PANEL_UPCOMING} content={panelContent} onClose={closePanel} />
-          )}
+        {/* ── Cycle spine: one descending axis of sacred time ── */}
+        <section className="fade-in fade-in-delay-1 pt-2" aria-label="Cycle of sacred time">
+          <CycleSpine
+            todayLabel={nowShort}
+            sunSign={sunSign}
+            venusSign={venusSign}
+            sabbatCtx={sabbatCtx}
+            events={spineEvents}
+            timezone={timezone}
+            expandedKey={expandedKey}
+            onToggle={handleToggle}
+            panelContent={panelContent}
+            onClose={closePanel}
+          />
         </section>
 
       </main>
