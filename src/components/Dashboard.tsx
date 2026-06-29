@@ -18,16 +18,6 @@ import { STORAGE_KEY, normalizeTimezone, hemisphereFromTimezone, type Hemisphere
 const PANEL_HERO = 'detail-panel-hero';
 const PANEL_HERO_SIGN = 'detail-panel-hero-sign';
 
-function formatDate(date: Date, timezone: string): string {
-  return date.toLocaleDateString('en-GB', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-    timeZone: timezone,
-  });
-}
-
 function formatTime(date: Date, timezone: string): string {
   return date.toLocaleTimeString('en-GB', {
     hour: '2-digit',
@@ -149,7 +139,6 @@ export default function Dashboard() {
   const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>(() =>
     getUpcomingEvents(toLocalDate(new Date(), DEFAULT_TZ), 8, hemisphereFromTimezone(DEFAULT_TZ)),
   );
-  const [todayLabel, setTodayLabel] = useState(() => formatDate(new Date(), DEFAULT_TZ));
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
 
   // Timezone-independent: moon phase, moon sign, venus, mercury
@@ -171,7 +160,6 @@ export default function Dashboard() {
     setSunSign(getCurrentSunSign(localDate));
     setSabbatCtx(getSabbatContext(localDate, hem));
     setUpcomingEvents(getUpcomingEvents(localDate, 8, hem));
-    setTodayLabel(formatDate(now, tz));
   }, []);
 
   const handleTimezoneChange = useCallback((tz: string) => {
@@ -319,11 +307,6 @@ export default function Dashboard() {
           </div>
           {/* Right side: flex-nowrap prevents wrapping to two rows at 360px */}
           <div className="flex items-center gap-2 sm:gap-3 flex-nowrap">
-            {todayLabel && (
-              <span className="hidden sm:block font-display text-xs text-text-tertiary tracking-wide whitespace-nowrap">
-                {todayLabel}
-              </span>
-            )}
             {/* Retrograde badge: informational, not interactive. Pre/post-shadow
                 states are visible in "Coming Up" and removed here to reduce clutter. */}
             {mercuryInfo?.status === 'retrograde' && mercuryInfo.period && (
@@ -438,7 +421,7 @@ export default function Dashboard() {
       </main>
 
       <footer className="px-6 py-5 text-center border-t border-white/5 space-y-1">
-        <p className="text-xs text-silver/55">Calculated locally — no tracking, no APIs.</p>
+        <p className="text-xs text-silver/55">Calculated locally. No tracking, no APIs.</p>
         {process.env.NEXT_PUBLIC_COMMIT && (
           <p aria-hidden className="text-xs text-white/10 font-mono">{process.env.NEXT_PUBLIC_COMMIT}</p>
         )}
