@@ -17,7 +17,7 @@ const IMG_OFFSET = C - IMG / 2;       // top-left so the disc centre sits at (C,
 
 interface Props {
   fraction: number;   // 0-1 illuminated fraction
-  waxing: boolean;    // SunCalc phase < 0.5
+  waxing: boolean;    // phase < 0.5
   hemisphere: Hemisphere;
   className?: string;
 }

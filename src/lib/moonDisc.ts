@@ -15,7 +15,7 @@ export interface MoonGeometry {
  * Pure and side-effect free so it can be unit-tested independently of the SVG.
  *
  * @param fraction   illuminated fraction, 0–1
- * @param waxing     true while the moon is growing (SunCalc phase < 0.5)
+ * @param waxing     true while the moon is growing (phase < 0.5)
  * @param hemisphere viewer hemisphere; south mirrors the lit limb
  */
 export function moonGeometry(
