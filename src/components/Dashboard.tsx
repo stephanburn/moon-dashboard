@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import TimezoneSelector from './TimezoneSelector';
+import MoonDisc from './MoonDisc';
 import DetailPanel, { DetailContent } from './DetailPanel';
 import { getMoonPhaseInfo, getMoonPhasePeak, MoonPhaseInfo, MoonPhasePeak } from '@/lib/moon';
 import { getCurrentSunSign, getCurrentMoonSign, getUpcomingMoonSignChanges, SunSignInfo, MoonSignChange } from '@/lib/astro';
@@ -259,7 +260,14 @@ export default function Dashboard() {
   const panelContent = useMemo<DetailContent | null>(() => {
     if (!expandedKey) return null;
     if (expandedKey === 'moon' && moon) {
-      return { type: 'moon', phaseName: moon.name, moonSignChanges, timezone };
+      return {
+        type: 'moon',
+        phaseName: moon.name,
+        illumination: moon.illumination,
+        ageInDays: moon.ageInDays,
+        moonSignChanges,
+        timezone,
+      };
     }
     if (expandedKey === 'moonSign' && moonSign) {
       return { type: 'moonSign', signName: moonSign.name, signSymbol: moonSign.symbol };
@@ -352,7 +360,7 @@ export default function Dashboard() {
         </div>
       </header>
 
-      <main className="flex-1 px-4 sm:px-8 py-8 max-w-4xl lg:max-w-5xl mx-auto w-full space-y-4">
+      <main className="flex-1 px-4 sm:px-8 pt-4 pb-8 max-w-4xl lg:max-w-5xl mx-auto w-full space-y-4">
 
         {/* ── Hero: Moon Phase ── */}
         <section className="fade-in space-y-4" aria-label="Moon phase">
@@ -365,18 +373,17 @@ export default function Dashboard() {
               isOpen={expandedKey === 'moon'}
               onToggle={() => handleToggle('moon')}
               panelId={PANEL_HERO}
-              className={`text-center space-y-5 rounded-xl px-4 pt-4 pb-2 transition-colors hover:bg-hover-surface ${expandedKey === 'moon' ? 'bg-hover-surface' : ''}`}
+              className={`text-center space-y-4 rounded-xl px-4 pt-2 pb-2 transition-colors hover:bg-hover-surface ${expandedKey === 'moon' ? 'bg-hover-surface' : ''}`}
             >
-              {/* Moon emoji with glow halo */}
-              <div className="relative inline-flex items-center justify-center">
+              {/* Drawn moon with glow halo */}
+              <div className="relative inline-flex items-center justify-center" role="img" aria-label={moon?.name}>
                 <div className="moon-glow" />
-                <div
-                  className="text-[100px] sm:text-[120px] lg:text-[150px] leading-none select-none relative"
-                  role="img"
-                  aria-label={moon?.name}
-                >
-                  {moon?.emoji ?? '🌑'}
-                </div>
+                <MoonDisc
+                  fraction={moon?.fraction ?? 0}
+                  waxing={(moon?.phase ?? 0) < 0.5}
+                  hemisphere={hemisphere}
+                  className="relative w-[150px] sm:w-[190px] lg:w-[230px] h-auto select-none"
+                />
               </div>
 
               <div className="space-y-3">
@@ -385,48 +392,13 @@ export default function Dashboard() {
                   {moon?.name}
                 </p>
 
-                {/* Mobile: stats on one line, peak on its own line — no orphaned dots */}
-                <div className="sm:hidden space-y-1 mt-1">
-                  <div className="flex items-center justify-center gap-4 text-text-secondary text-xs">
-                    <span>
-                      <span className="text-amber-light text-sm font-medium">{moon?.illumination}%</span>
-                      {' '}illuminated
-                    </span>
-                    <span className="text-white/15">·</span>
-                    <span>
-                      Day{' '}
-                      <span className="text-amber-light text-sm font-medium">{moon?.ageInDays}</span>
-                      {' '}of 29.5
-                    </span>
-                  </div>
-                  {moonPeak && (
-                    <p className="text-text-secondary text-xs text-center">
-                      {formatPeakText(moonPeak.phaseName, moonPeak.peakTime, new Date(), timezone)}
-                    </p>
-                  )}
-                </div>
-
-                {/* Desktop: single inline row with middot separators */}
-                <div className="hidden sm:flex items-center justify-center gap-5 text-text-secondary text-xs mt-1">
-                  <span>
-                    <span className="text-amber-light text-sm font-medium">{moon?.illumination}%</span>
-                    {' '}illuminated
-                  </span>
-                  <span className="text-white/15">·</span>
-                  <span>
-                    Day{' '}
-                    <span className="text-amber-light text-sm font-medium">{moon?.ageInDays}</span>
-                    {' '}of 29.5
-                  </span>
-                  {moonPeak && (
-                    <>
-                      <span className="text-white/15">·</span>
-                      <span>
-                        {formatPeakText(moonPeak.phaseName, moonPeak.peakTime, new Date(), timezone)}
-                      </span>
-                    </>
-                  )}
-                </div>
+                {/* Phase peak — the one number that's about *time*; the rest
+                    (illumination, age) now live in the pop-down. */}
+                {moonPeak && (
+                  <p className="text-text-secondary text-xs text-center">
+                    {formatPeakText(moonPeak.phaseName, moonPeak.peakTime, new Date(), timezone)}
+                  </p>
+                )}
 
                 <div className="flex justify-center pt-1">
                   <span className={`text-silver/50 text-xs inline-block transition-transform duration-300 motion-reduce:transition-none ${expandedKey === 'moon' ? 'rotate-180' : ''}`}>▾</span>

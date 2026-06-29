@@ -4,6 +4,7 @@ export interface MoonPhaseInfo {
   emoji: string;
   name: string;
   illumination: number; // 0-100
+  fraction: number;     // 0-1 un-rounded illuminated fraction (for drawing the disc)
   ageInDays: number;    // 0-29.5
   phase: number;        // 0-1 raw from SunCalc
 }
@@ -164,6 +165,7 @@ export function getMoonPhaseInfo(now: Date = new Date()): MoonPhaseInfo {
         emoji: mp.emoji,
         name: mp.name,
         illumination: Math.round(fraction * 100),
+        fraction,
         ageInDays: parseFloat(getMoonAgeInDays(phase).toFixed(1)),
         phase,
       };
@@ -181,6 +183,7 @@ export function getMoonPhaseInfo(now: Date = new Date()): MoonPhaseInfo {
     emoji,
     name,
     illumination: Math.round(fraction * 100),
+    fraction,
     ageInDays: parseFloat(getMoonAgeInDays(phase).toFixed(1)),
     phase,
   };

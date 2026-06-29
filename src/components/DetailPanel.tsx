@@ -13,6 +13,8 @@ import type { MoonSignChange } from '@/lib/astro';
 export interface MoonDetailContent {
   type: 'moon';
   phaseName: string;
+  illumination?: number; // 0-100; present only for the current moon, not future events
+  ageInDays?: number;    // 0-29.5; present only for the current moon
   moonSignChanges?: MoonSignChange[];
   timezone?: string;
 }
@@ -80,8 +82,10 @@ function formatTransitTime(date: Date, timezone: string): string {
 
 // ── Sub-renderers ──────────────────────────────────────────────────────────
 
-function MoonDetail({ phaseName, moonSignChanges, timezone }: {
+function MoonDetail({ phaseName, illumination, ageInDays, moonSignChanges, timezone }: {
   phaseName: string;
+  illumination?: number;
+  ageInDays?: number;
   moonSignChanges?: MoonSignChange[];
   timezone?: string;
 }) {
@@ -91,6 +95,17 @@ function MoonDetail({ phaseName, moonSignChanges, timezone }: {
 
   return (
     <div className="space-y-4">
+      {typeof illumination === 'number' && typeof ageInDays === 'number' && (
+        <p className="text-xs text-text-tertiary">
+          <span className="text-amber-light text-sm font-medium">{illumination}%</span>
+          {' '}illuminated
+          <span className="text-white/15">{' · '}</span>
+          Day{' '}
+          <span className="text-amber-light text-sm font-medium">{ageInDays}</span>
+          {' '}of 29.5
+        </p>
+      )}
+
       <div>
         <p className="text-foreground/90 text-sm leading-relaxed">{data.description}</p>
         <p className="text-amber-light/80 text-xs mt-2 italic">{data.energy}</p>
@@ -363,7 +378,7 @@ export default function DetailPanel({ content, onClose, id }: Props) {
 
           {/* Content */}
           <div className="pr-6">
-            {content.type === 'moon'               && <MoonDetail         phaseName={content.phaseName} moonSignChanges={content.moonSignChanges} timezone={content.timezone} />}
+            {content.type === 'moon'               && <MoonDetail         phaseName={content.phaseName} illumination={content.illumination} ageInDays={content.ageInDays} moonSignChanges={content.moonSignChanges} timezone={content.timezone} />}
             {content.type === 'moonSign'           && <MoonSignDetail     signName={content.signName} signSymbol={content.signSymbol} />}
             {content.type === 'zodiac'             && <ZodiacDetail       signName={content.signName} />}
             {content.type === 'sabbat'             && <SabbatDetail       sabbatName={content.sabbatName} />}

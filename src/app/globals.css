@@ -106,8 +106,8 @@ body::after {
 /* Moon glow / halo — radial luminous bloom behind the moon graphic */
 .moon-glow {
   position: absolute;
-  width: 320px;
-  height: 320px;
+  width: 380px;
+  height: 380px;
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
@@ -123,8 +123,8 @@ body::after {
 
 @media (min-width: 1024px) {
   .moon-glow {
-    width: 400px;
-    height: 400px;
+    width: 520px;
+    height: 520px;
   }
 }
 
