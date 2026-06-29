@@ -320,7 +320,7 @@ export default function Dashboard() {
           {/* Right side: flex-nowrap prevents wrapping to two rows at 360px */}
           <div className="flex items-center gap-2 sm:gap-3 flex-nowrap">
             {todayLabel && (
-              <span className="hidden sm:block font-display text-xs text-text-tertiary tracking-wide">
+              <span className="hidden sm:block font-display text-xs text-text-tertiary tracking-wide whitespace-nowrap">
                 {todayLabel}
               </span>
             )}
