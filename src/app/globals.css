@@ -10,11 +10,11 @@
   --card-border: rgba(255, 255, 255, 0.08);
 
   /* Semantic text tokens — silver (#c8c8d8) at calibrated opacities */
-  --text-secondary: rgba(200, 200, 216, 0.70); /* body / supporting text  */
-  --text-tertiary:  rgba(200, 200, 216, 0.60); /* eyebrow labels / captions */
+  --text-secondary: rgba(200, 200, 216, 0.78); /* body / supporting text  */
+  --text-tertiary:  rgba(200, 200, 216, 0.70); /* eyebrow labels / captions */
 
   /* Unified hover surface for all interactive elements */
-  --hover-surface: rgba(255, 255, 255, 0.04);
+  --hover-surface: rgba(255, 255, 255, 0.06);
 }
 
 @theme inline {
@@ -45,6 +45,7 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans);
   min-height: 100dvh;
+  overflow-x: clip;   /* glow/halo never produces a horizontal scrollbar */
 }
 
 .font-display {
@@ -103,6 +104,11 @@ body::after {
     radial-gradient(circle 0.3px at 95% 90%, rgba(255,255,255,0.15), transparent);
 }
 
+@keyframes moonBreathe {
+  0%, 100% { opacity: 0.85; }
+  50%      { opacity: 1; }
+}
+
 /* Moon glow / halo — radial luminous bloom behind the moon graphic */
 .moon-glow {
   position: absolute;
@@ -119,6 +125,7 @@ body::after {
   );
   pointer-events: none;
   border-radius: 50%;
+  animation: moonBreathe 8s ease-in-out infinite;
 }
 
 @media (min-width: 1024px) {
@@ -179,6 +186,15 @@ body::after {
   will-change: grid-template-rows, opacity;
 }
 
+/* Shared base for every tap-to-expand disclosure control */
+.disclosure-base {
+  background: transparent;
+  border: 0;
+  appearance: none;
+  cursor: pointer;
+  user-select: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .fade-in,
   .fade-in-delay-1,
@@ -190,6 +206,10 @@ body::after {
 
   .detail-panel {
     transition: none;
+  }
+
+  .moon-glow {
+    animation: none;
   }
 }
 

@@ -83,7 +83,7 @@ export default function CycleSpine({
   const sabbatToday = sabbatCtx?.today ?? null;
 
   return (
-    <nav aria-label="Cycle of sacred time" className="card max-w-lg mx-auto w-full p-5 sm:p-6">
+    <div className="card mx-auto w-full p-5 sm:p-6">
       <ol className="list-none m-0 p-0">
 
         {/* ── Now node ── */}
@@ -100,7 +100,7 @@ export default function CycleSpine({
                 onClick={() => onToggle('sunSign')}
                 aria-expanded={expandedKey === 'sunSign'}
                 aria-controls="spine-panel-sun"
-                className="inline-flex items-center gap-2 bg-transparent border-0 appearance-none cursor-pointer select-none rounded-lg -mx-1 px-1 py-0.5 transition-colors hover:bg-hover-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/40"
+                className="inline-flex items-center gap-2 disclosure-base rounded-lg -mx-1 px-1 py-0.5 min-h-[44px] transition-colors hover:bg-hover-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/40"
               >
                 <span className="text-sm text-foreground">
                   <span className="text-amber-light">{sunSign.sign.symbol}</span> {sunSign.sign.name}
@@ -110,15 +110,27 @@ export default function CycleSpine({
               </button>
 
               {venusSign && (
-                <span className="text-sm text-text-tertiary">
-                  <span className="text-white/20">·</span> <span className="text-amber-light/80">{venusSign.symbol}</span> {venusSign.name}
-                </span>
+                <button
+                  type="button"
+                  onClick={() => onToggle('venusNow')}
+                  aria-expanded={expandedKey === 'venusNow'}
+                  aria-controls="spine-panel-venus"
+                  className="inline-flex items-center gap-2 disclosure-base rounded-lg -mx-1 px-1 py-0.5 min-h-[44px] transition-colors hover:bg-hover-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/40"
+                >
+                  <span className="text-sm text-text-tertiary">
+                    <span className="text-white/20">·</span> <span className="text-amber-light/80">{venusSign.symbol}</span> {venusSign.name}
+                  </span>
+                  <Chevron open={expandedKey === 'venusNow'} />
+                </button>
               )}
             </div>
           )}
 
           {expandedKey === 'sunSign' && (
             <DetailPanel id="spine-panel-sun" content={panelContent} onClose={onClose} />
+          )}
+          {expandedKey === 'venusNow' && (
+            <DetailPanel id="spine-panel-venus" content={panelContent} onClose={onClose} />
           )}
 
           {sabbatToday && (
@@ -128,7 +140,7 @@ export default function CycleSpine({
                 onClick={() => onToggle('sabbat')}
                 aria-expanded={expandedKey === 'sabbat'}
                 aria-controls="spine-panel-sabbat"
-                className="mt-2 w-full flex items-center gap-2 text-left bg-transparent border-0 appearance-none cursor-pointer select-none rounded-lg -mx-1 px-1 py-0.5 transition-colors hover:bg-hover-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/40"
+                className="mt-2 w-full flex items-center gap-2 text-left disclosure-base rounded-lg -mx-1 px-1 py-0.5 min-h-[44px] transition-colors hover:bg-hover-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/40"
               >
                 <span className="text-sm text-amber-light flex-1">Blessed {sabbatToday.displayName}</span>
                 <Chevron open={expandedKey === 'sabbat'} />
@@ -151,9 +163,9 @@ export default function CycleSpine({
                 onClick={() => onToggle(event.key)}
                 aria-expanded={isOpen}
                 aria-controls={panelId}
-                className={`w-full flex items-center gap-3 text-left bg-transparent border-0 appearance-none cursor-pointer select-none rounded-xl -mx-2 px-2 py-1.5 transition-colors hover:bg-hover-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/40 ${isOpen ? 'bg-hover-surface' : ''}`}
+                className={`w-full flex items-center gap-3 text-left disclosure-base rounded-xl -mx-2 px-2 py-1.5 min-h-[44px] transition-colors hover:bg-hover-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/40 ${isOpen ? 'bg-hover-surface' : ''}`}
               >
-                <span className="text-lg w-6 text-center flex-shrink-0 select-none" aria-hidden>
+                <span className="text-lg w-6 text-center flex-shrink-0 select-none text-text-secondary" aria-hidden>
                   {event.icon}
                 </span>
                 <span className="flex-1 min-w-0 text-sm text-foreground">{event.name}</span>
@@ -169,6 +181,6 @@ export default function CycleSpine({
           );
         })}
       </ol>
-    </nav>
+    </div>
   );
 }

@@ -16,6 +16,7 @@ import { STORAGE_KEY, normalizeTimezone, hemisphereFromTimezone, type Hemisphere
 
 // Stable IDs linking each disclosure trigger to its detail panel via aria-controls.
 const PANEL_HERO = 'detail-panel-hero';
+const PANEL_HERO_SIGN = 'detail-panel-hero-sign';
 
 function formatDate(date: Date, timezone: string): string {
   return date.toLocaleDateString('en-GB', {
@@ -112,7 +113,7 @@ function Disclosure({
       onClick={onToggle}
       aria-expanded={isOpen}
       aria-controls={panelId}
-      className={`w-full bg-transparent border-0 appearance-none cursor-pointer select-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/40 ${className}`}
+      className={`w-full disclosure-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/40 ${className}`}
     >
       {children}
     </button>
@@ -137,11 +138,18 @@ export default function Dashboard() {
   const [venusSign, setVenusSign] = useState<{ name: string; symbol: string } | null>(() => getCurrentVenusSign(new Date()));
   const [mercuryInfo, setMercuryInfo] = useState<MercuryInfo | null>(() => getMercuryStatus(new Date()));
 
-  // TZ-dependent state: populated after mount when localStorage is readable.
-  const [sunSign, setSunSign] = useState<SunSignInfo | null>(null);
-  const [sabbatCtx, setSabbatCtx] = useState<SabbatContext | null>(null);
-  const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>([]);
-  const [todayLabel, setTodayLabel] = useState('');
+  // Eagerly computed with DEFAULT_TZ so the spine is fully populated on first
+  // paint (no post-mount growth/CLS); the mount effect reconciles the stored TZ.
+  const [sunSign, setSunSign] = useState<SunSignInfo | null>(() =>
+    getCurrentSunSign(toLocalDate(new Date(), DEFAULT_TZ)),
+  );
+  const [sabbatCtx, setSabbatCtx] = useState<SabbatContext | null>(() =>
+    getSabbatContext(toLocalDate(new Date(), DEFAULT_TZ), hemisphereFromTimezone(DEFAULT_TZ)),
+  );
+  const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>(() =>
+    getUpcomingEvents(toLocalDate(new Date(), DEFAULT_TZ), 8, hemisphereFromTimezone(DEFAULT_TZ)),
+  );
+  const [todayLabel, setTodayLabel] = useState(() => formatDate(new Date(), DEFAULT_TZ));
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
 
   // Timezone-independent: moon phase, moon sign, venus, mercury
@@ -237,6 +245,9 @@ export default function Dashboard() {
     if (expandedKey === 'moonSign' && moonSign) {
       return { type: 'moonSign', signName: moonSign.name, signSymbol: moonSign.symbol };
     }
+    if (expandedKey === 'venusNow' && venusSign) {
+      return { type: 'venus', signName: venusSign.name };
+    }
     if (expandedKey === 'sunSign' && sunSign) {
       return { type: 'zodiac', signName: sunSign.sign.name };
     }
@@ -267,7 +278,7 @@ export default function Dashboard() {
       return { type: 'data-expiry' };
     }
     return null;
-  }, [expandedKey, moon, moonSign, sunSign, sabbatCtx, upcomingEvents, moonSignChanges, timezone]);
+  }, [expandedKey, moon, moonSign, venusSign, sunSign, sabbatCtx, upcomingEvents, moonSignChanges, timezone]);
 
   const closePanel = useCallback(() => setExpandedKey(null), []);
 
@@ -300,7 +311,7 @@ export default function Dashboard() {
     <div className="relative z-10 min-h-dvh flex flex-col">
       {/* Header — full-bleed border, content constrained to match main */}
       <header className="border-b border-white/5">
-        <div className="flex items-center justify-between px-4 sm:px-8 py-4 max-w-4xl lg:max-w-5xl mx-auto w-full">
+        <div className="flex items-center justify-between px-4 sm:px-8 py-4 max-w-xl mx-auto w-full">
           <div>
             <h1 className="font-display text-base sm:text-lg tracking-wider sm:tracking-widest text-text-secondary uppercase whitespace-nowrap">
               Moon &amp; Sabbat
@@ -320,8 +331,9 @@ export default function Dashboard() {
                 aria-label={`Mercury retrograde until ${formatCalendarDate(mercuryInfo.period.retrogradeEnd)}`}
                 className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-950/60 border border-red-700/50 text-xs text-red-300 flex-shrink-0"
               >
-                <span aria-hidden>☿℞</span>
-                <span className="hidden sm:inline">until {formatCalendarDate(mercuryInfo.period.retrogradeEnd)}</span>
+                <span aria-hidden>☿</span>
+                <span>Rx</span>
+                <span className="hidden sm:inline">· until {formatCalendarDate(mercuryInfo.period.retrogradeEnd)}</span>
               </div>
             )}
             <TimezoneSelector value={timezone} onChange={handleTimezoneChange} />
@@ -329,7 +341,7 @@ export default function Dashboard() {
         </div>
       </header>
 
-      <main className="flex-1 px-4 sm:px-8 pt-4 pb-8 max-w-4xl lg:max-w-5xl mx-auto w-full space-y-4">
+      <main className="flex-1 px-4 sm:px-8 pt-4 pb-8 max-w-xl mx-auto w-full space-y-4">
 
         {/* ── Hero: Moon Phase ── */}
         <section className="fade-in space-y-4" aria-label="Moon phase">
@@ -364,7 +376,7 @@ export default function Dashboard() {
                 {/* Phase peak — the one number that's about *time*; the rest
                     (illumination, age) now live in the pop-down. */}
                 {moonPeak && (
-                  <p className="text-text-secondary text-xs text-center">
+                  <p className="text-text-secondary text-xs sm:text-sm text-center">
                     {formatPeakText(moonPeak.phaseName, moonPeak.peakTime, new Date(), timezone)}
                   </p>
                 )}
@@ -380,7 +392,7 @@ export default function Dashboard() {
               <Disclosure
                 isOpen={expandedKey === 'moonSign'}
                 onToggle={() => handleToggle('moonSign')}
-                panelId={PANEL_HERO}
+                panelId={PANEL_HERO_SIGN}
                 className={`min-h-[44px] flex items-center justify-center py-1 px-4 rounded-lg transition-colors hover:bg-hover-surface ${expandedKey === 'moonSign' ? 'bg-hover-surface' : ''}`}
               >
                 <span className="text-xs text-text-tertiary">
@@ -396,7 +408,11 @@ export default function Dashboard() {
 
           {/* Detail panel — shown for moon phase or moon sign */}
           {activeSection === 'hero' && (
-            <DetailPanel id={PANEL_HERO} content={panelContent} onClose={closePanel} />
+            <DetailPanel
+              id={expandedKey === 'moonSign' ? PANEL_HERO_SIGN : PANEL_HERO}
+              content={panelContent}
+              onClose={closePanel}
+            />
           )}
         </section>
 
@@ -422,12 +438,9 @@ export default function Dashboard() {
       </main>
 
       <footer className="px-6 py-5 text-center border-t border-white/5 space-y-1">
-        {todayLabel && (
-          <p className="font-display text-sm text-text-tertiary tracking-wide sm:hidden">{todayLabel}</p>
-        )}
-        <p className="text-xs text-silver/40">Calculated locally — no tracking, no APIs.</p>
+        <p className="text-xs text-silver/55">Calculated locally — no tracking, no APIs.</p>
         {process.env.NEXT_PUBLIC_COMMIT && (
-          <p className="text-xs text-white/10 font-mono">{process.env.NEXT_PUBLIC_COMMIT}</p>
+          <p aria-hidden className="text-xs text-white/10 font-mono">{process.env.NEXT_PUBLIC_COMMIT}</p>
         )}
       </footer>
     </div>

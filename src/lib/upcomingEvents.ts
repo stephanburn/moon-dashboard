@@ -21,6 +21,14 @@ export interface UpcomingEvent {
   mercuryRetroSignFlavour?: string;
 }
 
+function moonGlyph(name: string): string {
+  if (name === 'New Moon') return '●';
+  if (name === 'Full Moon') return '○';
+  if (name === 'First Quarter') return '◑';
+  if (name === 'Last Quarter') return '◐';
+  return '☾';
+}
+
 export function getUpcomingEvents(
   from: Date,
   count = 5,
@@ -36,7 +44,7 @@ export function getUpcomingEvents(
     ...moonPhases.map(p => ({
       type: 'moon' as const,
       name: p.name,
-      icon: p.emoji,
+      icon: moonGlyph(p.name),
       date: p.date,
       key: `moon-${p.name}-${p.date.getTime()}`,
       moonPhaseName: p.name,
@@ -52,7 +60,7 @@ export function getUpcomingEvents(
     ...sabbats.map(s => ({
       type: 'sabbat' as const,
       name: s.displayName,         // shown in the Coming Up list
-      icon: '☀️',
+      icon: '☉',
       date: s.date,
       key: `sabbat-${s.name}-${s.date.getFullYear()}`,
       sabbatName: s.name,          // key for SABBAT_CORRESPONDENCES lookup
@@ -60,7 +68,7 @@ export function getUpcomingEvents(
     ...venusEvents.map(v => ({
       type: 'venus' as const,
       name: `Venus enters ${v.sign.name} ${v.sign.symbol}`,
-      icon: '♀',
+      icon: '♀︎',
       date: v.date,
       key: `venus-${v.sign.name}-${v.date.getTime()}`,
       venusSignName: v.sign.name,
@@ -68,7 +76,7 @@ export function getUpcomingEvents(
     ...mercuryRx.map(rx => ({
       type: 'mercury-retrograde' as const,
       name: `Mercury Retrograde ☿℞`,
-      icon: '☿',
+      icon: '☿︎',
       date: rx.retrogradeStart,
       key: `mercury-rx-${rx.retrogradeStart.getTime()}`,
       mercuryRetroSigns: rx.signs,
@@ -82,7 +90,7 @@ export function getUpcomingEvents(
     events.push({
       type: 'data-expiry' as const,
       name: 'Planetary data expires — update needed',
-      icon: '⚠',
+      icon: '⚠︎',
       date: PLANET_DATA_EXPIRY,
       key: 'data-expiry',
     });
