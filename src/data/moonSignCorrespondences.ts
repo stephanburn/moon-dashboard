@@ -5,7 +5,7 @@ export interface MoonSignCorrespondence {
 export const MOON_SIGN_CORRESPONDENCES: Record<string, MoonSignCorrespondence> = {
   Aries: {
     energy:
-      'Moon in Aries ignites emotional courage and the urge to act. Feelings are vivid, quick, and intense — this is a time for bold emotional expression, initiating new cycles, and clearing the air. Anger passes quickly; so does hesitation.',
+      'Moon in Aries ignites emotional courage and the urge to act. Feelings are vivid, quick, and intense. This is a time for bold emotional expression, initiating new cycles, and clearing the air. Anger passes quickly; so does hesitation.',
   },
   Taurus: {
     energy:
@@ -13,15 +13,15 @@ export const MOON_SIGN_CORRESPONDENCES: Record<string, MoonSignCorrespondence> =
   },
   Gemini: {
     energy:
-      'Moon in Gemini quickens the emotional mind — curiosity, conversation, and connection take on extra charge. Feelings may shift rapidly, and the need to process thoughts by speaking or writing is strong. Favours communication magic and divination through words.',
+      'Moon in Gemini quickens the emotional mind: curiosity, conversation, and connection take on extra charge. Feelings may shift rapidly, and the need to process thoughts by speaking or writing is strong. Favours communication magic and divination through words.',
   },
   Cancer: {
     energy:
-      'Moon in Cancer is the Moon in her home sign — intuition is at its sharpest and emotional sensitivity is heightened. Deep nurturing, ancestral connection, and work with the home as sacred space are all potentised. Listen to your gut without question.',
+      'Moon in Cancer is the Moon in her home sign. Intuition is at its sharpest and emotional sensitivity is heightened. Deep nurturing, ancestral connection, and work with the home as sacred space are all amplified. Listen to your gut without question.',
   },
   Leo: {
     energy:
-      'Moon in Leo calls for heartfelt expression, celebration, and the warmth of being seen. Emotions want creative outlet — through art, theatre, or generous acts. Ritual that honours the self, summons confidence, or works with solar or fire energy is well-supported.',
+      'Moon in Leo calls for heartfelt expression, celebration, and the warmth of being seen. Emotions want creative outlet: through art, theatre, or generous acts. Ritual that honours the self, summons confidence, or works with solar or fire energy sits well here.',
   },
   Virgo: {
     energy:
@@ -29,7 +29,7 @@ export const MOON_SIGN_CORRESPONDENCES: Record<string, MoonSignCorrespondence> =
   },
   Libra: {
     energy:
-      'Moon in Libra heightens sensitivity to harmony and relationship. Feelings seek balance and beauty — discord is felt acutely now. Excellent for relationship magic, working with Venus energies, or any ritual that calls for justice, aesthetics, or peaceful resolution.',
+      'Moon in Libra heightens sensitivity to harmony and relationship. Feelings seek balance and beauty. Discord is felt acutely now. Excellent for relationship magic, working with Venus energies, or any ritual that calls for justice, aesthetics, or peaceful resolution.',
   },
   Scorpio: {
     energy:
@@ -37,7 +37,7 @@ export const MOON_SIGN_CORRESPONDENCES: Record<string, MoonSignCorrespondence> =
   },
   Sagittarius: {
     energy:
-      'Moon in Sagittarius lifts emotional horizons — there is an expansive, adventurous quality to feeling now. Optimism and philosophical seeking are strong. Good for ritual that calls in abundance, wisdom, travel blessings, or a broadening of spiritual perspective.',
+      'Moon in Sagittarius lifts emotional horizons. There is an expansive, adventurous quality to feeling now. Optimism and philosophical seeking are strong. Good for ritual that calls in abundance, wisdom, travel blessings, or a broadening of spiritual perspective.',
   },
   Capricorn: {
     energy:
@@ -49,6 +49,6 @@ export const MOON_SIGN_CORRESPONDENCES: Record<string, MoonSignCorrespondence> =
   },
   Pisces: {
     energy:
-      'Moon in Pisces dissolves the boundary between feeling and spirit. Dreams are vivid, empathy is boundless, and psychic perception is heightened. This is a deeply receptive time — ideal for meditation, dreamwork, devotional practice, and any magic of compassion or healing.',
+      'Moon in Pisces dissolves the boundary between feeling and spirit. Dreams are vivid, empathy is boundless, and psychic perception is heightened. This is a deeply receptive time, ideal for meditation, dreamwork, devotional practice, and any magic of compassion or healing.',
   },
 };

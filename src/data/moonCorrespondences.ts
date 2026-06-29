@@ -14,7 +14,7 @@ export const MOON_CORRESPONDENCES: Record<string, MoonPhaseCorrespondence> = {
   'New Moon': {
     phaseName: 'New Moon',
     description:
-      'The New Moon marks the beginning of the lunar cycle, a time of darkness and potential. Seeds planted now carry the full force of the moon\'s growing light behind them. Rest, reflect, and set clear intentions for the cycle ahead.',
+      'The New Moon opens the cycle. The moon sits between us and the sun and shows no lit face, so the sky is dark (strictly, the fully invisible Dark Moon is the day or so just before the first crescent returns). It\'s a low, quiet point, better for rest, reflection, and setting intentions than outward work. Hekate is traditionally honoured at the dark of the moon, at the crossroads and the turn of the cycle.',
     energy: 'New beginnings, intention-setting, seed planting',
     magicalWorkings: ['intention setting', 'new beginnings', 'manifestation', 'divination', 'binding'],
     colours: ['black', 'deep indigo', 'midnight blue', 'silver'],
@@ -22,13 +22,13 @@ export const MOON_CORRESPONDENCES: Record<string, MoonPhaseCorrespondence> = {
     herbs: ['mugwort', 'jasmine', 'myrrh', 'frankincense'],
     esbat: true,
     esbatNote:
-      'The New Moon esbat is a time of inner work, shadow integration, and planting seeds of intention. Many covens work quietly and introspectively at this phase, setting the tone for the entire cycle.',
+      'The New Moon is a quieter observance, given to inner work and intention rather than celebration. Many covens keep this phase introspective and use it to set the tone for the cycle that follows.',
   },
 
   'Waxing Crescent': {
     phaseName: 'Waxing Crescent',
     description:
-      'As the thin silver crescent grows, so too does momentum. This phase carries the energy of hope and forward movement — a gentle push to begin and to believe. Nurture your intentions with consistent action and hold faith in the process.',
+      'The first sliver of light returns and the cycle starts to gain momentum. This is a building phase, suited to the first concrete steps on whatever you set at the New Moon. Consistent action matters more here than intensity.',
     energy: 'Growth, hope, momentum, attraction',
     magicalWorkings: ['attraction magic', 'positive affirmations', 'new friendships', 'courage work'],
     colours: ['silver', 'pale yellow', 'soft white', 'light blue'],
@@ -40,7 +40,7 @@ export const MOON_CORRESPONDENCES: Record<string, MoonPhaseCorrespondence> = {
   'First Quarter': {
     phaseName: 'First Quarter',
     description:
-      'The half-illuminated moon represents a point of decision and necessary action. Challenges that arise now are part of growth — meet them with determination and will. This is a time to push forward, commit to your path, and act with clarity.',
+      'The moon shows half its face, a midpoint that tends to surface decisions and obstacles. Whatever resistance comes up now is usually worth meeting directly rather than working around. A phase for commitment and deliberate action.',
     energy: 'Action, decision, commitment, overcoming challenges',
     magicalWorkings: ['courage spells', 'overcoming obstacles', 'strength work', 'protection magic'],
     colours: ['golden yellow', 'bright orange', 'warm white', 'fiery red'],
@@ -52,7 +52,7 @@ export const MOON_CORRESPONDENCES: Record<string, MoonPhaseCorrespondence> = {
   'Waxing Gibbous': {
     phaseName: 'Waxing Gibbous',
     description:
-      'The nearly-full moon calls you to refine and adjust your approach. Intentions set at the New Moon are taking shape — observe what is working and gently course-correct what is not. Trust the unfolding process and tend your work with patience.',
+      'The moon is almost full and the cycle\'s work is taking shape. A phase for refinement: notice what\'s working, adjust what isn\'t, and tend the details rather than starting anything new.',
     energy: 'Refinement, patience, trust, adjustment',
     magicalWorkings: ['refinement magic', 'patience work', 'healing', 'prosperity boosting'],
     colours: ['golden', 'warm cream', 'pale gold', 'soft amber'],
@@ -64,7 +64,7 @@ export const MOON_CORRESPONDENCES: Record<string, MoonPhaseCorrespondence> = {
   'Full Moon': {
     phaseName: 'Full Moon',
     description:
-      'The Full Moon illuminates all things, bringing culmination, power, and clarity. Emotions run high and intuition is at its peak. This is the height of the lunar cycle — when magical workings carry their greatest potency and the Goddess shines at her fullest.',
+      'The moon is fully lit and the cycle reaches its peak. This is the brightest, highest-energy point, and traditionally the strongest time for workings of most kinds. Emotions and intuition tend to run high. Selene, the moon herself, is honoured at her fullest here.',
     energy: 'Power, culmination, fruition, illumination',
     magicalWorkings: [
       'charging tools and crystals',
@@ -79,13 +79,13 @@ export const MOON_CORRESPONDENCES: Record<string, MoonPhaseCorrespondence> = {
     herbs: ['jasmine', 'rose', 'mugwort', 'yarrow', 'sandalwood'],
     esbat: true,
     esbatNote:
-      'The Full Moon is the primary esbat celebration, observed across Wiccan and pagan traditions. Covens gather to honour the Goddess in her Mother aspect, charge tools and crystals in moonlight, and work high magic in her silvered light.',
+      'The Full Moon is the main monthly gathering across many Wiccan and pagan traditions. Covens meet to mark the height of the cycle, charge tools and crystals in the moonlight, and carry out their more significant workings.',
   },
 
   'Waning Gibbous': {
     phaseName: 'Waning Gibbous',
     description:
-      'As the moon begins to retreat, this phase calls for gratitude and the generous sharing of what you have gained. The energy of giving back flows strongly now — share your gifts, teach what you know, and extend your abundance outward.',
+      'The moon begins to wane and the cycle turns outward. A phase associated with gratitude and giving back: sharing what you\'ve gained, teaching, passing things on.',
     energy: 'Gratitude, sharing, generosity, teaching',
     magicalWorkings: ['gratitude work', 'releasing perfectionism', 'teaching rituals', 'healing others'],
     colours: ['dusty gold', 'warm amber', 'copper', 'warm rust'],
@@ -97,7 +97,7 @@ export const MOON_CORRESPONDENCES: Record<string, MoonPhaseCorrespondence> = {
   'Last Quarter': {
     phaseName: 'Last Quarter',
     description:
-      'The half-dark moon is an invitation to deep release. What no longer serves your highest good must now be let go — habits, relationships, thought patterns, or anything that holds you back. Forgiveness is a powerful working at this time.',
+      'The moon is half-dark again and the emphasis shifts to release. A phase for letting go of habits, patterns, or commitments that have run their course. Work around forgiveness and clearing sits well here.',
     energy: 'Release, forgiveness, letting go, breaking habits',
     magicalWorkings: ['banishing', 'cord-cutting', 'forgiveness work', 'breaking bad habits', 'uncrossing'],
     colours: ['black', 'deep grey', 'deep purple', 'dark midnight blue'],
@@ -109,7 +109,7 @@ export const MOON_CORRESPONDENCES: Record<string, MoonPhaseCorrespondence> = {
   'Waning Crescent': {
     phaseName: 'Waning Crescent',
     description:
-      'The last sliver of moon before darkness is the most introspective phase of the cycle. Rest, surrender, and allow the old cycle to fully dissolve before the new one begins. Dreams are vivid and prophetic now — record them faithfully.',
+      'The final sliver before the dark is the most inward part of the cycle. A phase for rest and winding down, letting the old cycle close before the next begins. Dreams often sharpen here, so keep something to hand to record them.',
     energy: 'Rest, surrender, dreams, dissolution',
     magicalWorkings: ['shadow work', 'dream work', 'deep meditation', 'psychic cleansing', 'banishing'],
     colours: ['deep indigo', 'dark charcoal', 'midnight blue', 'black'],

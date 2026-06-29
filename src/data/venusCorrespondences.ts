@@ -5,11 +5,11 @@ export interface VenusCorrespondence {
 export const VENUS_CORRESPONDENCES: Record<string, VenusCorrespondence> = {
   Aries: {
     energy:
-      'Venus in Aries loves boldly and impulsively — desire is immediate, direct, and unashamed. Attraction is sparked by confidence and novelty; passion burns hot but may need tending to last. A time for pursuing what the heart wants without apology.',
+      'Venus in Aries loves boldly and impulsively. Desire is immediate, direct, and unashamed. Attraction is sparked by confidence and novelty; passion burns hot but may need tending to last. A time for pursuing what the heart wants without apology.',
   },
   Taurus: {
     energy:
-      'Venus is in her home sign in Taurus — sensuality, loyalty, and the pleasures of the physical world are heightened. Love is expressed through comfort, beauty, and enduring devotion. Savour the body\'s senses and invest in what is lasting and beautiful.',
+      'Venus is in her home sign in Taurus: sensuality, loyalty, and the pleasures of the physical world are heightened. Love is expressed through comfort, beauty, and enduring devotion. Savour the body\'s senses and invest in what is lasting and beautiful.',
   },
   Gemini: {
     energy:
@@ -25,11 +25,11 @@ export const VENUS_CORRESPONDENCES: Record<string, VenusCorrespondence> = {
   },
   Virgo: {
     energy:
-      'Venus in Virgo expresses love through service, attentiveness, and quiet devotion. Attraction is drawn by thoughtfulness and competence rather than spectacle. Beauty is found in precision and care — a time to refine your craft and show love through practical acts.',
+      'Venus in Virgo expresses love through service, attentiveness, and quiet devotion. Attraction is drawn by thoughtfulness and competence rather than spectacle. Beauty is found in precision and care: a time to refine your craft and show love through practical acts.',
   },
   Libra: {
     energy:
-      'Venus is in her home sign in Libra — grace, harmony, and the art of relating are at their finest. Partnership is especially potent and the desire for balance, beauty, and mutual appreciation is strong. Justice and aesthetics intertwine; diplomacy is instinctive.',
+      'Venus is in her home sign in Libra: grace, harmony, and the art of relating are at their finest. Partnership is especially potent and the desire for balance, beauty, and mutual appreciation is strong. Justice and aesthetics intertwine; diplomacy is instinctive.',
   },
   Scorpio: {
     energy:
@@ -37,7 +37,7 @@ export const VENUS_CORRESPONDENCES: Record<string, VenusCorrespondence> = {
   },
   Sagittarius: {
     energy:
-      'Venus in Sagittarius loves freedom, adventure, and the expansion of horizons through relationship. Attraction is drawn to those with vision, humour, and wanderlust. Love is idealistic and generous — best expressed through shared adventures and philosophical connection.',
+      'Venus in Sagittarius loves freedom, adventure, and the expansion of horizons through relationship. Attraction is drawn to those with vision, humour, and wanderlust. Love is idealistic and generous, best expressed through shared adventures and philosophical connection.',
   },
   Capricorn: {
     energy:
@@ -49,6 +49,6 @@ export const VENUS_CORRESPONDENCES: Record<string, VenusCorrespondence> = {
   },
   Pisces: {
     energy:
-      'Venus in Pisces loves with a boundless, almost devotional tenderness. The boundaries between self and beloved dissolve; romance is mystical, compassionate, and deeply spiritual. Beauty is found in the sublime — music, dreams, and transcendent feeling.',
+      'Venus in Pisces loves with a boundless, almost devotional tenderness. The boundaries between self and beloved dissolve; romance is mystical, compassionate, and deeply spiritual. Beauty is found in the sublime: music, dreams, and transcendent feeling.',
   },
 };

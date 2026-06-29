@@ -289,9 +289,9 @@ function MercuryRetroDetail({ signs, signFlavour }: { signs: string; signFlavour
       <div>
         <p className="text-foreground/90 text-sm leading-relaxed">
           Mercury retrograde is a period when the planet appears to travel backwards across the sky.
-          In astrological tradition, this time calls for review rather than forward motion — revisit,
+          In astrological tradition, this time calls for review rather than forward motion. Revisit,
           reflect, and revise. Communications, travel, technology, and agreements are prone to delays
-          and misunderstandings. Back up important data, read the small print, and hold space for
+          and misunderstandings. Back up important data, read the small print, and leave room for
           things to be clarified before they are resolved.
         </p>
       </div>

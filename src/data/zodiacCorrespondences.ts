@@ -20,7 +20,7 @@ export const ZODIAC_CORRESPONDENCES: Record<string, ZodiacCorrespondence> = {
     rulingPlanet: 'Mars',
     qualities: ['bold', 'pioneering', 'impulsive', 'courageous', 'competitive'],
     transitEnergy:
-      'The Sun in Aries brings a surge of bold, pioneering energy — the world feels younger, more urgent, and full of possibility. Initiative is rewarded and there is little patience for delay or hesitation. The collective focus turns to action, new beginnings, and the assertion of individual will.',
+      'The Sun in Aries brings a surge of bold, pioneering energy. The world feels younger, more urgent, and full of possibility. Initiative is rewarded and there is little patience for delay or hesitation. The collective focus turns to action, new beginnings, and the assertion of individual will.',
     colours: ['scarlet', 'bright red', 'orange-gold', 'white'],
     crystals: ['carnelian', 'bloodstone', 'red jasper', 'diamond'],
     herbs: ['ginger', 'nettle', 'peppermint', 'garlic', 'dragon\'s blood'],
@@ -34,7 +34,7 @@ export const ZODIAC_CORRESPONDENCES: Record<string, ZodiacCorrespondence> = {
     rulingPlanet: 'Venus',
     qualities: ['steadfast', 'sensual', 'patient', 'resourceful', 'determined'],
     transitEnergy:
-      'The Sun in Taurus grounds the fiery push of Aries into something tangible and lasting. Beauty, pleasure, and the physical world take on heightened importance — enjoy good food, time in nature, and sensory richness. Steady effort and patience are the keys to progress now, and rushing will not serve you.',
+      'The Sun in Taurus grounds the fiery push of Aries into something tangible and lasting. Beauty, pleasure, and the physical world take on heightened importance. Enjoy good food, time in nature, and sensory richness. Steady effort and patience are the keys to progress now, and rushing will not serve you.',
     colours: ['forest green', 'earthy brown', 'rose pink', 'rich cream'],
     crystals: ['rose quartz', 'malachite', 'emerald', 'jade'],
     herbs: ['rose', 'thyme', 'patchouli', 'vervain', 'violet'],
@@ -48,7 +48,7 @@ export const ZODIAC_CORRESPONDENCES: Record<string, ZodiacCorrespondence> = {
     rulingPlanet: 'Mercury',
     qualities: ['curious', 'adaptable', 'witty', 'communicative', 'restless'],
     transitEnergy:
-      'The Sun in Gemini quickens the mind and tongue — conversation, learning, and variety are the pleasures of this season. Ideas come quickly and attention may be scattered; it is a fine time for writing, socialising, and exploring new topics. The world feels more playful and mentally alive.',
+      'The Sun in Gemini quickens the mind and tongue: conversation, learning, and variety are the pleasures of this season. Ideas come quickly and attention may be scattered; it is a fine time for writing, socialising, and exploring new topics. The world feels more playful and mentally alive.',
     colours: ['bright yellow', 'pale silver', 'light blue', 'white'],
     crystals: ['agate', 'citrine', 'aquamarine', 'tiger\'s eye'],
     herbs: ['lavender', 'dill', 'fennel', 'lemongrass', 'clover'],
@@ -62,7 +62,7 @@ export const ZODIAC_CORRESPONDENCES: Record<string, ZodiacCorrespondence> = {
     rulingPlanet: 'Moon',
     qualities: ['nurturing', 'intuitive', 'protective', 'emotional', 'home-loving'],
     transitEnergy:
-      'The Sun in Cancer draws us inward, to home, family, and emotional roots. Intuition deepens and the need for belonging and comfort becomes strong. It is a beautiful time for kitchen witchery, ancestral work, and tending to the home as sacred space — a season of nurturing and nourishing.',
+      'The Sun in Cancer draws us inward, to home, family, and emotional roots. Intuition deepens and the need for belonging and comfort becomes strong. It is a beautiful time for kitchen witchery, ancestral work, and tending to the home as sacred space.',
     colours: ['silver', 'pearl white', 'sea green', 'pale blue'],
     crystals: ['moonstone', 'pearl', 'selenite', 'labradorite'],
     herbs: ['jasmine', 'chamomile', 'lemon balm', 'lily', 'water lily'],
@@ -76,7 +76,7 @@ export const ZODIAC_CORRESPONDENCES: Record<string, ZodiacCorrespondence> = {
     rulingPlanet: 'Sun',
     qualities: ['generous', 'confident', 'dramatic', 'creative', 'loyal'],
     transitEnergy:
-      'The Sun in Leo blazes with vitality, creativity, and the desire to be seen and celebrated. Self-expression, play, and the warmth of the heart are paramount. Lead with generosity and celebrate the unique gifts you bring to the world — this is a season of radiance, courage, and joyful pride.',
+      'The Sun in Leo blazes with vitality, creativity, and the desire to be seen and celebrated. Self-expression, play, and the warmth of the heart are paramount. Lead with generosity and celebrate the unique gifts you bring to the world. This is a season of radiance, courage, and joyful pride.',
     colours: ['royal gold', 'bright orange', 'royal purple', 'crimson'],
     crystals: ['sunstone', 'amber', 'citrine', 'pyrite', 'carnelian'],
     herbs: ['sunflower', 'cinnamon', 'saffron', 'marigold', 'rosemary'],
@@ -90,7 +90,7 @@ export const ZODIAC_CORRESPONDENCES: Record<string, ZodiacCorrespondence> = {
     rulingPlanet: 'Mercury',
     qualities: ['analytical', 'precise', 'helpful', 'discerning', 'health-conscious'],
     transitEnergy:
-      'The Sun in Virgo brings a quieter, more thoughtful energy — one of order, refinement, and service. It is a fine time to tend to health, organise the home or workspace, and refine your craft with care. The harvest season calls us to be discerning about what we cultivate and what we must cull.',
+      'The Sun in Virgo brings a quieter, more thoughtful energy: order, refinement, and service. It is a fine time to tend to health, organise the home or workspace, and refine your craft with care. The harvest season calls us to be discerning about what we cultivate and what we must cull.',
     colours: ['navy blue', 'deep grey', 'forest green', 'rich brown'],
     crystals: ['peridot', 'sapphire', 'amazonite', 'moss agate'],
     herbs: ['dill', 'oregano', 'caraway', 'chrysanthemum', 'valerian'],
@@ -104,7 +104,7 @@ export const ZODIAC_CORRESPONDENCES: Record<string, ZodiacCorrespondence> = {
     rulingPlanet: 'Venus',
     qualities: ['diplomatic', 'gracious', 'fair-minded', 'social', 'peace-seeking'],
     transitEnergy:
-      'The Sun in Libra invites harmony, balance, and beauty into sharp focus. Relationships and partnerships come to the fore — how we relate to others, and how we can find equilibrium within ourselves. Aesthetics and justice are Libra\'s twin callings, and both feel more pressing and meaningful now.',
+      'The Sun in Libra invites harmony, balance, and beauty into sharp focus. Relationships and partnerships come to the fore. How we relate to others, and how we can find equilibrium within ourselves. Aesthetics and justice are Libra\'s twin callings, and both feel more pressing and meaningful now.',
     colours: ['rose pink', 'pale sky blue', 'soft lavender', 'ivory'],
     crystals: ['rose quartz', 'opal', 'lapis lazuli', 'lepidolite'],
     herbs: ['rose', 'spearmint', 'thyme', 'catnip', 'violet'],
@@ -132,7 +132,7 @@ export const ZODIAC_CORRESPONDENCES: Record<string, ZodiacCorrespondence> = {
     rulingPlanet: 'Jupiter',
     qualities: ['adventurous', 'philosophical', 'optimistic', 'freedom-loving', 'visionary'],
     transitEnergy:
-      'The Sun in Sagittarius expands horizons — of the mind, the spirit, and the world. Philosophy, travel, and the pursuit of higher meaning feel urgent and joyful. There is an infectious optimism in the air and a call to explore beliefs, cultures, and vast landscapes both inner and outer.',
+      'The Sun in Sagittarius expands horizons: the mind, the spirit, and the world. Philosophy, travel, and the pursuit of higher meaning feel urgent and joyful. Optimism is in the air and there is a pull toward beliefs, cultures, and vast landscapes both inner and outer.',
     colours: ['royal purple', 'deep blue', 'turquoise', 'bright gold'],
     crystals: ['turquoise', 'lapis lazuli', 'topaz', 'amethyst'],
     herbs: ['sage', 'hyssop', 'borage', 'anise', 'clove'],
@@ -160,7 +160,7 @@ export const ZODIAC_CORRESPONDENCES: Record<string, ZodiacCorrespondence> = {
     rulingPlanet: 'Uranus (traditional: Saturn)',
     qualities: ['innovative', 'humanitarian', 'independent', 'visionary', 'unconventional'],
     transitEnergy:
-      'The Sun in Aquarius brings an electric, forward-looking energy — idealism, community, and the desire to break from convention are heightened. It is a time to think about humanity\'s larger patterns and your own unique contribution to the collective. Innovation and social magic flourish.',
+      'The Sun in Aquarius brings an electric, forward-looking energy: idealism, community, and the desire to break from convention are heightened. It is a time to think about humanity\'s larger patterns and your own unique contribution to the collective. Innovation and social magic flourish.',
     colours: ['electric blue', 'silver', 'turquoise', 'violet'],
     crystals: ['aquamarine', 'amethyst', 'blue kyanite', 'clear quartz'],
     herbs: ['lavender', 'peppermint', 'eucalyptus', 'clover', 'violet'],
