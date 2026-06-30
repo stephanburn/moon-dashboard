@@ -64,48 +64,48 @@ export default async function Image() {
           display: 'flex',
           alignItems: 'center',
           gap: 56,
-          padding: '0 80px',
+          padding: '0 64px',
           background: '#0b0d17',
-          color: '#e8e6f0',
+          color: '#f2f0f8',
         }}
       >
-        <svg width={300} height={300} viewBox="0 0 320 320">
+        <svg width={336} height={336} viewBox="0 0 320 320" style={{ flexShrink: 0 }}>
           <circle cx={C} cy={C} r={R} fill="#161a2b" />
-          <path d={litPath} fill="#e8e6f0" />
-          <circle cx={C} cy={C} r={R} fill="none" stroke="#2c3150" strokeWidth={2} />
+          <path d={litPath} fill="#f2f0f8" />
+          <circle cx={C} cy={C} r={R} fill="none" stroke="#34396040" strokeWidth={2} />
         </svg>
 
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
-          <div style={{ fontSize: 22, letterSpacing: 5, color: '#6f6b96' }}>MOON DASHBOARD</div>
-          <div style={{ fontSize: 76, fontWeight: 600, lineHeight: 1.05, marginTop: 6 }}>{moon.name}</div>
+          <div style={{ fontSize: 28, letterSpacing: 6, color: '#9690c4' }}>MOON DASHBOARD</div>
+          <div style={{ fontSize: 104, fontWeight: 600, lineHeight: 1.02, marginTop: 4 }}>{moon.name}</div>
 
-          <div style={{ fontSize: 30, color: '#c9c5e8', marginTop: 10 }}>
+          <div style={{ fontSize: 42, color: '#dad6f4', marginTop: 14 }}>
             {`In ${moonSign.name} ${moonSign.symbol} · ${nextPhase.name} ${inDays(nextPhase.date, now)}`}
           </div>
 
           {energy && (
-            <div style={{ fontSize: 27, fontStyle: 'italic', color: '#8f8bb8', marginTop: 2 }}>
+            <div style={{ fontSize: 37, fontStyle: 'italic', color: '#b0aada', marginTop: 2 }}>
               {energy}
             </div>
           )}
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 28, fontSize: 28 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 30, fontSize: 39 }}>
             <div style={{ display: 'flex' }}>
               {`Sun in ${sunSign.sign.name} `}
-              <span style={{ color: '#6f6b96', marginLeft: 8 }}>{forDays(sunIngress.date, now)}</span>
+              <span style={{ color: '#9690c4', marginLeft: 10 }}>{forDays(sunIngress.date, now)}</span>
             </div>
             {nextSabbat && (
               <div style={{ display: 'flex' }}>
                 Next sabbat
-                <span style={{ color: '#6f6b96', marginLeft: 8 }}>
+                <span style={{ color: '#9690c4', marginLeft: 10 }}>
                   {`· ${nextSabbat.displayName} ${inDays(nextSabbat.date, now)}`}
                 </span>
               </div>
             )}
           </div>
 
-          <div style={{ fontSize: 18, letterSpacing: 2, color: '#56527d', marginTop: 24 }}>
-            CLICK FOR LIVE DATA AND CORRESPONDENCES →
+          <div style={{ fontSize: 25, letterSpacing: 2, color: '#8580b0', marginTop: 28 }}>
+            CLICK LINK FOR LIVE DATA AND CORRESPONDENCES →
           </div>
         </div>
       </div>
