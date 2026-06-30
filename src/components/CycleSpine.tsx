@@ -58,7 +58,7 @@ function Chevron({ open }: { open: boolean }) {
   return (
     <span
       aria-hidden
-      className={`text-silver/50 text-xs flex-shrink-0 inline-block transition-transform duration-300 motion-reduce:transition-none ${open ? 'rotate-180' : ''}`}
+      className={`text-silver/75 text-base flex-shrink-0 inline-block transition-transform duration-300 motion-reduce:transition-none ${open ? 'rotate-180' : ''}`}
     >
       ▾
     </span>

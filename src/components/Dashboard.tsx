@@ -18,6 +18,10 @@ import { STORAGE_KEY, normalizeTimezone, hemisphereFromTimezone, type Hemisphere
 const PANEL_HERO = 'detail-panel-hero';
 const PANEL_HERO_SIGN = 'detail-panel-hero-sign';
 
+// Once the user has opened any disclosure, they've learned the gesture — retire
+// the "tap any item" hint for good.
+const HINT_DISMISSED_KEY = 'moon-dashboard-hint-dismissed';
+
 function formatTime(date: Date, timezone: string): string {
   return date.toLocaleTimeString('en-GB', {
     hour: '2-digit',
@@ -140,6 +144,9 @@ export default function Dashboard() {
     getUpcomingEvents(toLocalDate(new Date(), DEFAULT_TZ), 8, hemisphereFromTimezone(DEFAULT_TZ)),
   );
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
+  // Hidden on first paint (hydration-safe); the mount effect reveals it only for
+  // users who haven't yet dismissed it, so returning users never see a flash.
+  const [showHint, setShowHint] = useState(false);
 
   // Timezone-independent: moon phase, moon sign, venus, mercury
   const recalculateAstro = useCallback(() => {
@@ -181,6 +188,10 @@ export default function Dashboard() {
     setTimezone(storedTz);
     recalculateAstro();
     recalculateTz(storedTz, hemisphereFromTimezone(storedTz));
+    // Show the tap hint only to users who haven't dismissed it before.
+    if (localStorage.getItem(HINT_DISMISSED_KEY) !== '1') {
+      setShowHint(true);
+    }
   }, [recalculateAstro, recalculateTz]);
 
   // Keep the view fresh on long-open tabs: recompute on an interval and whenever
@@ -207,6 +218,9 @@ export default function Dashboard() {
   // Toggle expand/collapse for a given item key
   const handleToggle = useCallback((key: string) => {
     setExpandedKey(prev => (prev === key ? null : key));
+    // First interaction teaches the gesture; retire the hint permanently.
+    setShowHint(false);
+    localStorage.setItem(HINT_DISMISSED_KEY, '1');
   }, []);
 
   // Which region owns the currently expanded key. The hero renders its own
@@ -326,6 +340,14 @@ export default function Dashboard() {
 
       <main className="flex-1 px-4 sm:px-8 pt-4 pb-8 max-w-xl mx-auto w-full space-y-4">
 
+        {/* Discoverability hint: the disclosures aren't obviously tappable, so
+            name the gesture once, quietly, above the fold — until first tap. */}
+        {showHint && (
+          <p className="fade-in text-center text-xs text-text-tertiary">
+            Tap any item to reveal its meaning
+          </p>
+        )}
+
         {/* ── Hero: Moon Phase ── */}
         <section className="fade-in space-y-4" aria-label="Moon phase">
 
@@ -365,7 +387,7 @@ export default function Dashboard() {
                 )}
 
                 <div className="flex justify-center pt-1">
-                  <span className={`text-silver/50 text-xs inline-block transition-transform duration-300 motion-reduce:transition-none ${expandedKey === 'moon' ? 'rotate-180' : ''}`}>▾</span>
+                  <span className={`text-silver/75 text-base inline-block transition-transform duration-300 motion-reduce:transition-none ${expandedKey === 'moon' ? 'rotate-180' : ''}`}>▾</span>
                 </div>
               </div>
             </Disclosure>
@@ -384,7 +406,7 @@ export default function Dashboard() {
                     {moonSign.name} {moonSign.symbol}
                   </span>
                 </span>
-                <span className={`ml-1.5 text-silver/50 text-xs inline-block transition-transform duration-300 motion-reduce:transition-none ${expandedKey === 'moonSign' ? 'rotate-180' : ''}`}>▾</span>
+                <span className={`ml-1.5 text-silver/75 text-base inline-block transition-transform duration-300 motion-reduce:transition-none ${expandedKey === 'moonSign' ? 'rotate-180' : ''}`}>▾</span>
               </Disclosure>
             )}
           </div>
