@@ -1,0 +1,122 @@
+import { ImageResponse } from 'next/og';
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
+import { getMoonPhaseInfo, getUpcomingMajorPhases } from '@/lib/moon';
+import { getCurrentMoonSign, getCurrentSunSign, getNextSunSignIngress } from '@/lib/astro';
+import { getUpcomingSabbats } from '@/lib/sabbats';
+import { moonGeometry } from '@/lib/moonDisc';
+import { MOON_CORRESPONDENCES } from '@/data/moonCorrespondences';
+
+export const alt = 'Current moon phase, zodiac transit, and the next sabbat';
+export const size = { width: 1200, height: 630 };
+export const contentType = 'image/png';
+
+// Regenerate hourly so the card stays current. Note: Discord caches the image
+// per-URL, so an already-posted embed will not tick forward — only fresh posts
+// pick up the new render.
+export const revalidate = 3600;
+
+// The OG card is shared generically, so it is rendered for the northern
+// hemisphere in UTC rather than any one viewer's zone.
+const DAY = 86_400_000;
+
+// Whole-day countdown phrased "today / tomorrow / in N days" — always days, never
+// weeks, regardless of distance.
+function inDays(target: Date, now: Date): string {
+  const d = Math.round((target.getTime() - now.getTime()) / DAY);
+  if (d <= 0) return 'today';
+  if (d === 1) return 'tomorrow';
+  return `in ${d} days`;
+}
+
+function forDays(target: Date, now: Date): string {
+  const d = Math.max(0, Math.round((target.getTime() - now.getTime()) / DAY));
+  return d === 1 ? 'for 1 day' : `for ${d} days`;
+}
+
+export default async function Image() {
+  const [serif, serifBold, italic] = await Promise.all([
+    readFile(join(process.cwd(), 'assets/CormorantGaramond-Regular.ttf')),
+    readFile(join(process.cwd(), 'assets/CormorantGaramond-SemiBold.ttf')),
+    readFile(join(process.cwd(), 'assets/CormorantGaramond-Italic.ttf')),
+  ]);
+
+  const now = new Date();
+  const moon = getMoonPhaseInfo(now);
+  const moonSign = getCurrentMoonSign(now);
+  const sunSign = getCurrentSunSign(now);
+  const sunIngress = getNextSunSignIngress(now);
+  const nextPhase = getUpcomingMajorPhases(now, 2)[0];
+  const nextSabbat = getUpcomingSabbats(now, 12, 'north')[0];
+  const energy = MOON_CORRESPONDENCES[moon.name]?.energy ?? '';
+
+  // Real phase disc via the same geometry the dashboard uses.
+  const R = 150;
+  const C = 160;
+  const { litPath } = moonGeometry(moon.fraction, moon.phase < 0.5, 'north', C, C, R);
+
+  return new ImageResponse(
+    (
+      <div
+        style={{
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 56,
+          padding: '0 80px',
+          background: '#0b0d17',
+          color: '#e8e6f0',
+        }}
+      >
+        <svg width={300} height={300} viewBox="0 0 320 320">
+          <circle cx={C} cy={C} r={R} fill="#161a2b" />
+          <path d={litPath} fill="#e8e6f0" />
+          <circle cx={C} cy={C} r={R} fill="none" stroke="#2c3150" strokeWidth={2} />
+        </svg>
+
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+          <div style={{ fontSize: 22, letterSpacing: 5, color: '#6f6b96' }}>MOON DASHBOARD</div>
+          <div style={{ fontSize: 76, fontWeight: 600, lineHeight: 1.05, marginTop: 6 }}>{moon.name}</div>
+
+          <div style={{ fontSize: 30, color: '#c9c5e8', marginTop: 10 }}>
+            {`In ${moonSign.name} ${moonSign.symbol} · ${nextPhase.name} ${inDays(nextPhase.date, now)}`}
+          </div>
+
+          {energy && (
+            <div style={{ fontSize: 27, fontStyle: 'italic', color: '#8f8bb8', marginTop: 2 }}>
+              {energy}
+            </div>
+          )}
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 28, fontSize: 28 }}>
+            <div style={{ display: 'flex' }}>
+              {`Sun in ${sunSign.sign.name} `}
+              <span style={{ color: '#6f6b96', marginLeft: 8 }}>{forDays(sunIngress.date, now)}</span>
+            </div>
+            {nextSabbat && (
+              <div style={{ display: 'flex' }}>
+                Next sabbat
+                <span style={{ color: '#6f6b96', marginLeft: 8 }}>
+                  {`· ${nextSabbat.displayName} ${inDays(nextSabbat.date, now)}`}
+                </span>
+              </div>
+            )}
+          </div>
+
+          <div style={{ fontSize: 18, letterSpacing: 2, color: '#56527d', marginTop: 24 }}>
+            CLICK FOR LIVE DATA AND CORRESPONDENCES →
+          </div>
+        </div>
+      </div>
+    ),
+    {
+      ...size,
+      fonts: [
+        { name: 'Cormorant Garamond', data: serif, style: 'normal', weight: 400 },
+        { name: 'Cormorant Garamond', data: serifBold, style: 'normal', weight: 600 },
+        { name: 'Cormorant Garamond', data: italic, style: 'italic', weight: 400 },
+      ],
+    },
+  );
+}

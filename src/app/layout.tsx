@@ -9,7 +9,12 @@ const cormorant = Cormorant_Garamond({
   style: ['normal', 'italic'],
 });
 
+const baseUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
+  ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+  : 'http://localhost:3000';
+
 export const metadata: Metadata = {
+  metadataBase: new URL(baseUrl),
   title: 'Moon Dashboard',
   description: 'Moon phases, zodiac transits, and the Wheel of the Year',
   openGraph: {
