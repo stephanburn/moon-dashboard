@@ -1,36 +1,53 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Moon Dashboard
 
-## Getting Started
+A personal moon / sabbat dashboard — moon phases, zodiac transits, and the Wheel of the Year, computed locally and rendered client-side. No backend, no database, no external APIs.
 
-First, run the development server:
+**Live:** [moon.terriblerealms.com](https://moon.terriblerealms.com)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## What it does
+
+- **Hero moon** — a photographic lunar disc masked by a translucent shadow computed from true illuminated fraction and hemisphere, with the current phase name and peak time ("peaked yesterday" / "peaks in 3 days").
+- **Cycle spine** — a single vertical timeline: a "Now" node (Sun sign, Venus sign, today's sabbat) followed by upcoming events — moon phases, sun sign ingresses, sabbats, Venus ingresses, Mercury retrograde, Hekate's Deipnon — each with relative-time labels and an inline detail panel of correspondences (colours, crystals, herbs, ritual notes).
+- **Hemisphere-aware Wheel of the Year** — switching timezone to a Southern Hemisphere city automatically inverts the sabbat calendar.
+- **Mercury retrograde badge**, dynamic OG image for link previews, deploy commit hash in the footer.
+
+## Stack
+
+Next.js 16 (App Router), React 19, TypeScript, Tailwind v4, `suncalc` + `astronomy-engine` for lunar calculations. Deployed on Vercel.
+
+## Architecture
+
+```
+src/
+  app/
+    page.tsx          -- thin server shell, renders <Dashboard />
+    layout.tsx         -- root layout, fonts
+    globals.css         -- design tokens, starfield, glass cards
+    api/og/             -- dynamic Open Graph image route
+  lib/
+    moon.ts             -- moon phase calculations (suncalc + astronomy-engine)
+    moonDisc.ts          -- illuminated fraction / shadow geometry for the lunar disc
+    astro.ts             -- sun sign + moon sign (ecliptic longitude)
+    sabbats.ts            -- Wheel of the Year calendar (hemisphere-aware)
+    planets.ts             -- Mercury retrograde + Venus ingress lookup tables
+    upcomingEvents.ts       -- merges all event types into one sorted list
+    config.ts                -- DEFAULT_TZ + PLANET_DATA_EXPIRY constants
+  data/
+    *Correspondences.ts       -- correspondence content, kept separate from logic
+  components/
+    Dashboard.tsx               -- main client component, holds all app state
+    MoonDisc.tsx                  -- photographic moon + phase-shadow mask
+    DetailPanel.tsx                -- expand/collapse correspondence panel
+    TimezoneSelector.tsx
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+`planets.ts` is a hand-maintained lookup table that expires end of 2027 (`PLANET_DATA_EXPIRY` in `config.ts`).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Development
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm install
+npm run dev
+```
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Before committing: `npx tsc --noEmit` and `npx eslint` should both be clean.
