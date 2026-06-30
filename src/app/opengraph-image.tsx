@@ -59,6 +59,7 @@ export default async function Image() {
     (
       <div
         style={{
+          position: 'relative',
           width: '100%',
           height: '100%',
           display: 'flex',
@@ -103,10 +104,22 @@ export default async function Image() {
               </div>
             )}
           </div>
+        </div>
 
-          <div style={{ fontSize: 25, letterSpacing: 2, color: '#8580b0', marginTop: 28 }}>
-            CLICK LINK FOR LIVE DATA AND CORRESPONDENCES →
-          </div>
+        <div
+          style={{
+            position: 'absolute',
+            bottom: 56,
+            left: 0,
+            right: 0,
+            display: 'flex',
+            justifyContent: 'center',
+            fontSize: 33,
+            letterSpacing: 3,
+            color: '#938ec0',
+          }}
+        >
+          CLICK LINK FOR LIVE DATA AND CORRESPONDENCES →
         </div>
       </div>
     ),
