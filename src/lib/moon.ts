@@ -201,6 +201,34 @@ export function getUpcomingMajorPhases(from: Date, upToMonths = 6): UpcomingMoon
   return results;
 }
 
+export interface UpcomingDeipnon {
+  date: Date;        // the dark-moon night the Deipnon is observed (eve of the new moon)
+  newMoonDate: Date; // the new moon it precedes
+}
+
+/**
+ * Upcoming Deipnons: the dark-moon night before each new moon, when Hekate is
+ * honoured at the close of the lunar month. Taken as the night preceding the
+ * exact new moon, so it always lands the evening before the New Moon node.
+ */
+export function getUpcomingDeipnons(from: Date, upToMonths = 6): UpcomingDeipnon[] {
+  const results: UpcomingDeipnon[] = [];
+  const maxTime = from.getTime() + upToMonths * 30 * DAY;
+
+  let search = SearchMoonPhase(0, from, 40);
+  while (search && search.date.getTime() <= maxTime) {
+    const deipnon = new Date(search.date.getTime() - DAY);
+    if (deipnon.getTime() >= from.getTime()) {
+      results.push({ date: deipnon, newMoonDate: search.date });
+    }
+    // Advance into the next synodic month and search the next new moon.
+    const nextStart = new Date(search.date.getTime() + (SYNODIC_DAYS - 2) * DAY);
+    search = SearchMoonPhase(0, nextStart, 40);
+  }
+
+  return results;
+}
+
 // Keep original export for backward compatibility
 export function getNextMoonPhases(from: Date = new Date()): UpcomingMoonPhase[] {
   return getUpcomingMajorPhases(from, 2).slice(0, 2);

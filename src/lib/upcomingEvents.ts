@@ -1,10 +1,10 @@
-import { getUpcomingMajorPhases } from './moon';
+import { getUpcomingMajorPhases, getUpcomingDeipnons } from './moon';
 import { getUpcomingSunIngresses } from './astro';
 import { getUpcomingSabbats } from './sabbats';
 import { getUpcomingVenusIngresses, getUpcomingMercuryRetrogrades } from './planets';
 import { PLANET_DATA_EXPIRY } from './config';
 
-export type UpcomingEventType = 'moon' | 'ingress' | 'sabbat' | 'venus' | 'mercury-retrograde' | 'data-expiry';
+export type UpcomingEventType = 'moon' | 'deipnon' | 'ingress' | 'sabbat' | 'venus' | 'mercury-retrograde' | 'data-expiry';
 
 export interface UpcomingEvent {
   type: UpcomingEventType;
@@ -35,6 +35,7 @@ export function getUpcomingEvents(
   hemisphere: 'north' | 'south' = 'north',
 ): UpcomingEvent[] {
   const moonPhases  = getUpcomingMajorPhases(from, 6);
+  const deipnons    = getUpcomingDeipnons(from, 6);
   const ingresses   = getUpcomingSunIngresses(from, 10);
   const sabbats     = getUpcomingSabbats(from, 6, hemisphere);
   const venusEvents = getUpcomingVenusIngresses(from, 14);
@@ -48,6 +49,13 @@ export function getUpcomingEvents(
       date: p.date,
       key: `moon-${p.name}-${p.date.getTime()}`,
       moonPhaseName: p.name,
+    })),
+    ...deipnons.map(d => ({
+      type: 'deipnon' as const,
+      name: "Hekate's Deipnon",
+      icon: '⚸',
+      date: d.date,
+      key: `deipnon-${d.date.getTime()}`,
     })),
     ...ingresses.map(ing => ({
       type: 'ingress' as const,

@@ -46,6 +46,10 @@ export interface MoonSignDetailContent {
   signSymbol: string;
 }
 
+export interface DeipnonDetailContent {
+  type: 'deipnon';
+}
+
 export interface DataExpiryDetailContent {
   type: 'data-expiry';
 }
@@ -57,6 +61,7 @@ export type DetailContent =
   | VenusDetailContent
   | MercuryRetroDetailContent
   | MoonSignDetailContent
+  | DeipnonDetailContent
   | DataExpiryDetailContent;
 
 // ── Helpers ────────────────────────────────────────────────────────────────
@@ -304,6 +309,41 @@ function MercuryRetroDetail({ signs, signFlavour }: { signs: string; signFlavour
   );
 }
 
+function DeipnonDetail() {
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <span className="font-display text-3xl text-amber-light">⚸</span>
+        <div>
+          <p className="font-display text-xl text-foreground">Hekate&apos;s Deipnon</p>
+          <p className="text-xs text-text-tertiary mt-0.5">Dark of the moon</p>
+        </div>
+      </div>
+
+      <p className="text-foreground/90 text-sm leading-relaxed">
+        The Deipnon is the meal laid out for Hekate on the last night of the lunar
+        month, the dark of the moon just before the new crescent returns. It marks
+        the close of one cycle before the next begins.
+      </p>
+
+      <p className="text-foreground/90 text-sm leading-relaxed">
+        Traditionally it is a night for clearing the house, settling debts, and
+        carrying out what is finished. An offering is left at the crossroads for
+        Hekate, who keeps the keys between the worlds, with thanks and a request
+        for protection through the turn of the cycle.
+      </p>
+
+      <div className="border-l-2 border-amber/30 pl-3">
+        <p className="text-xs text-text-tertiary uppercase tracking-wider mb-1">Observance</p>
+        <p className="text-sm text-text-secondary leading-relaxed">
+          Cleanse and release, give the offering after dark, and do not look back
+          on the way home.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function DataExpiryDetail() {
   return (
     <div className="space-y-3">
@@ -384,6 +424,7 @@ export default function DetailPanel({ content, onClose, id }: Props) {
             {content.type === 'sabbat'             && <SabbatDetail       sabbatName={content.sabbatName} />}
             {content.type === 'venus'              && <VenusDetail        signName={content.signName} />}
             {content.type === 'mercury-retrograde' && <MercuryRetroDetail signs={content.signs} signFlavour={content.signFlavour} />}
+            {content.type === 'deipnon'            && <DeipnonDetail />}
             {content.type === 'data-expiry'        && <DataExpiryDetail />}
           </div>
         </div>

@@ -276,6 +276,9 @@ export default function Dashboard() {
     if (event.type === 'mercury-retrograde' && event.mercuryRetroSigns) {
       return { type: 'mercury-retrograde', signs: event.mercuryRetroSigns, signFlavour: event.mercuryRetroSignFlavour ?? '' };
     }
+    if (event.type === 'deipnon') {
+      return { type: 'deipnon' };
+    }
     if (event.type === 'data-expiry') {
       return { type: 'data-expiry' };
     }
