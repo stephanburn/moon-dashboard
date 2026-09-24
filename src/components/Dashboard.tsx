@@ -9,6 +9,7 @@ import { MoonPhaseDetail, MoonSignDetail } from './details';
 import { buildDashboardModel } from '@/lib/dashboardModel';
 import { DEFAULT_TZ } from '@/lib/config';
 import { formatDay } from '@/lib/format';
+import { dayOf } from '@/lib/days';
 import { SIGN_SYMBOLS } from '@/lib/names';
 import { STORAGE_KEY, normalizeTimezone } from '@/lib/timezones';
 
@@ -133,12 +134,12 @@ export default function Dashboard() {
                 getMercuryStatus but not currently shown anywhere. */}
             {mercury.status === 'retrograde' && mercury.period && (
               <div
-                aria-label={`Mercury retrograde until ${formatDay(mercury.period.retrogradeEnd)}`}
+                aria-label={`Mercury retrograde until ${formatDay(dayOf(mercury.period.retrogradeEnd, timezone))}`}
                 className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-950/60 border border-red-700/50 text-xs text-red-300 flex-shrink-0"
               >
                 <span aria-hidden>☿</span>
                 <span>Rx</span>
-                <span className="hidden sm:inline">· until {formatDay(mercury.period.retrogradeEnd)}</span>
+                <span className="hidden sm:inline">· until {formatDay(dayOf(mercury.period.retrogradeEnd, timezone))}</span>
               </div>
             )}
             <TimezoneSelector value={timezone} onChange={handleTimezoneChange} />

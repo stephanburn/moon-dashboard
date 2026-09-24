@@ -58,9 +58,9 @@ export default async function Image() {
   const today = dayOf(now, TZ);
   const moon = getMoonPhaseInfo(now);
   const moonSign = getCurrentMoonSign(now);
-  const sunSign = getCurrentSunSign(today);
+  const sunSign = getCurrentSunSign(now);
   const nextPhase = getUpcomingMajorPhases(now, new Date(now.getTime() + 40 * DAY_MS))[0];
-  const nextSabbat = getUpcomingSabbats(today, addDays(today, 366), 'north')[0];
+  const nextSabbat = getUpcomingSabbats(today, addDays(today, 366), 'north', TZ)[0];
   const energy = MOON_CORRESPONDENCES[moon.name]?.energy ?? '';
 
   // Real phase disc via the same geometry the dashboard uses.
@@ -105,7 +105,7 @@ export default async function Image() {
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 26, fontSize: 39 }}>
               <div style={{ display: 'flex' }}>
                 {`Sun in ${sunSign.sign} `}
-                <span style={{ color: '#9690c4', marginLeft: 10 }}>{forDays(addDays(sunSign.until, 1), today)}</span>
+                <span style={{ color: '#9690c4', marginLeft: 10 }}>{forDays(dayOf(sunSign.until, TZ), today)}</span>
               </div>
               {nextSabbat && (
                 <div style={{ display: 'flex' }}>

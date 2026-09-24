@@ -1,4 +1,5 @@
-import { makeDay, type CalendarDay } from './days';
+import { Seasons } from 'astronomy-engine';
+import { dayOf, makeDay, type CalendarDay } from './days';
 import type { SabbatName } from './names';
 import type { Hemisphere } from './timezones';
 
@@ -6,6 +7,7 @@ export interface Sabbat {
   name: SabbatName;    // key into SABBAT_CORRESPONDENCES
   displayName: string; // shown in the UI (e.g. "Spring Equinox (Ostara)")
   day: CalendarDay;
+  at?: Date;           // the exact solstice/equinox, for astronomical sabbats
 }
 
 const DISPLAY_NAMES: Record<SabbatName, string> = {
@@ -19,32 +21,26 @@ const DISPLAY_NAMES: Record<SabbatName, string> = {
   Yule: 'Winter Solstice (Yule)',
 };
 
-// Approximate solstice/equinox dates through 2030 (see SABBAT_DATA_EXPIRY in
-// config.ts). Beyond that, the nearest known year is used; drift is ~1
-// day/decade. These are close enough for a personal dashboard.
 type Season = 'march' | 'june' | 'september' | 'december';
 
-const SEASON_DATES: Record<Season, Record<number, [month: number, day: number]>> = {
-  march: {
-    2025: [3, 20], 2026: [3, 20], 2027: [3, 20], 2028: [3, 20], 2029: [3, 20], 2030: [3, 20],
-  },
-  june: {
-    2025: [6, 21], 2026: [6, 21], 2027: [6, 21], 2028: [6, 20], 2029: [6, 21], 2030: [6, 21],
-  },
-  september: {
-    2025: [9, 22], 2026: [9, 23], 2027: [9, 23], 2028: [9, 22], 2029: [9, 22], 2030: [9, 23],
-  },
-  december: {
-    2025: [12, 21], 2026: [12, 21], 2027: [12, 22], 2028: [12, 21], 2029: [12, 21], 2030: [12, 22],
-  },
-};
+// The exact solstice/equinox instant. Its calendar day depends on the viewer's
+// timezone: the Sep 2026 equinox (00:05 UTC on the 23rd) falls on the 22nd
+// everywhere in the Americas.
+const seasonsByYear = new Map<number, Record<Season, Date>>();
 
-function seasonDay(season: Season, year: number): CalendarDay {
-  const table = SEASON_DATES[season];
-  const years = Object.keys(table).map(Number);
-  const nearest = years.reduce((a, b) => (Math.abs(b - year) < Math.abs(a - year) ? b : a));
-  const [month, day] = table[nearest];
-  return makeDay(year, month, day);
+function seasonInstant(season: Season, year: number): Date {
+  let times = seasonsByYear.get(year);
+  if (!times) {
+    const s = Seasons(year);
+    times = {
+      march: s.mar_equinox.date,
+      june: s.jun_solstice.date,
+      september: s.sep_equinox.date,
+      december: s.dec_solstice.date,
+    };
+    seasonsByYear.set(year, times);
+  }
+  return times[season];
 }
 
 // Each sabbat sits either on a fixed date or on a solstice/equinox. The
@@ -75,16 +71,17 @@ const WHEEL: Record<Hemisphere, [SabbatName, Slot][]> = {
   ],
 };
 
-export function getSabbatsForYear(year: number, hemisphere: Hemisphere): Sabbat[] {
-  return WHEEL[hemisphere].map(([name, slot]) => ({
-    name,
-    displayName: DISPLAY_NAMES[name],
-    day: 'fixed' in slot ? makeDay(year, slot.fixed[0], slot.fixed[1]) : seasonDay(slot.season, year),
-  }));
+export function getSabbatsForYear(year: number, hemisphere: Hemisphere, timezone: string): Sabbat[] {
+  return WHEEL[hemisphere].map(([name, slot]): Sabbat => {
+    const base = { name, displayName: DISPLAY_NAMES[name] };
+    if ('fixed' in slot) return { ...base, day: makeDay(year, slot.fixed[0], slot.fixed[1]) };
+    const at = seasonInstant(slot.season, year);
+    return { ...base, day: dayOf(at, timezone), at };
+  });
 }
 
-function sabbatsAround(year: number, hemisphere: Hemisphere): Sabbat[] {
-  return [year - 1, year, year + 1].flatMap(y => getSabbatsForYear(y, hemisphere));
+function sabbatsAround(year: number, hemisphere: Hemisphere, timezone: string): Sabbat[] {
+  return [year - 1, year, year + 1].flatMap(y => getSabbatsForYear(y, hemisphere, timezone));
 }
 
 export interface SabbatContext {
@@ -92,8 +89,8 @@ export interface SabbatContext {
   nextSabbat: Sabbat | null; // the next sabbat strictly after today
 }
 
-export function getSabbatContext(today: CalendarDay, hemisphere: Hemisphere): SabbatContext {
-  const all = sabbatsAround(Number(today.slice(0, 4)), hemisphere);
+export function getSabbatContext(today: CalendarDay, hemisphere: Hemisphere, timezone: string): SabbatContext {
+  const all = sabbatsAround(Number(today.slice(0, 4)), hemisphere, timezone);
   return {
     today: all.find(s => s.day === today) ?? null,
     nextSabbat: all.filter(s => s.day > today).sort((a, b) => a.day.localeCompare(b.day))[0] ?? null,
@@ -105,8 +102,9 @@ export function getUpcomingSabbats(
   after: CalendarDay,
   through: CalendarDay,
   hemisphere: Hemisphere,
+  timezone: string,
 ): Sabbat[] {
-  return sabbatsAround(Number(after.slice(0, 4)), hemisphere)
+  return sabbatsAround(Number(after.slice(0, 4)), hemisphere, timezone)
     .filter(s => s.day > after && s.day <= through)
     .sort((a, b) => a.day.localeCompare(b.day));
 }

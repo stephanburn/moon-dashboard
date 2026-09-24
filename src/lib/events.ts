@@ -6,8 +6,7 @@ import {
   getUpcomingMercuryRetrogrades,
   type MercuryRetrogradePeriod,
 } from './planets';
-import { PLANET_DATA_EXPIRY } from './config';
-import { addDays, dayOf, diffDays, type CalendarDay } from './days';
+import { addDays, dayOf, type CalendarDay } from './days';
 import type { MajorPhaseName, SignName } from './names';
 import type { Hemisphere } from './timezones';
 
@@ -23,11 +22,10 @@ interface EventBase {
 export type SpineEvent = EventBase & (
   | { kind: 'moon-phase'; at: Date; phase: MajorPhaseName }
   | { kind: 'deipnon'; newMoonAt: Date }
-  | { kind: 'sun-ingress'; sign: SignName }
+  | { kind: 'sun-ingress'; at: Date; sign: SignName }
   | { kind: 'sabbat'; sabbat: Sabbat }
-  | { kind: 'venus-ingress'; sign: SignName; retrograde: boolean }
-  | { kind: 'mercury-rx'; period: MercuryRetrogradePeriod }
-  | { kind: 'data-expiry' }
+  | { kind: 'venus-ingress'; at: Date; sign: SignName; retrograde: boolean }
+  | { kind: 'mercury-rx'; at: Date; period: MercuryRetrogradePeriod }
 );
 
 export type SpineEventKind = SpineEvent['kind'];
@@ -50,12 +48,12 @@ export function getUpcomingEvents(
   const through = addDays(today, HORIZON_DAYS);
   const events: SpineEvent[] = [];
 
-  // Start a day early so phases earlier today, and a Deipnon today for a new
-  // moon tomorrow, are both found; the day filter below trims the rest.
-  const phases = getUpcomingMajorPhases(
-    new Date(now.getTime() - DAY_MS),
-    new Date(now.getTime() + (HORIZON_DAYS + 1) * DAY_MS),
-  );
+  // Search from a day early so events earlier today, and a Deipnon today for a
+  // new moon tomorrow, are found; the day filter below trims the rest.
+  const from = new Date(now.getTime() - DAY_MS);
+  const to = new Date(now.getTime() + (HORIZON_DAYS + 1) * DAY_MS);
+
+  const phases = getUpcomingMajorPhases(from, to);
   for (const p of phases) {
     events.push({
       kind: 'moon-phase',
@@ -71,30 +69,39 @@ export function getUpcomingEvents(
     }
   }
 
-  for (const ing of getUpcomingSunIngresses(today, through)) {
-    events.push({ kind: 'sun-ingress', key: `sun-${ing.sign}-${ing.day}`, day: ing.day, sign: ing.sign });
+  for (const ing of getUpcomingSunIngresses(from, to)) {
+    events.push({
+      kind: 'sun-ingress',
+      key: `sun-${ing.sign}-${ing.at.getTime()}`,
+      day: dayOf(ing.at, timezone),
+      at: ing.at,
+      sign: ing.sign,
+    });
   }
 
-  for (const s of getUpcomingSabbats(today, through, hemisphere)) {
+  for (const s of getUpcomingSabbats(today, through, hemisphere, timezone)) {
     events.push({ kind: 'sabbat', key: `sabbat-${s.name}-${s.day}`, day: s.day, sabbat: s });
   }
 
-  for (const v of getUpcomingVenusIngresses(today, through)) {
+  for (const v of getUpcomingVenusIngresses(from, to)) {
     events.push({
       kind: 'venus-ingress',
-      key: `venus-${v.sign}-${v.day}`,
-      day: v.day,
+      key: `venus-${v.sign}-${v.at.getTime()}`,
+      day: dayOf(v.at, timezone),
+      at: v.at,
       sign: v.sign,
       retrograde: v.retrograde,
     });
   }
 
-  for (const rx of getUpcomingMercuryRetrogrades(today, through)) {
-    events.push({ kind: 'mercury-rx', key: `mercury-rx-${rx.retrogradeStart}`, day: rx.retrogradeStart, period: rx });
-  }
-
-  if (diffDays(PLANET_DATA_EXPIRY, today) <= 90) {
-    events.push({ kind: 'data-expiry', key: 'data-expiry', day: PLANET_DATA_EXPIRY });
+  for (const rx of getUpcomingMercuryRetrogrades(from, to)) {
+    events.push({
+      kind: 'mercury-rx',
+      key: `mercury-rx-${rx.retrogradeStart.getTime()}`,
+      day: dayOf(rx.retrogradeStart, timezone),
+      at: rx.retrogradeStart,
+      period: rx,
+    });
   }
 
   // Same day: all-day events first, then timed events in time order.

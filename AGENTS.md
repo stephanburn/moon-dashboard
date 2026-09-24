@@ -8,7 +8,7 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 A personal moon / sabbat dashboard. Single page, no backend, no DB, no external data APIs — everything is computed locally. The page is statically prerendered with ISR (`revalidate = 3600`) and hydrated; all real values are recomputed in the browser. Aesthetic and astronomical/spiritual accuracy matter more than generic SaaS patterns.
 
-**Stack:** Next.js 16 (App Router), React 19, Tailwind v4, `astronomy-engine` (moon phases/illumination), Vitest. Deployed on Vercel with Vercel Analytics.
+**Stack:** Next.js 16 (App Router), React 19, Tailwind v4, `astronomy-engine` (all astronomy), Vitest. Deployed on Vercel with Vercel Analytics.
 
 **Shape:**
 - `src/app/page.tsx` is a thin server shell; the whole app is `src/components/Dashboard.tsx` (one `'use client'` component holding all state).
@@ -17,7 +17,8 @@ A personal moon / sabbat dashboard. Single page, no backend, no DB, no external 
 - `src/components/CycleSpine.tsx` renders the Now node + upcoming-event timeline; `DetailPanel.tsx` is the panel chrome, `details.tsx` the panel contents, and `eventKinds.tsx` maps each event kind to its icon, title and detail. Adding an event kind = extend `SpineEvent` + one `EVENT_KINDS` entry; `TimezoneSelector.tsx` is a plain `<select>` (Dashboard persists the choice in `localStorage`).
 
 **Watch out for:**
-- `planets.ts` Mercury/Venus tables are hand-maintained and expire end of 2027 (`PLANET_DATA_EXPIRY`). They are lookup data, not computed; `planetsTruth.test.ts` cross-checks them against `astronomy-engine`. Sun-sign dates (`astro.ts`) and solstice/equinox dates (`sabbats.ts`) are also fixed tables.
+- All astronomy is computed with `astronomy-engine` through `src/lib/ephemeris.ts` (geocentric apparent tropical longitude; sign changes, stations and longitude crossings bisected to the minute). Don't reintroduce hand-maintained date tables. Tests in `ephemeris.test.ts` compare against *published* almanac values (sources listed in the file); never paste the code's own output in as a fixture.
+- `planets.ts` caches its Venus/Mercury scans per UTC day; a cold model build is ~100 ms in Node, a refresh ~15 ms.
 - Hemisphere (N/S) is derived from the selected timezone via a hardcoded `SOUTHERN_TIMEZONES` set in `src/lib/timezones.ts` (a test checks it stays a subset of the selector list).
 - Time model (`src/lib/days.ts`): **instants** are `Date`s; **calendar days** are `CalendarDay` strings (`'YYYY-MM-DD'`). An instant becomes a day only via `dayOf(instant, selectedTimezone)`. Never construct a "day" as a device-local midnight `Date`, and format days with `formatDay` (UTC-based). `npm run test:tz` runs the suite under four device zones to catch violations.
 - `.next/` sometimes accumulates duplicate `* 2.ts` / `* 3.ts` files (Finder/iCloud) that break `tsc`; delete `.next` if you see a spurious `Duplicate identifier` error.

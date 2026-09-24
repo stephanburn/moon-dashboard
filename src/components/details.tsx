@@ -7,8 +7,9 @@ import { SABBAT_CORRESPONDENCES } from '@/data/sabbatCorrespondences';
 import { MOON_SIGN_CORRESPONDENCES } from '@/data/moonSignCorrespondences';
 import { VENUS_CORRESPONDENCES } from '@/data/venusCorrespondences';
 import type { MoonSignChange } from '@/lib/astro';
-import type { MercuryRetrogradePeriod } from '@/lib/planets';
-import { PLANET_DATA_EXPIRY } from '@/lib/config';
+import { MERCURY_RETROGRADE_CORRESPONDENCES } from '@/data/mercuryRetrogradeCorrespondences';
+import { mercuryRetrogradeSigns, type MercuryRetrogradePeriod } from '@/lib/planets';
+import { dayOf } from '@/lib/days';
 import { formatDay, formatDayAndTime } from '@/lib/format';
 import { SIGN_SYMBOLS, type PhaseName, type SabbatName, type SignName } from '@/lib/names';
 
@@ -221,13 +222,25 @@ export function VenusDetail({ sign }: { sign: SignName }) {
 
 // ── Mercury retrograde ─────────────────────────────────────────────────────
 
-export function MercuryRetroDetail({ period }: { period: MercuryRetrogradePeriod }) {
+export function MercuryRetroDetail({ period, timezone }: { period: MercuryRetrogradePeriod; timezone: string }) {
+  const signs = mercuryRetrogradeSigns(period);
+  const day = (d: Date) => formatDay(dayOf(d, timezone), { day: 'numeric', month: 'short' });
+
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3">
         <span className="font-display text-3xl text-amber-light">☿℞</span>
-        <span className="text-sm text-text-secondary">{period.signs}</span>
+        <span className="text-sm text-text-secondary">{signs}</span>
       </div>
+
+      <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-xs">
+        <dt className="text-text-tertiary">Pre-shadow</dt>
+        <dd className="text-text-secondary">from {day(period.shadowStart)}</dd>
+        <dt className="text-text-tertiary">Retrograde</dt>
+        <dd className="text-text-secondary">{day(period.retrogradeStart)} to {day(period.retrogradeEnd)}</dd>
+        <dt className="text-text-tertiary">Post-shadow</dt>
+        <dd className="text-text-secondary">until {day(period.shadowEnd)}</dd>
+      </dl>
 
       <div>
         <p className="text-foreground/90 text-sm leading-relaxed">
@@ -240,8 +253,10 @@ export function MercuryRetroDetail({ period }: { period: MercuryRetrogradePeriod
       </div>
 
       <div className="border-l-2 border-amber/30 pl-3">
-        <p className="text-xs text-text-tertiary uppercase tracking-wider mb-1">{period.signs}</p>
-        <p className="text-sm text-text-secondary leading-relaxed">{period.signFlavour}</p>
+        <p className="text-xs text-text-tertiary uppercase tracking-wider mb-1">In {period.stationSign}</p>
+        <p className="text-sm text-text-secondary leading-relaxed">
+          {MERCURY_RETROGRADE_CORRESPONDENCES[period.stationSign].flavour}
+        </p>
       </div>
     </div>
   );
@@ -280,25 +295,6 @@ export function DeipnonDetail() {
           on the way home.
         </p>
       </div>
-    </div>
-  );
-}
-
-// ── Data expiry ────────────────────────────────────────────────────────────
-
-export function DataExpiryDetail() {
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-3">
-        <span className="text-amber-light text-xl">⚠</span>
-        <p className="font-display text-lg text-foreground">Planetary data expiring</p>
-      </div>
-      <p className="text-foreground/90 text-sm leading-relaxed">
-        The Venus and Mercury lookup tables in this dashboard cover up to {formatDay(PLANET_DATA_EXPIRY)}.
-        After that date, planetary positions will be incorrect. To keep the dashboard accurate,
-        the data in <code className="text-amber/70 text-xs">src/lib/planets.ts</code> needs
-        to be extended with ephemeris data beyond that date.
-      </p>
     </div>
   );
 }

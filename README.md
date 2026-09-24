@@ -13,7 +13,7 @@ A personal moon / sabbat dashboard — moon phases, zodiac transits, and the Whe
 
 ## Stack
 
-Next.js 16 (App Router), React 19, TypeScript, Tailwind v4, `astronomy-engine` for moon phase timing and illumination, Vitest for tests. Deployed on Vercel.
+Next.js 16 (App Router), React 19, TypeScript, Tailwind v4, `astronomy-engine` for all astronomical calculations, Vitest for tests. Deployed on Vercel.
 
 ## Architecture
 
@@ -26,18 +26,19 @@ src/
     error.tsx             -- error boundary (offers to clear the stored timezone)
     opengraph-image.tsx   -- dynamic, date-stamped Open Graph image
   lib/
-    moon.ts               -- moon phase, peaks, upcoming quarters, Deipnon (astronomy-engine)
+    ephemeris.ts          -- ecliptic longitude, sign changes, stations, longitude crossings
+    moon.ts               -- moon phase, peaks, upcoming quarters
     moonDisc.ts           -- SVG geometry for the lit portion of the lunar disc
-    astro.ts              -- sun sign (fixed date table) + moon sign (Meeus approximation)
-    sabbats.ts            -- Wheel of the Year calendar (hemisphere-aware)
-    planets.ts            -- Mercury retrograde + Venus ingress lookup tables
+    astro.ts              -- sun sign and ingresses, moon sign and ingresses
+    sabbats.ts            -- Wheel of the Year (hemisphere-aware; solstices/equinoxes from Seasons())
+    planets.ts            -- Mercury retrogrades with shadows, Venus ingresses (cached per day)
     events.ts             -- SpineEvent union; merges all event kinds into one sorted list
     dashboardModel.ts     -- pure (now, timezone) -> everything the dashboard shows
     days.ts               -- CalendarDay ('YYYY-MM-DD') vs instants; dayOf(instant, tz)
     names.ts              -- SignName / SabbatName / PhaseName unions used as content keys
     timezones.ts          -- selectable zones, hemisphere lookup, stored-value validation
     format.ts             -- all date/time formatting
-    config.ts             -- DEFAULT_TZ, PLANET_DATA_EXPIRY, SABBAT_DATA_EXPIRY
+    config.ts             -- DEFAULT_TZ
     __tests__/            -- Vitest suite
   data/
     *Correspondences.ts   -- correspondence content, kept separate from logic
@@ -51,7 +52,7 @@ src/
     TimezoneSelector.tsx  -- zone <select> (persistence is handled in Dashboard)
 ```
 
-`planets.ts` is a hand-maintained lookup table that expires end of 2027 (`PLANET_DATA_EXPIRY` in `config.ts`). The tables are cross-checked against `astronomy-engine` by `planetsTruth.test.ts`.
+Every astronomical value is computed with `astronomy-engine`; there are no hand-maintained tables and nothing expires. `ephemeris.test.ts` checks the results against published almanac values.
 
 ## Development
 

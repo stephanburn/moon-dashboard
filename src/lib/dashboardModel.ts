@@ -26,7 +26,7 @@ export interface DashboardModel {
   moonSign: SignName;
   moonSignChanges: MoonSignChange[];
   sunSign: SunSignInfo;
-  venusSign: SignName | null;
+  venusSign: SignName;
   mercury: MercuryInfo;
   sabbatToday: Sabbat | null;
   events: SpineEvent[];
@@ -63,10 +63,10 @@ export function buildDashboardModel(now: Date, timezone: string): DashboardModel
     moonPeakText: formatPeakText(moonPeak.phaseName, moonPeak.peakTime, now, timezone),
     moonSign: getCurrentMoonSign(now),
     moonSignChanges: getUpcomingMoonSignChanges(now, 3),
-    sunSign: getCurrentSunSign(today),
-    venusSign: getCurrentVenusSign(today),
-    mercury: getMercuryStatus(today),
-    sabbatToday: getSabbatContext(today, hemisphere).today,
+    sunSign: getCurrentSunSign(now),
+    venusSign: getCurrentVenusSign(now),
+    mercury: getMercuryStatus(now),
+    sabbatToday: getSabbatContext(today, hemisphere, timezone).today,
     events,
   };
 }

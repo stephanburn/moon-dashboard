@@ -3,7 +3,6 @@ import type { SpineEvent, SpineEventKind } from '@/lib/events';
 import type { Hemisphere } from '@/lib/timezones';
 import { SIGN_SYMBOLS, type MajorPhaseName } from '@/lib/names';
 import {
-  DataExpiryDetail,
   DeipnonDetail,
   MercuryRetroDetail,
   MoonPhaseDetail,
@@ -66,12 +65,7 @@ const EVENT_KINDS: { [K in SpineEventKind]: KindSpec<K> } = {
   'mercury-rx': {
     icon: () => '☿︎',
     title: () => 'Mercury Retrograde ☿℞',
-    Detail: ({ event }) => <MercuryRetroDetail period={event.period} />,
-  },
-  'data-expiry': {
-    icon: () => '⚠︎',
-    title: () => 'Planetary data expires — update needed',
-    Detail: () => <DataExpiryDetail />,
+    Detail: ({ event, ctx }) => <MercuryRetroDetail period={event.period} timezone={ctx.timezone} />,
   },
 };
 

@@ -6,7 +6,7 @@ import { EventDetail, eventIcon, eventTitle, type EventContext } from './eventKi
 import type { SpineEvent } from '@/lib/events';
 import type { SunSignInfo } from '@/lib/astro';
 import type { Sabbat } from '@/lib/sabbats';
-import type { CalendarDay } from '@/lib/days';
+import { dayOf, type CalendarDay } from '@/lib/days';
 import { SIGN_SYMBOLS, type SignName } from '@/lib/names';
 import { formatDay, formatRelativeDays } from '@/lib/format';
 
@@ -17,7 +17,7 @@ interface Props {
   today: CalendarDay;
   todayLabel: string;
   sunSign: SunSignInfo;
-  venusSign: SignName | null;
+  venusSign: SignName;
   sabbatToday: Sabbat | null;
   events: SpineEvent[];
   ctx: EventContext;
@@ -105,25 +105,23 @@ export default function CycleSpine({
             >
               <span className="text-sm text-foreground">
                 <span className="text-amber-light">{SIGN_SYMBOLS[sunSign.sign]}</span> {sunSign.sign}
-                <span className="text-text-tertiary"> · until {formatDay(sunSign.until)}</span>
+                <span className="text-text-tertiary"> · until {formatDay(dayOf(sunSign.until, ctx.timezone))}</span>
               </span>
               <Chevron open={expandedKey === 'sunSign'} />
             </button>
 
-            {venusSign && (
-              <button
-                type="button"
-                onClick={() => onToggle('venusNow')}
-                aria-expanded={expandedKey === 'venusNow'}
-                aria-controls="spine-panel-venus"
-                className="inline-flex items-center gap-2 disclosure-base rounded-lg -mx-1 px-1 py-0.5 min-h-[44px] transition-colors hover:bg-hover-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/40"
-              >
-                <span className="text-sm text-text-tertiary">
-                  <span className="text-white/20">·</span> <span className="text-amber-light/80">{SIGN_SYMBOLS[venusSign]}</span> {venusSign}
-                </span>
-                <Chevron open={expandedKey === 'venusNow'} />
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => onToggle('venusNow')}
+              aria-expanded={expandedKey === 'venusNow'}
+              aria-controls="spine-panel-venus"
+              className="inline-flex items-center gap-2 disclosure-base rounded-lg -mx-1 px-1 py-0.5 min-h-[44px] transition-colors hover:bg-hover-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/40"
+            >
+              <span className="text-sm text-text-tertiary">
+                <span className="text-white/20">·</span> <span className="text-amber-light/80">{SIGN_SYMBOLS[venusSign]}</span> {venusSign}
+              </span>
+              <Chevron open={expandedKey === 'venusNow'} />
+            </button>
           </div>
 
           {expandedKey === 'sunSign' && (
@@ -131,7 +129,7 @@ export default function CycleSpine({
               <ZodiacDetail sign={sunSign.sign} />
             </DetailPanel>
           )}
-          {expandedKey === 'venusNow' && venusSign && (
+          {expandedKey === 'venusNow' && (
             <DetailPanel id="spine-panel-venus" onClose={onClose}>
               <VenusDetail sign={venusSign} />
             </DetailPanel>

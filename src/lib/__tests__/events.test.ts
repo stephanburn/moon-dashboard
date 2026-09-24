@@ -12,7 +12,6 @@ function describeEvent(e: SpineEvent): string {
     case 'sabbat': return e.sabbat.displayName;
     case 'venus-ingress': return `Venus ${e.retrograde ? 're-enters' : 'enters'} ${e.sign}`;
     case 'mercury-rx': return 'Mercury Retrograde';
-    case 'data-expiry': return 'Data expiry';
   }
 }
 
@@ -24,7 +23,9 @@ function spine(iso: string, tz: string, hemisphere: 'north' | 'south'): string[]
 }
 
 // Characterisation: the spine's content for fixed instants, captured before the
-// day-model refactor. The whole suite also runs under several device zones
+// day-model refactor. The only intended change since then is the Sydney
+// solstice: it falls at 07:50 on 22 Dec there, so Litha now lands on the same
+// day as the Sun's ingress into Capricorn (it was a day early in the old table). The whole suite also runs under several device zones
 // (npm run test:tz); these results must not change with the device zone.
 describe('getUpcomingEvents', () => {
   it('matches the known spine for 24 Sep 2026, London', () => {
@@ -42,7 +43,7 @@ describe('getUpcomingEvents', () => {
 
   it('matches the known spine for 20 Dec 2026, Sydney (southern wheel)', () => {
     expect(spine('2026-12-20T12:00:00Z', 'Australia/Sydney', 'south')).toEqual([
-      'Summer Solstice (Litha) | Tomorrow',
+      'Summer Solstice (Litha) | in 2 days',
       'Sun enters Capricorn | in 2 days',
       'Full Moon | in 4 days',
       'Last Quarter | in 11 days',
