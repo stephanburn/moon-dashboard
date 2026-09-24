@@ -17,4 +17,7 @@ jobs:
       - run: npx tsc --noEmit
       - run: npx eslint
       - run: npm run test:tz
-      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      # Builds the app, serves it with TZ=UTC and a non-English LANG, and
+      # fails on any console or hydration error.
+      - run: npm run test:e2e

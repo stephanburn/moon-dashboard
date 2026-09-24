@@ -9,7 +9,8 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:tz": "for tz in Europe/London Australia/Sydney America/Los_Angeles Pacific/Kiritimati; do echo \"== device TZ $tz\"; TEST_TZ=$tz vitest run || exit 1; done"
+    "test:tz": "for tz in Europe/London Australia/Sydney America/Los_Angeles Pacific/Kiritimati; do echo \"== device TZ $tz\"; TEST_TZ=$tz vitest run || exit 1; done",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
@@ -19,6 +20,7 @@
     "react-dom": "19.2.4"
   },
   "devDependencies": {
+    "@playwright/test": "^1.56.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

@@ -1,6 +1,6 @@
 # Moon Dashboard
 
-A personal moon / sabbat dashboard — moon phases, zodiac transits, and the Wheel of the Year, computed locally. No backend, no database, no external data APIs. The page is statically prerendered (ISR, hourly) and all values are recomputed in the browser; Vercel Analytics records page views.
+A personal moon / sabbat dashboard — moon phases, zodiac transits, and the Wheel of the Year, computed locally. No backend, no database, no external data APIs. The page shell is statically prerendered (ISR, hourly, so the date-stamped OG tag advances); everything time-dependent is computed only in the browser. Vercel Analytics records page views.
 
 **Live:** [moon.terriblerealms.com](https://moon.terriblerealms.com)
 
@@ -38,6 +38,7 @@ src/
     names.ts              -- SignName / SabbatName / PhaseName unions used as content keys
     timezones.ts          -- selectable zones, hemisphere lookup, stored-value validation
     format.ts             -- all date/time formatting
+    storage.ts            -- localStorage helpers that never throw
     config.ts             -- DEFAULT_TZ
     __tests__/            -- Vitest suite
   data/
@@ -49,6 +50,7 @@ src/
     DetailPanel.tsx       -- expand/collapse panel chrome (animation, close button)
     details.tsx           -- the content of every detail panel
     eventKinds.tsx        -- per-event-kind icon, title and detail (the registry)
+    DashboardSkeleton.tsx -- what the server renders: layout placeholders, no dates
     TimezoneSelector.tsx  -- zone <select> (persistence is handled in Dashboard)
 ```
 
@@ -61,6 +63,8 @@ npm install
 npm run dev
 npm test          # Vitest, device TZ pinned to Europe/London
 npm run test:tz   # the suite under four device timezones
+npm run test:e2e  # Playwright smoke tests against a production build
+                  # (first time locally: npx playwright install chromium)
 ```
 
-Before committing: `npx tsc --noEmit`, `npx eslint` and `npm run test:tz` should all be clean. CI (`.github/workflows/ci.yml`) runs the same checks plus `next build` on every push.
+Before committing: `npx tsc --noEmit`, `npx eslint` and `npm run test:tz` should all be clean. CI (`.github/workflows/ci.yml`) runs the same checks plus the Playwright smoke tests (which include `next build`) on every push.

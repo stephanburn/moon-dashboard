@@ -1,6 +1,6 @@
 import { DEFAULT_TZ } from './config';
 
-// Persisted in localStorage by the timezone selector.
+// Persisted in localStorage by Dashboard (via lib/storage).
 export const STORAGE_KEY = 'moon-dashboard-timezone';
 
 // The IANA zones offered in the selector. This is the single source of truth:
