@@ -12,6 +12,7 @@ import { mercuryRetrogradeSigns, type MercuryRetrogradePeriod } from '@/lib/plan
 import { dayOf } from '@/lib/days';
 import { formatDay, formatDayAndTime } from '@/lib/format';
 import { SIGN_SYMBOLS, type PhaseName, type SabbatName, type SignName } from '@/lib/names';
+import type { Hemisphere } from '@/lib/timezones';
 
 // The body of each detail panel. DetailPanel supplies the chrome (animation,
 // close button); these supply the content.
@@ -162,7 +163,7 @@ export function ZodiacDetail({ sign }: { sign: SignName }) {
 
 // ── Sabbat ─────────────────────────────────────────────────────────────────
 
-export function SabbatDetail({ sabbat }: { sabbat: SabbatName }) {
+export function SabbatDetail({ sabbat, hemisphere }: { sabbat: SabbatName; hemisphere: Hemisphere }) {
   const data = SABBAT_CORRESPONDENCES[sabbat];
 
   return (
@@ -171,7 +172,7 @@ export function SabbatDetail({ sabbat }: { sabbat: SabbatName }) {
         {data.alternateNames.length > 0 && (
           <p className="text-xs text-text-tertiary mb-1">{data.alternateNames.join(' · ')}</p>
         )}
-        <p className="text-xs text-amber-light/60 mb-3">{data.dateDescription}</p>
+        <p className="text-xs text-amber-light/60 mb-3">{data.dateDescription[hemisphere]}</p>
         <p className="text-foreground/90 text-sm leading-relaxed">{data.mythology}</p>
       </div>
 

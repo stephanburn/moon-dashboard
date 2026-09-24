@@ -7,8 +7,9 @@ A personal moon / sabbat dashboard — moon phases, zodiac transits, and the Whe
 ## What it does
 
 - **Hero moon** — a photographic lunar disc masked by a translucent shadow computed from true illuminated fraction and hemisphere, with the current phase name and peak time ("peaked yesterday" / "peaks in 3 days").
-- **Cycle spine** — a single vertical timeline: a "Now" node (Sun sign, Venus sign, today's sabbat) followed by upcoming events — moon phases, sun sign ingresses, sabbats, Venus ingresses, Mercury retrograde, Hekate's Deipnon — each with relative-time labels and an inline detail panel of correspondences (colours, crystals, herbs, ritual notes).
-- **Hemisphere-aware Wheel of the Year** — switching timezone to a Southern Hemisphere city automatically inverts the sabbat calendar.
+- **Cycle spine** — a single vertical timeline: a "Now" node (Sun sign, Venus sign, today's sabbat) followed by upcoming events — moon phases, sun sign ingresses, sabbats, Venus ingresses (including retrograde re-entries), Mercury retrograde (with its shadow period), Hekate's Deipnon — each with relative-time labels and an inline detail panel of correspondences (colours, crystals, herbs, ritual notes).
+- **Timezone-correct days** — every date is the calendar day in the selected timezone, so e.g. the September 2026 equinox is Mabon on 22 Sep in New York and 23 Sep in London.
+- **Hemisphere-aware Wheel of the Year** — switching timezone to a Southern Hemisphere city automatically inverts the sabbat calendar and its date notes.
 - **Mercury retrograde badge**, dynamic OG image for link previews, deploy commit hash in the footer.
 
 ## Stack
@@ -42,7 +43,7 @@ src/
     config.ts             -- DEFAULT_TZ
     __tests__/            -- Vitest suite
   data/
-    *Correspondences.ts   -- correspondence content, kept separate from logic
+    *Correspondences.ts   -- correspondence content, keyed by SignName / SabbatName / PhaseName
   components/
     Dashboard.tsx         -- main client component, holds all app state
     CycleSpine.tsx        -- the "Now" node + upcoming-event timeline
@@ -67,4 +68,4 @@ npm run test:e2e  # Playwright smoke tests against a production build
                   # (first time locally: npx playwright install chromium)
 ```
 
-Before committing: `npx tsc --noEmit`, `npx eslint` and `npm run test:tz` should all be clean. CI (`.github/workflows/ci.yml`) runs the same checks plus the Playwright smoke tests (which include `next build`) on every push.
+Before committing: `npx tsc --noEmit`, `npx eslint` and `npm run test:tz` should all be clean (plus `npm run test:e2e` for UI changes). CI (`.github/workflows/ci.yml`) runs the same checks plus the Playwright smoke tests (which include `next build`) on every push.

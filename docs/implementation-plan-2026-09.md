@@ -1,5 +1,19 @@
 # Implementation plan — fixing the September 2026 review
 
+> **Status: implemented** on branch `claude/eager-dirac-yjncnt`, one commit per PR
+> (`994832c`, `9c8a7d0`, `588ceec`, `133146a`, then the PR 5 commit). All
+> decisions used the recommended defaults. Departures from the plan:
+> - `dashboardModel.ts` and the formatter consolidation (4a, 4b, 4e) landed
+>   in PR 2, because `Dashboard.tsx` was being rewritten there anyway.
+> - Venus re-entries were labelled "re-enters … ℞" in PR 2, since the
+>   corrected table already carried the flag.
+> - `@playwright/test` is pinned to 1.56.1, the version whose Chromium the
+>   dev container provides.
+> - `npm audit fix` crashed on an npm 10.9 peer-resolution bug, so the
+>   lockfile was regenerated with npm 11. `npm ci` under npm 10 installs it
+>   cleanly. React 19.3 was included in the Next 16.3 bump, per the Next
+>   upgrade guide.
+
 This plan fixes every finding in [code-review-2026-09.md](code-review-2026-09.md).
 The work is split into five PRs. Each PR can ship on its own and leaves `main`
 green (`tsc`, `eslint`, `npm test`, `next build`).

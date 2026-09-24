@@ -3,6 +3,33 @@
 Baseline review at commit `0b8a824` (24 Sep 2026), ahead of expanding the app.
 The fix plan is in [implementation-plan-2026-09.md](implementation-plan-2026-09.md).
 
+## Status (updated 24 Sep 2026)
+
+Every finding has been fixed on branch `claude/eager-dirac-yjncnt`:
+
+| Finding | Status | Commit |
+|---|---|---|
+| P0-1 Venus table | Fixed: table corrected, then replaced by computation | `994832c`, `588ceec` |
+| P0-2 hydration error | Fixed: time-dependent content is client-only; the e2e test guards it | `133146a` |
+| P0-3 relative days across TZs | Fixed: `CalendarDay` model; `test:tz` guards it | `9c8a7d0` |
+| P1-1 Mercury dates, labels, shadow | Fixed: computed stations and degree-based shadow | `994832c`, `588ceec` |
+| P1-2 sun ingresses vs sabbats | Fixed: both come from the same ephemeris | `588ceec` |
+| P1-3 equinox day by timezone | Fixed: `Seasons()` + `dayOf(…, tz)` | `588ceec` |
+| P1-4 moon-sign ingress precision | Fixed: `EclipticGeoMoon` | `588ceec` |
+| P1-5 southern sabbat copy | Fixed: `dateDescription.{north,south}` | PR 5 commit |
+| P2-1 unguarded localStorage | Fixed: `lib/storage.ts` | `133146a` |
+| P2-2 footer vs analytics | Fixed: "Anonymous page-view counts only." | PR 5 commit |
+| P2-3 commit hash source | Fixed: `VERCEL_GIT_COMMIT_SHA` first | PR 5 commit |
+| P2-4 dependency advisories | Fixed: `npm audit` reports 0 | PR 5 commit |
+| P2-5 expiry warning timing | Removed: nothing expires now | `588ceec` |
+| P2-6 dead code | Removed | `9c8a7d0`, `588ceec` |
+| P2-7 duplication | Fixed: `days.ts`, `format.ts` | `9c8a7d0` |
+| P2-8 em dashes | Fixed: `content.test.ts` guards it | `588ceec`, PR 5 commit |
+| Test gaps | Fixed: fixture tests, `test:tz`, Playwright smoke tests, CI | all |
+| Doc drift | Fixed | all |
+
+The findings below are kept as written at the time of the review.
+
 ## Health check
 
 | Check | Result |

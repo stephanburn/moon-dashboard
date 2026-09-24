@@ -53,7 +53,7 @@ const EVENT_KINDS: { [K in SpineEventKind]: KindSpec<K> } = {
   'sabbat': {
     icon: () => '☉',
     title: e => e.sabbat.displayName,
-    Detail: ({ event }) => <SabbatDetail sabbat={event.sabbat.name} />,
+    Detail: ({ event, ctx }) => <SabbatDetail sabbat={event.sabbat.name} hemisphere={ctx.hemisphere} />,
   },
   'venus-ingress': {
     icon: () => '♀︎',

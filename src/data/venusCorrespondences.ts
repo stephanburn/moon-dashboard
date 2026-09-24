@@ -15,7 +15,7 @@ export const VENUS_CORRESPONDENCES: Record<SignName, VenusCorrespondence> = {
   },
   Gemini: {
     energy:
-      'Venus in Gemini loves through wit, variety, and intellectual connection. Attraction thrives on conversation and playful exchange. Relationships feel lighter and more curious now — a good time for flirtation, social pleasure, and exploring new connections.',
+      'Venus in Gemini loves through wit, variety, and intellectual connection. Attraction thrives on conversation and playful exchange. Relationships feel lighter and more curious now, which makes this a good time for flirtation, social pleasure, and exploring new connections.',
   },
   Cancer: {
     energy:

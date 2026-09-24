@@ -291,7 +291,7 @@ export default function Dashboard() {
       </main>
 
       <footer className="px-6 py-5 text-center border-t border-white/5 space-y-1">
-        <p className="text-xs text-silver/55">Calculated locally. No tracking, no APIs.</p>
+        <p className="text-xs text-silver/55">Calculated locally. Anonymous page-view counts only.</p>
         {process.env.NEXT_PUBLIC_COMMIT && (
           <p aria-hidden className="text-xs text-white/10 font-mono">{process.env.NEXT_PUBLIC_COMMIT}</p>
         )}

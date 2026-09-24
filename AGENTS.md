@@ -12,8 +12,8 @@ A personal moon / sabbat dashboard. Single page, no backend, no DB, no external 
 
 **Shape:**
 - `src/app/page.tsx` is a thin server shell; the whole app is `src/components/Dashboard.tsx` (one `'use client'` component holding all state).
-- `src/lib/` = calculations (moon, moonDisc, astro, sabbats, planets), `events.ts` (the `SpineEvent` union), `dashboardModel.ts` (pure `buildDashboardModel(now, timezone)`: everything the UI shows), `days.ts` (calendar days), `names.ts` (name unions), `timezones.ts`, `format.ts` (all formatting), `config.ts`. Tests in `src/lib/__tests__/`.
-- `src/data/` = correspondence content (phases, signs, sabbats, Venus, moon-in-sign), kept separate from logic so content is editable in isolation.
+- `src/lib/` = calculations (`ephemeris.ts`, moon, moonDisc, astro, sabbats, planets), `events.ts` (the `SpineEvent` union), `dashboardModel.ts` (pure `buildDashboardModel(now, timezone)`: everything the UI shows), `days.ts` (calendar days), `names.ts` (name unions), `timezones.ts`, `format.ts` (all formatting), `storage.ts`, `config.ts`. Tests in `src/lib/__tests__/`.
+- `src/data/` = correspondence content (phases, signs, sabbats, Venus, moon-in-sign, Mercury retrograde by station sign), kept separate from logic so content is editable in isolation. Records are keyed by the unions in `names.ts`, so a missing entry fails `tsc`. Sabbat `dateDescription` has `north` and `south` variants. House style: no em dashes in user-facing copy (`content.test.ts` enforces it for `src/data`).
 - `src/components/CycleSpine.tsx` renders the Now node + upcoming-event timeline; `DetailPanel.tsx` is the panel chrome, `details.tsx` the panel contents, and `eventKinds.tsx` maps each event kind to its icon, title and detail. Adding an event kind = extend `SpineEvent` + one `EVENT_KINDS` entry; `TimezoneSelector.tsx` is a plain `<select>` (Dashboard persists the choice in `localStorage`).
 
 **Watch out for:**
