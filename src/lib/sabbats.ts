@@ -249,7 +249,7 @@ export function getSabbatContext(
 
 /**
  * Get upcoming sabbats from `from` for the next `upToMonths` months.
- * Used for the unified Coming Up list.
+ * Feeds the cycle spine via getUpcomingEvents.
  */
 export function getUpcomingSabbats(
   from: Date,

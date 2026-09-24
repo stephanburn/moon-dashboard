@@ -195,7 +195,7 @@ export default function Dashboard() {
   }, [recalculateAstro, recalculateTz]);
 
   // Keep the view fresh on long-open tabs: recompute on an interval and whenever
-  // the tab regains focus, so phase peaks, the date label, and "Coming Up" don't
+  // the tab regains focus, so phase peaks, the date label, and the cycle spine don't
   // go stale across midnight or a phase/sign change.
   useEffect(() => {
     const refresh = () => {
@@ -324,8 +324,9 @@ export default function Dashboard() {
           </div>
           {/* Right side: flex-nowrap prevents wrapping to two rows at 360px */}
           <div className="flex items-center gap-2 sm:gap-3 flex-nowrap">
-            {/* Retrograde badge: informational, not interactive. Pre/post-shadow
-                states are visible in "Coming Up" and removed here to reduce clutter. */}
+            {/* Retrograde badge: informational, not interactive. Only the
+                retrograde itself is badged; pre/post-shadow status is computed by
+                getMercuryStatus but not currently shown anywhere. */}
             {mercuryInfo?.status === 'retrograde' && mercuryInfo.period && (
               <div
                 aria-label={`Mercury retrograde until ${formatCalendarDate(mercuryInfo.period.retrogradeEnd)}`}

@@ -108,8 +108,9 @@ export interface VenusIngress {
 }
 
 // Lookup table of Venus sign changes.
-// Dates for 2025 are approximate (affected by Venus retrograde Mar–May 2025).
-// 2026 dates from ephemeris data. 2027 dates are approximate.
+// KNOWN INACCURATE: a cross-check against astronomy-engine (Sep 2026) found
+// this table wrong on most days of 2025–2027, and it omits the Venus retrograde
+// of 3 Oct – 14 Nov 2026 entirely. See docs/code-review-2026-09.md.
 // To extend: append new entries at the end.
 export const VENUS_INGRESSES: VenusIngress[] = [
   // 2025 (approximate, retrograde re-entries noted)
@@ -142,7 +143,7 @@ export const VENUS_INGRESSES: VenusIngress[] = [
   { sign: { name: 'Capricorn',   symbol: '♑' }, date: d(2026, 11, 14) },
   { sign: { name: 'Aquarius',    symbol: '♒' }, date: d(2026, 12, 12) },
 
-  // 2027 (approximate — no retrograde expected this year)
+  // 2027
   { sign: { name: 'Pisces',      symbol: '♓' }, date: d(2027, 1,  8)  },
   { sign: { name: 'Aries',       symbol: '♈' }, date: d(2027, 2,  5)  },
   { sign: { name: 'Taurus',      symbol: '♉' }, date: d(2027, 3,  5)  },

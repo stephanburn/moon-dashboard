@@ -67,7 +67,7 @@ export function getUpcomingEvents(
     })),
     ...sabbats.map(s => ({
       type: 'sabbat' as const,
-      name: s.displayName,         // shown in the Coming Up list
+      name: s.displayName,         // shown on the cycle spine
       icon: '☉',
       date: s.date,
       key: `sabbat-${s.name}-${s.date.getFullYear()}`,

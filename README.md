@@ -1,6 +1,6 @@
 # Moon Dashboard
 
-A personal moon / sabbat dashboard — moon phases, zodiac transits, and the Wheel of the Year, computed locally and rendered client-side. No backend, no database, no external APIs.
+A personal moon / sabbat dashboard — moon phases, zodiac transits, and the Wheel of the Year, computed locally. No backend, no database, no external data APIs. The page is statically prerendered (ISR, hourly) and all values are recomputed in the browser; Vercel Analytics records page views.
 
 **Live:** [moon.terriblerealms.com](https://moon.terriblerealms.com)
 
@@ -13,41 +13,47 @@ A personal moon / sabbat dashboard — moon phases, zodiac transits, and the Whe
 
 ## Stack
 
-Next.js 16 (App Router), React 19, TypeScript, Tailwind v4, `suncalc` + `astronomy-engine` for lunar calculations. Deployed on Vercel.
+Next.js 16 (App Router), React 19, TypeScript, Tailwind v4, `astronomy-engine` for moon phase timing and illumination, Vitest for tests. Deployed on Vercel.
 
 ## Architecture
 
 ```
 src/
   app/
-    page.tsx          -- thin server shell, renders <Dashboard />
-    layout.tsx         -- root layout, fonts
-    globals.css         -- design tokens, starfield, glass cards
-    api/og/             -- dynamic Open Graph image route
+    page.tsx              -- thin server shell, renders <Dashboard /> (ISR, revalidate 1h)
+    layout.tsx            -- root layout, fonts, Vercel Analytics
+    globals.css           -- design tokens, starfield, spine styling
+    error.tsx             -- error boundary (offers to clear the stored timezone)
+    opengraph-image.tsx   -- dynamic, date-stamped Open Graph image
   lib/
-    moon.ts             -- moon phase calculations (suncalc + astronomy-engine)
-    moonDisc.ts          -- illuminated fraction / shadow geometry for the lunar disc
-    astro.ts             -- sun sign + moon sign (ecliptic longitude)
+    moon.ts               -- moon phase, peaks, upcoming quarters, Deipnon (astronomy-engine)
+    moonDisc.ts           -- SVG geometry for the lit portion of the lunar disc
+    astro.ts              -- sun sign (fixed date table) + moon sign (Meeus approximation)
     sabbats.ts            -- Wheel of the Year calendar (hemisphere-aware)
-    planets.ts             -- Mercury retrograde + Venus ingress lookup tables
-    upcomingEvents.ts       -- merges all event types into one sorted list
-    config.ts                -- DEFAULT_TZ + PLANET_DATA_EXPIRY constants
+    planets.ts            -- Mercury retrograde + Venus ingress lookup tables
+    upcomingEvents.ts     -- merges all event types into one sorted list
+    timezones.ts          -- selectable zones, hemisphere lookup, stored-value validation
+    format.ts             -- calendar-date and relative-day formatting
+    config.ts             -- DEFAULT_TZ, PLANET_DATA_EXPIRY, SABBAT_DATA_EXPIRY
+    __tests__/            -- Vitest suite
   data/
-    *Correspondences.ts       -- correspondence content, kept separate from logic
+    *Correspondences.ts   -- correspondence content, kept separate from logic
   components/
-    Dashboard.tsx               -- main client component, holds all app state
-    MoonDisc.tsx                  -- photographic moon + phase-shadow mask
-    DetailPanel.tsx                -- expand/collapse correspondence panel
-    TimezoneSelector.tsx
+    Dashboard.tsx         -- main client component, holds all app state
+    CycleSpine.tsx        -- the "Now" node + upcoming-event timeline
+    MoonDisc.tsx          -- photographic moon + phase-shadow mask
+    DetailPanel.tsx       -- expand/collapse correspondence panel for every event type
+    TimezoneSelector.tsx  -- zone <select> (persistence is handled in Dashboard)
 ```
 
-`planets.ts` is a hand-maintained lookup table that expires end of 2027 (`PLANET_DATA_EXPIRY` in `config.ts`).
+`planets.ts` is a hand-maintained lookup table that expires end of 2027 (`PLANET_DATA_EXPIRY` in `config.ts`). The Venus table is known to be inaccurate; see [docs/code-review-2026-09.md](docs/code-review-2026-09.md).
 
 ## Development
 
 ```bash
 npm install
 npm run dev
+npm test          # Vitest, TZ pinned to Europe/London
 ```
 
-Before committing: `npx tsc --noEmit` and `npx eslint` should both be clean.
+Before committing: `npx tsc --noEmit`, `npx eslint` and `npm test` should all be clean.
