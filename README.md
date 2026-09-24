@@ -46,7 +46,7 @@ src/
     TimezoneSelector.tsx  -- zone <select> (persistence is handled in Dashboard)
 ```
 
-`planets.ts` is a hand-maintained lookup table that expires end of 2027 (`PLANET_DATA_EXPIRY` in `config.ts`). The Venus table is known to be inaccurate; see [docs/code-review-2026-09.md](docs/code-review-2026-09.md).
+`planets.ts` is a hand-maintained lookup table that expires end of 2027 (`PLANET_DATA_EXPIRY` in `config.ts`). The tables are cross-checked against `astronomy-engine` by `planetsTruth.test.ts`.
 
 ## Development
 

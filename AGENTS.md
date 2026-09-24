@@ -17,7 +17,7 @@ A personal moon / sabbat dashboard. Single page, no backend, no DB, no external 
 - `src/components/CycleSpine.tsx` renders the Now node + upcoming-event timeline; `DetailPanel.tsx` renders every expandable detail type; `TimezoneSelector.tsx` is a plain `<select>` (Dashboard persists the choice in `localStorage`).
 
 **Watch out for:**
-- `planets.ts` Mercury/Venus tables are hand-maintained and expire end of 2027 (`PLANET_DATA_EXPIRY`). They are lookup data, not computed, and the Venus table is known to be wrong (see `docs/code-review-2026-09.md`). Sun-sign dates (`astro.ts`) and solstice/equinox dates (`sabbats.ts`) are also fixed tables.
+- `planets.ts` Mercury/Venus tables are hand-maintained and expire end of 2027 (`PLANET_DATA_EXPIRY`). They are lookup data, not computed; `planetsTruth.test.ts` cross-checks them against `astronomy-engine`. Sun-sign dates (`astro.ts`) and solstice/equinox dates (`sabbats.ts`) are also fixed tables.
 - Hemisphere (N/S) is derived from the selected timezone via a hardcoded `SOUTHERN_TIMEZONES` set in `src/lib/timezones.ts` (a test checks it stays a subset of the selector list).
 - Timezone handling is manual (`Intl.DateTimeFormat` part-parsing in `toLocalDate` in `Dashboard.tsx` and `localDayIndex` in `format.ts`) — tread carefully around date-boundary logic.
 - Two kinds of `Date` flow through the app: **instants** (moon phases, moon-sign ingresses, Deipnon) and **calendar days** (sabbats, sun/Venus ingresses, Mercury dates), which are built as *device-local* midnights. Calendar days must never be formatted or compared with a `timeZone` option (see `formatCalendarDate`); `formatRelativeDays` currently breaks this rule (known bug, see the review doc).
