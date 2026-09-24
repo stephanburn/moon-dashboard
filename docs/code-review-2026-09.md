@@ -16,15 +16,15 @@ Every finding has been fixed on branch `claude/eager-dirac-yjncnt`:
 | P1-2 sun ingresses vs sabbats | Fixed: both come from the same ephemeris | `588ceec` |
 | P1-3 equinox day by timezone | Fixed: `Seasons()` + `dayOf(…, tz)` | `588ceec` |
 | P1-4 moon-sign ingress precision | Fixed: `EclipticGeoMoon` | `588ceec` |
-| P1-5 southern sabbat copy | Fixed: `dateDescription.{north,south}` | PR 5 commit |
+| P1-5 southern sabbat copy | Fixed: `dateDescription.{north,south}` | `f2b018b` |
 | P2-1 unguarded localStorage | Fixed: `lib/storage.ts` | `133146a` |
-| P2-2 footer vs analytics | Fixed: "Anonymous page-view counts only." | PR 5 commit |
-| P2-3 commit hash source | Fixed: `VERCEL_GIT_COMMIT_SHA` first | PR 5 commit |
-| P2-4 dependency advisories | Fixed: `npm audit` reports 0 | PR 5 commit |
+| P2-2 footer vs analytics | Fixed: "Anonymous page-view counts only." | `f2b018b` |
+| P2-3 commit hash source | Fixed: `VERCEL_GIT_COMMIT_SHA` first | `f2b018b` |
+| P2-4 dependency advisories | Fixed: `npm audit` reports 0 | `f2b018b` |
 | P2-5 expiry warning timing | Removed: nothing expires now | `588ceec` |
 | P2-6 dead code | Removed | `9c8a7d0`, `588ceec` |
 | P2-7 duplication | Fixed: `days.ts`, `format.ts` | `9c8a7d0` |
-| P2-8 em dashes | Fixed: `content.test.ts` guards it | `588ceec`, PR 5 commit |
+| P2-8 em dashes | Fixed: `content.test.ts` guards it | `588ceec`, `f2b018b` |
 | Test gaps | Fixed: fixture tests, `test:tz`, Playwright smoke tests, CI | all |
 | Doc drift | Fixed | all |
 

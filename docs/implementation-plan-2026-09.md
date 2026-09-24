@@ -1,7 +1,7 @@
 # Implementation plan — fixing the September 2026 review
 
 > **Status: implemented** on branch `claude/eager-dirac-yjncnt`, one commit per PR
-> (`994832c`, `9c8a7d0`, `588ceec`, `133146a`, then the PR 5 commit). All
+> (`994832c`, `9c8a7d0`, `588ceec`, `133146a`, `f2b018b`). All
 > decisions used the recommended defaults. Departures from the plan:
 > - `dashboardModel.ts` and the formatter consolidation (4a, 4b, 4e) landed
 >   in PR 2, because `Dashboard.tsx` was being rewritten there anyway.
