@@ -31,9 +31,12 @@ src/
     astro.ts              -- sun sign (fixed date table) + moon sign (Meeus approximation)
     sabbats.ts            -- Wheel of the Year calendar (hemisphere-aware)
     planets.ts            -- Mercury retrograde + Venus ingress lookup tables
-    upcomingEvents.ts     -- merges all event types into one sorted list
+    events.ts             -- SpineEvent union; merges all event kinds into one sorted list
+    dashboardModel.ts     -- pure (now, timezone) -> everything the dashboard shows
+    days.ts               -- CalendarDay ('YYYY-MM-DD') vs instants; dayOf(instant, tz)
+    names.ts              -- SignName / SabbatName / PhaseName unions used as content keys
     timezones.ts          -- selectable zones, hemisphere lookup, stored-value validation
-    format.ts             -- calendar-date and relative-day formatting
+    format.ts             -- all date/time formatting
     config.ts             -- DEFAULT_TZ, PLANET_DATA_EXPIRY, SABBAT_DATA_EXPIRY
     __tests__/            -- Vitest suite
   data/
@@ -42,7 +45,9 @@ src/
     Dashboard.tsx         -- main client component, holds all app state
     CycleSpine.tsx        -- the "Now" node + upcoming-event timeline
     MoonDisc.tsx          -- photographic moon + phase-shadow mask
-    DetailPanel.tsx       -- expand/collapse correspondence panel for every event type
+    DetailPanel.tsx       -- expand/collapse panel chrome (animation, close button)
+    details.tsx           -- the content of every detail panel
+    eventKinds.tsx        -- per-event-kind icon, title and detail (the registry)
     TimezoneSelector.tsx  -- zone <select> (persistence is handled in Dashboard)
 ```
 
@@ -53,7 +58,8 @@ src/
 ```bash
 npm install
 npm run dev
-npm test          # Vitest, TZ pinned to Europe/London
+npm test          # Vitest, device TZ pinned to Europe/London
+npm run test:tz   # the suite under four device timezones
 ```
 
-Before committing: `npx tsc --noEmit`, `npx eslint` and `npm test` should all be clean.
+Before committing: `npx tsc --noEmit`, `npx eslint` and `npm run test:tz` should all be clean. CI (`.github/workflows/ci.yml`) runs the same checks plus `next build` on every push.

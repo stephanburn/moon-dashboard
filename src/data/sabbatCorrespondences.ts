@@ -1,7 +1,8 @@
+import type { SabbatName } from '@/lib/names';
+
 export interface SabbatCorrespondence {
-  name: string;
+  name: SabbatName;
   alternateNames: string[];
-  subtitle: string;
   dateDescription: string;
   mythology: string;
   themes: string[];
@@ -12,11 +13,10 @@ export interface SabbatCorrespondence {
   ritualFocus: string;
 }
 
-export const SABBAT_CORRESPONDENCES: Record<string, SabbatCorrespondence> = {
+export const SABBAT_CORRESPONDENCES: Record<SabbatName, SabbatCorrespondence> = {
   Imbolc: {
     name: 'Imbolc',
     alternateNames: ['Candlemas', 'Brigid\'s Day', 'Oimelc'],
-    subtitle: 'The Festival of Returning Light',
     dateDescription: 'Fixed: 1st February',
     mythology:
       'Imbolc is one of the four Gaelic seasonal festivals and falls around 1 February, midway between the winter solstice and the spring equinox rather than on an astronomical point. It marks the first stirrings of spring beneath the frozen ground and is associated with Brigid, who survives both as an Irish goddess and, later, as a Christian saint of hearth, healing, poetry, and smithcraft. In Irish and Scottish folk custom Brigid travels the land on the eve of the festival, blessing homes and hearths. One old name, Oimelc, is glossed as "ewe\'s milk", tying the date to the lambing season and the land beginning to quicken again.',
@@ -32,7 +32,6 @@ export const SABBAT_CORRESPONDENCES: Record<string, SabbatCorrespondence> = {
   Ostara: {
     name: 'Ostara',
     alternateNames: ['Spring Equinox', 'Vernal Equinox', 'Eostre'],
-    subtitle: 'The Spring Equinox',
     dateDescription: 'Astronomical: the Vernal Equinox (approximately 20–21 March in the Northern Hemisphere)',
     mythology:
       'Ostara is the spring equinox, a genuine astronomical event when day and night fall briefly into near-equal balance before the light starts to win out. It is one of only two points in the year when the sun rises due east and sets due west, and cultures across the world have built monuments to it and gathered around it. The name Ostara, however, is a modern label for the sabbat. It was popularised in twentieth-century paganism and borrowed from Eostre, a spring goddess mentioned only once in the historical record, by Bede in the eighth century, and later expanded by Jacob Grimm into a reconstructed "Ostara". The familiar claims tying her to eggs and hares are modern folklore rather than established fact.',
@@ -48,7 +47,6 @@ export const SABBAT_CORRESPONDENCES: Record<string, SabbatCorrespondence> = {
   Beltane: {
     name: 'Beltane',
     alternateNames: ['May Day', 'Calan Mai', 'Walpurgis Night'],
-    subtitle: 'The Great Fire Festival',
     dateDescription: 'Fixed: 1st May (some traditions: when hawthorn blooms)',
     mythology:
       'Beltane is the second of the Gaelic fire festivals, falling around 1 May, midway between the spring equinox and the summer solstice rather than on an astronomical marker. It celebrates the full arrival of spring. The best-attested old custom is the driving of cattle between two fires before they went to summer pasture, recorded as a protective and purifying rite. May Eve also carries a long folklore association with heightened fairy activity. The maypole, often tied to Beltane today, is a later English and Germanic custom rather than an ancient Celtic one, and the "sacred marriage" framing belongs to modern Wicca rather than the older festival.',
@@ -64,7 +62,6 @@ export const SABBAT_CORRESPONDENCES: Record<string, SabbatCorrespondence> = {
   Litha: {
     name: 'Litha',
     alternateNames: ['Summer Solstice', 'Midsummer', 'Alban Hefin'],
-    subtitle: 'The Summer Solstice',
     dateDescription: 'Astronomical: the Summer Solstice (approximately 20–21 June in the Northern Hemisphere)',
     mythology:
       'Litha is the summer solstice, the longest day of the year, when the sun reaches its highest arc and seems to hang there before the days slowly begin to shorten again. This is a real astronomical turning point, and people have marked it for a very long time. Stonehenge frames the solstice sunrise along its main axis, and midsummer bonfires have been lit on hilltops across the Northern Hemisphere for millennia. The name Litha is a modern label for the sabbat, taken from an Old English term Bede recorded for the midsummer months. Midsummer festivities still run today across Scandinavia, the British Isles, and beyond.',
@@ -80,7 +77,6 @@ export const SABBAT_CORRESPONDENCES: Record<string, SabbatCorrespondence> = {
   Lughnasadh: {
     name: 'Lughnasadh',
     alternateNames: ['Lammas', 'Lughnasad', 'First Harvest'],
-    subtitle: 'The First Harvest',
     dateDescription: 'Fixed: 1st August',
     mythology:
       'Lughnasadh is the last of the Gaelic fire festivals, falling around 1 August, midway between the summer solstice and the autumn equinox rather than on an astronomical point. It is named for the Irish god Lugh, who according to tradition founded it as funeral games for his foster-mother Tailtiu, said to have died clearing the plains of Ireland for farming. It marks the start of the harvest, when the first grain is cut and the first loaves baked. In England the same first-harvest festival is Lammas, from the Old English hlafmæsse, or "loaf-mass", and the two names are often used interchangeably for this sabbat today.',
@@ -96,7 +92,6 @@ export const SABBAT_CORRESPONDENCES: Record<string, SabbatCorrespondence> = {
   Mabon: {
     name: 'Mabon',
     alternateNames: ['Autumn Equinox', 'Second Harvest', 'Alban Elfed'],
-    subtitle: 'The Autumn Equinox',
     dateDescription: 'Astronomical: the Autumnal Equinox (approximately 22–23 September in the Northern Hemisphere)',
     mythology:
       'Mabon is the autumn equinox, the second of the year\'s two balance points, when day and night stand briefly equal before the dark takes the lead. This is a real astronomical event, and harvest festivals and thanksgivings cluster around it across many cultures. The name Mabon, though, is a modern invention. It was coined in 1970 by Aidan Kelly, borrowing a figure from Welsh myth, Mabon ap Modron, who has no traditional connection to the equinox at all. The older reality is simpler: a gathered harvest, turning leaves, and a slant golden light that belongs to no other time of year.',
@@ -112,7 +107,6 @@ export const SABBAT_CORRESPONDENCES: Record<string, SabbatCorrespondence> = {
   Samhain: {
     name: 'Samhain',
     alternateNames: ['Halloween', 'All Hallows\' Eve', 'Oíche Shamhna'],
-    subtitle: 'The Witches\' New Year',
     dateDescription: 'Fixed: 31st October (some traditions: first Full Moon of Scorpio)',
     mythology:
       'Samhain is the first and arguably most important of the Gaelic fire festivals, falling around 1 November, midway between the autumn equinox and the winter solstice rather than on an astronomical point. It is well attested in early Irish literature, where the boundary between the ordinary world and the Otherworld is unusually open and a great many mythological events are set. It is commonly described as the start of the Celtic year, beginning, in the old pattern, in darkness: night before day, winter before summer. The honoured dead are welcomed back and met with respect rather than fear.',
@@ -128,7 +122,6 @@ export const SABBAT_CORRESPONDENCES: Record<string, SabbatCorrespondence> = {
   Yule: {
     name: 'Yule',
     alternateNames: ['Winter Solstice', 'Midwinter', 'Alban Arthan'],
-    subtitle: 'The Winter Solstice',
     dateDescription: 'Astronomical: the Winter Solstice (approximately 21–22 December in the Northern Hemisphere)',
     mythology:
       'Yule is the winter solstice, the longest night of the year, after which the sun slowly begins to return. It is the clearest astronomical turning point of all, a low moment of darkness that carries the promise of growing light, and it has been marked across human history. Newgrange in Ireland is built so that the rising sun floods its inner chamber on the solstice morning, and Stonehenge is oriented to the solstice sunset. Roman Saturnalia, the Norse Yule, the Persian Yalda, and later Christmas all gather around this point. The name Yule is itself old, from the Norse and Germanic midwinter feasting that ran through the longest dark, when a great log of oak or ash was burned through the night to keep the flame, and the sun, alive.',

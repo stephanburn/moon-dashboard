@@ -2,9 +2,11 @@ import { ImageResponse } from 'next/og';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { getMoonPhaseInfo, getUpcomingMajorPhases } from '@/lib/moon';
-import { getCurrentMoonSign, getCurrentSunSign, getNextSunSignIngress } from '@/lib/astro';
+import { getCurrentMoonSign, getCurrentSunSign } from '@/lib/astro';
 import { getUpcomingSabbats } from '@/lib/sabbats';
 import { moonGeometry } from '@/lib/moonDisc';
+import { addDays, dayOf, diffDays, type CalendarDay } from '@/lib/days';
+import { SIGN_SYMBOLS } from '@/lib/names';
 import { MOON_CORRESPONDENCES } from '@/data/moonCorrespondences';
 
 const alt = 'Current moon phase, zodiac transit, and the next sabbat';
@@ -28,19 +30,20 @@ export function generateImageMetadata() {
 
 // The OG card is shared generically, so it is rendered for the northern
 // hemisphere in UTC rather than any one viewer's zone.
-const DAY = 86_400_000;
+const TZ = 'UTC';
+const DAY_MS = 86_400_000;
 
 // Whole-day countdown phrased "today / tomorrow / in N days" — always days, never
 // weeks, regardless of distance.
-function inDays(target: Date, now: Date): string {
-  const d = Math.round((target.getTime() - now.getTime()) / DAY);
+function inDays(target: CalendarDay, today: CalendarDay): string {
+  const d = diffDays(target, today);
   if (d <= 0) return 'today';
   if (d === 1) return 'tomorrow';
   return `in ${d} days`;
 }
 
-function forDays(target: Date, now: Date): string {
-  const d = Math.max(0, Math.round((target.getTime() - now.getTime()) / DAY));
+function forDays(target: CalendarDay, today: CalendarDay): string {
+  const d = Math.max(0, diffDays(target, today));
   return d === 1 ? 'for 1 day' : `for ${d} days`;
 }
 
@@ -52,12 +55,12 @@ export default async function Image() {
   ]);
 
   const now = new Date();
+  const today = dayOf(now, TZ);
   const moon = getMoonPhaseInfo(now);
   const moonSign = getCurrentMoonSign(now);
-  const sunSign = getCurrentSunSign(now);
-  const sunIngress = getNextSunSignIngress(now);
-  const nextPhase = getUpcomingMajorPhases(now, 2)[0];
-  const nextSabbat = getUpcomingSabbats(now, 12, 'north')[0];
+  const sunSign = getCurrentSunSign(today);
+  const nextPhase = getUpcomingMajorPhases(now, new Date(now.getTime() + 40 * DAY_MS))[0];
+  const nextSabbat = getUpcomingSabbats(today, addDays(today, 366), 'north')[0];
   const energy = MOON_CORRESPONDENCES[moon.name]?.energy ?? '';
 
   // Real phase disc via the same geometry the dashboard uses.
@@ -90,7 +93,7 @@ export default async function Image() {
             <div style={{ fontSize: 96, fontWeight: 600, lineHeight: 1.0, marginTop: 4 }}>{moon.name}</div>
 
             <div style={{ fontSize: 42, color: '#dad6f4', marginTop: 14 }}>
-              {`In ${moonSign.name} ${moonSign.symbol} · ${nextPhase.name} ${inDays(nextPhase.date, now)}`}
+              {`In ${moonSign} ${SIGN_SYMBOLS[moonSign]} · ${nextPhase.name} ${inDays(dayOf(nextPhase.date, TZ), today)}`}
             </div>
 
             {energy && (
@@ -101,14 +104,14 @@ export default async function Image() {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 26, fontSize: 39 }}>
               <div style={{ display: 'flex' }}>
-                {`Sun in ${sunSign.sign.name} `}
-                <span style={{ color: '#9690c4', marginLeft: 10 }}>{forDays(sunIngress.date, now)}</span>
+                {`Sun in ${sunSign.sign} `}
+                <span style={{ color: '#9690c4', marginLeft: 10 }}>{forDays(addDays(sunSign.until, 1), today)}</span>
               </div>
               {nextSabbat && (
                 <div style={{ display: 'flex' }}>
                   Next sabbat
                   <span style={{ color: '#9690c4', marginLeft: 10 }}>
-                    {`· ${nextSabbat.displayName} ${inDays(nextSabbat.date, now)}`}
+                    {`· ${nextSabbat.displayName} ${inDays(nextSabbat.day, today)}`}
                   </span>
                 </div>
               )}

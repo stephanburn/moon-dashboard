@@ -6,10 +6,10 @@ import {
   SearchMoonQuarter,
   NextMoonQuarter,
 } from 'astronomy-engine';
+import type { MajorPhaseName, PhaseName } from './names';
 
 export interface MoonPhaseInfo {
-  emoji: string;
-  name: string;
+  name: PhaseName;
   illumination: number; // 0-100
   fraction: number;     // 0-1 un-rounded illuminated fraction (for drawing the disc)
   ageInDays: number;    // 0-29.5
@@ -17,13 +17,12 @@ export interface MoonPhaseInfo {
 }
 
 export interface MoonPhasePeak {
-  phaseName: 'New Moon' | 'First Quarter' | 'Full Moon' | 'Last Quarter';
+  phaseName: MajorPhaseName;
   peakTime: Date;
 }
 
 export interface UpcomingMoonPhase {
-  name: 'New Moon' | 'Full Moon' | 'First Quarter' | 'Last Quarter';
-  emoji: string;
+  name: MajorPhaseName;
   date: Date;
 }
 
@@ -104,15 +103,15 @@ function findNextFuturePeakTime(after: Date, target: number): Date {
 }
 
 // Major phase definitions with their widened practitioner windows
-const MAJOR_PHASES = [
-  { name: 'New Moon'      as const, emoji: '🌑', target: 0,    halfWindowDays: 1.5 },
-  { name: 'First Quarter' as const, emoji: '🌓', target: 0.25, halfWindowDays: 1.0 },
-  { name: 'Full Moon'     as const, emoji: '🌕', target: 0.5,  halfWindowDays: 1.5 },
-  { name: 'Last Quarter'  as const, emoji: '🌗', target: 0.75, halfWindowDays: 1.0 },
+const MAJOR_PHASES: { name: MajorPhaseName; target: number; halfWindowDays: number }[] = [
+  { name: 'New Moon',      target: 0,    halfWindowDays: 1.5 },
+  { name: 'First Quarter', target: 0.25, halfWindowDays: 1.0 },
+  { name: 'Full Moon',     target: 0.5,  halfWindowDays: 1.5 },
+  { name: 'Last Quarter',  target: 0.75, halfWindowDays: 1.0 },
 ];
 
 // For each transitional phase, the next major phase to display a peak for
-const TRANSITIONAL_NEXT: Record<string, typeof MAJOR_PHASES[number]> = {
+const TRANSITIONAL_NEXT: Partial<Record<PhaseName, typeof MAJOR_PHASES[number]>> = {
   'Waxing Crescent': MAJOR_PHASES[1], // → First Quarter
   'Waxing Gibbous':  MAJOR_PHASES[2], // → Full Moon
   'Waning Gibbous':  MAJOR_PHASES[3], // → Last Quarter
@@ -132,7 +131,6 @@ export function getMoonPhaseInfo(now: Date = new Date()): MoonPhaseInfo {
     const peakTime = peakTimes.get(mp.target)!;
     if (Math.abs(now.getTime() - peakTime.getTime()) <= mp.halfWindowDays * DAY) {
       return {
-        emoji: mp.emoji,
         name: mp.name,
         illumination: Math.round(fraction * 100),
         fraction,
@@ -143,14 +141,13 @@ export function getMoonPhaseInfo(now: Date = new Date()): MoonPhaseInfo {
   }
 
   // Not in any major window — transitional phase from raw phase value
-  let emoji: string, name: string;
-  if (phase < 0.25)      { emoji = '🌒'; name = 'Waxing Crescent'; }
-  else if (phase < 0.5)  { emoji = '🌔'; name = 'Waxing Gibbous';  }
-  else if (phase < 0.75) { emoji = '🌖'; name = 'Waning Gibbous';  }
-  else                   { emoji = '🌘'; name = 'Waning Crescent';  }
+  const name: PhaseName =
+      phase < 0.25 ? 'Waxing Crescent'
+    : phase < 0.5  ? 'Waxing Gibbous'
+    : phase < 0.75 ? 'Waning Gibbous'
+    :                'Waning Crescent';
 
   return {
-    emoji,
     name,
     illumination: Math.round(fraction * 100),
     fraction,
@@ -164,7 +161,7 @@ export function getMoonPhaseInfo(now: Date = new Date()): MoonPhaseInfo {
  * - Major phases (New Moon etc.): the nearest peak for that phase (may be past or future)
  * - Transitional phases: the next future peak of the upcoming major phase
  */
-export function getMoonPhasePeak(now: Date, displayedPhaseName: string): MoonPhasePeak {
+export function getMoonPhasePeak(now: Date, displayedPhaseName: PhaseName): MoonPhasePeak {
   const own = MAJOR_PHASES.find(mp => mp.name === displayedPhaseName);
   if (own) {
     return { phaseName: own.name, peakTime: findNearestPeakTime(now, own.target) };
@@ -175,61 +172,18 @@ export function getMoonPhasePeak(now: Date, displayedPhaseName: string): MoonPha
 }
 
 /**
- * Get all 4 major upcoming moon phases (New, First Quarter, Full, Last Quarter)
- * for the next `upToMonths` months. Returns them sorted chronologically.
+ * All major phases (New, First Quarter, Full, Last Quarter) from `from` up to
+ * `to`, in chronological order.
  */
-export function getUpcomingMajorPhases(from: Date, upToMonths = 6): UpcomingMoonPhase[] {
-  const results: UpcomingMoonPhase[] = [];
-  const maxTime = from.getTime() + upToMonths * 30 * DAY;
-
+export function getUpcomingMajorPhases(from: Date, to: Date): UpcomingMoonPhase[] {
   // astronomy-engine's quarter index: 0 = New, 1 = FQ, 2 = Full, 3 = LQ.
-  const QUARTER_META: { name: UpcomingMoonPhase['name']; emoji: string }[] = [
-    { name: 'New Moon',      emoji: '🌑' },
-    { name: 'First Quarter', emoji: '🌓' },
-    { name: 'Full Moon',     emoji: '🌕' },
-    { name: 'Last Quarter',  emoji: '🌗' },
-  ];
+  const QUARTER_NAMES: MajorPhaseName[] = ['New Moon', 'First Quarter', 'Full Moon', 'Last Quarter'];
+  const results: UpcomingMoonPhase[] = [];
 
   let q = SearchMoonQuarter(from);
-  while (q.time.date.getTime() <= maxTime) {
-    const meta = QUARTER_META[q.quarter];
-    results.push({ name: meta.name, emoji: meta.emoji, date: q.time.date });
+  while (q.time.date <= to) {
+    results.push({ name: QUARTER_NAMES[q.quarter], date: q.time.date });
     q = NextMoonQuarter(q);
   }
-
-  // Already chronological from the quarter walk.
   return results;
-}
-
-export interface UpcomingDeipnon {
-  date: Date;        // the dark-moon night the Deipnon is observed (eve of the new moon)
-  newMoonDate: Date; // the new moon it precedes
-}
-
-/**
- * Upcoming Deipnons: the dark-moon night before each new moon, when Hekate is
- * honoured at the close of the lunar month. Taken as the night preceding the
- * exact new moon, so it always lands the evening before the New Moon node.
- */
-export function getUpcomingDeipnons(from: Date, upToMonths = 6): UpcomingDeipnon[] {
-  const results: UpcomingDeipnon[] = [];
-  const maxTime = from.getTime() + upToMonths * 30 * DAY;
-
-  let search = SearchMoonPhase(0, from, 40);
-  while (search && search.date.getTime() <= maxTime) {
-    const deipnon = new Date(search.date.getTime() - DAY);
-    if (deipnon.getTime() >= from.getTime()) {
-      results.push({ date: deipnon, newMoonDate: search.date });
-    }
-    // Advance into the next synodic month and search the next new moon.
-    const nextStart = new Date(search.date.getTime() + (SYNODIC_DAYS - 2) * DAY);
-    search = SearchMoonPhase(0, nextStart, 40);
-  }
-
-  return results;
-}
-
-// Keep original export for backward compatibility
-export function getNextMoonPhases(from: Date = new Date()): UpcomingMoonPhase[] {
-  return getUpcomingMajorPhases(from, 2).slice(0, 2);
 }

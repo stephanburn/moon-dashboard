@@ -1,39 +1,41 @@
 import { describe, it, expect } from 'vitest';
-import { getCurrentSunSign } from '../astro';
+import { getCurrentSunSign, getUpcomingSunIngresses } from '../astro';
+import { makeDay } from '../days';
 
-// Dates here are built with `new Date(y, m-1, d)` (local midnight), which is how
-// the app derives the sun sign, so these assertions are independent of the
-// runner's timezone. The Capricorn case exercises the Dec->Jan year-boundary
-// wrap in dateMatchesSign / getCurrentSunSign, the trickiest branch in astro.ts.
-describe('getCurrentSunSign — Capricorn year boundary & cusps', () => {
-  it('treats early January as Capricorn whose transit began the previous year', () => {
-    const info = getCurrentSunSign(new Date(2026, 0, 10)); // 10 Jan 2026
-    expect(info.sign.name).toBe('Capricorn');
-    expect(info.transitStart.getFullYear()).toBe(2025);
-    expect(info.transitStart.getMonth()).toBe(11); // December
-    expect(info.transitStart.getDate()).toBe(22);
-    expect(info.transitEnd.getFullYear()).toBe(2026);
-    expect(info.transitEnd.getMonth()).toBe(0); // January
-    expect(info.transitEnd.getDate()).toBe(19);
+// The Capricorn case exercises the Dec->Jan year-boundary wrap, the trickiest
+// branch of the sun-sign table.
+describe('getCurrentSunSign: Capricorn year boundary & cusps', () => {
+  it('treats early January as Capricorn, running until 19 January', () => {
+    const info = getCurrentSunSign(makeDay(2026, 1, 10));
+    expect(info.sign).toBe('Capricorn');
+    expect(info.until).toBe('2026-01-19');
   });
 
-  it('treats late December as Capricorn whose transit ends the following year', () => {
-    const info = getCurrentSunSign(new Date(2026, 11, 25)); // 25 Dec 2026
-    expect(info.sign.name).toBe('Capricorn');
-    expect(info.transitStart.getFullYear()).toBe(2026);
-    expect(info.transitStart.getMonth()).toBe(11);
-    expect(info.transitEnd.getFullYear()).toBe(2027);
-    expect(info.transitEnd.getMonth()).toBe(0);
-    expect(info.transitEnd.getDate()).toBe(19);
+  it('treats late December as Capricorn, running into the next year', () => {
+    const info = getCurrentSunSign(makeDay(2026, 12, 25));
+    expect(info.sign).toBe('Capricorn');
+    expect(info.until).toBe('2027-01-19');
   });
 
   it('places the Capricorn -> Aquarius cusp on 20 January', () => {
-    expect(getCurrentSunSign(new Date(2026, 0, 19)).sign.name).toBe('Capricorn');
-    expect(getCurrentSunSign(new Date(2026, 0, 20)).sign.name).toBe('Aquarius');
+    expect(getCurrentSunSign(makeDay(2026, 1, 19)).sign).toBe('Capricorn');
+    expect(getCurrentSunSign(makeDay(2026, 1, 20)).sign).toBe('Aquarius');
   });
 
   it('places the Aries -> Taurus cusp on 20 April', () => {
-    expect(getCurrentSunSign(new Date(2026, 3, 19)).sign.name).toBe('Aries');
-    expect(getCurrentSunSign(new Date(2026, 3, 20)).sign.name).toBe('Taurus');
+    expect(getCurrentSunSign(makeDay(2026, 4, 19)).sign).toBe('Aries');
+    expect(getCurrentSunSign(makeDay(2026, 4, 20)).sign).toBe('Taurus');
+  });
+});
+
+describe('getUpcomingSunIngresses', () => {
+  it('lists every ingress in the range, across the year boundary', () => {
+    const ingresses = getUpcomingSunIngresses(makeDay(2026, 11, 1), makeDay(2027, 2, 28));
+    expect(ingresses.map(i => `${i.sign} ${i.day}`)).toEqual([
+      'Sagittarius 2026-11-22',
+      'Capricorn 2026-12-22',
+      'Aquarius 2027-01-20',
+      'Pisces 2027-02-19',
+    ]);
   });
 });

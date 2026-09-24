@@ -1,24 +1,28 @@
 'use client';
 
-import DetailPanel, { DetailContent } from './DetailPanel';
-import { UpcomingEvent } from '@/lib/upcomingEvents';
-import { SunSignInfo } from '@/lib/astro';
-import { SabbatContext } from '@/lib/sabbats';
-import { formatCalendarDate, formatRelativeDays } from '@/lib/format';
+import DetailPanel from './DetailPanel';
+import { SabbatDetail, VenusDetail, ZodiacDetail } from './details';
+import { EventDetail, eventIcon, eventTitle, type EventContext } from './eventKinds';
+import type { SpineEvent } from '@/lib/events';
+import type { SunSignInfo } from '@/lib/astro';
+import type { Sabbat } from '@/lib/sabbats';
+import type { CalendarDay } from '@/lib/days';
+import { SIGN_SYMBOLS, type SignName } from '@/lib/names';
+import { formatDay, formatRelativeDays } from '@/lib/format';
 
 // Rail geometry — kept in one place so the connector segments meet the dots.
 const DOT_CENTER = 19.5; // px from a node's top edge to the vertical centre of its dot
 
 interface Props {
+  today: CalendarDay;
   todayLabel: string;
-  sunSign: SunSignInfo | null;
-  venusSign: { name: string; symbol: string } | null;
-  sabbatCtx: SabbatContext | null;
-  events: UpcomingEvent[];
-  timezone: string;
+  sunSign: SunSignInfo;
+  venusSign: SignName | null;
+  sabbatToday: Sabbat | null;
+  events: SpineEvent[];
+  ctx: EventContext;
   expandedKey: string | null;
   onToggle: (key: string) => void;
-  panelContent: DetailContent | null;
   onClose: () => void;
 }
 
@@ -68,19 +72,17 @@ function Chevron({ open }: { open: boolean }) {
 // ── Cycle spine ─────────────────────────────────────────────────────────────
 
 export default function CycleSpine({
+  today,
   todayLabel,
   sunSign,
   venusSign,
-  sabbatCtx,
+  sabbatToday,
   events,
-  timezone,
+  ctx,
   expandedKey,
   onToggle,
-  panelContent,
   onClose,
 }: Props) {
-  const now = new Date();
-  const sabbatToday = sabbatCtx?.today ?? null;
 
   return (
     <div className="card mx-auto w-full p-5 sm:p-6">
@@ -93,44 +95,46 @@ export default function CycleSpine({
             <span className="text-xs text-text-tertiary whitespace-nowrap">{todayLabel}</span>
           </div>
 
-          {sunSign && (
-            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+            <button
+              type="button"
+              onClick={() => onToggle('sunSign')}
+              aria-expanded={expandedKey === 'sunSign'}
+              aria-controls="spine-panel-sun"
+              className="inline-flex items-center gap-2 disclosure-base rounded-lg -mx-1 px-1 py-0.5 min-h-[44px] transition-colors hover:bg-hover-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/40"
+            >
+              <span className="text-sm text-foreground">
+                <span className="text-amber-light">{SIGN_SYMBOLS[sunSign.sign]}</span> {sunSign.sign}
+                <span className="text-text-tertiary"> · until {formatDay(sunSign.until)}</span>
+              </span>
+              <Chevron open={expandedKey === 'sunSign'} />
+            </button>
+
+            {venusSign && (
               <button
                 type="button"
-                onClick={() => onToggle('sunSign')}
-                aria-expanded={expandedKey === 'sunSign'}
-                aria-controls="spine-panel-sun"
+                onClick={() => onToggle('venusNow')}
+                aria-expanded={expandedKey === 'venusNow'}
+                aria-controls="spine-panel-venus"
                 className="inline-flex items-center gap-2 disclosure-base rounded-lg -mx-1 px-1 py-0.5 min-h-[44px] transition-colors hover:bg-hover-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/40"
               >
-                <span className="text-sm text-foreground">
-                  <span className="text-amber-light">{sunSign.sign.symbol}</span> {sunSign.sign.name}
-                  <span className="text-text-tertiary"> · until {formatCalendarDate(sunSign.transitEnd)}</span>
+                <span className="text-sm text-text-tertiary">
+                  <span className="text-white/20">·</span> <span className="text-amber-light/80">{SIGN_SYMBOLS[venusSign]}</span> {venusSign}
                 </span>
-                <Chevron open={expandedKey === 'sunSign'} />
+                <Chevron open={expandedKey === 'venusNow'} />
               </button>
-
-              {venusSign && (
-                <button
-                  type="button"
-                  onClick={() => onToggle('venusNow')}
-                  aria-expanded={expandedKey === 'venusNow'}
-                  aria-controls="spine-panel-venus"
-                  className="inline-flex items-center gap-2 disclosure-base rounded-lg -mx-1 px-1 py-0.5 min-h-[44px] transition-colors hover:bg-hover-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/40"
-                >
-                  <span className="text-sm text-text-tertiary">
-                    <span className="text-white/20">·</span> <span className="text-amber-light/80">{venusSign.symbol}</span> {venusSign.name}
-                  </span>
-                  <Chevron open={expandedKey === 'venusNow'} />
-                </button>
-              )}
-            </div>
-          )}
+            )}
+          </div>
 
           {expandedKey === 'sunSign' && (
-            <DetailPanel id="spine-panel-sun" content={panelContent} onClose={onClose} />
+            <DetailPanel id="spine-panel-sun" onClose={onClose}>
+              <ZodiacDetail sign={sunSign.sign} />
+            </DetailPanel>
           )}
-          {expandedKey === 'venusNow' && (
-            <DetailPanel id="spine-panel-venus" content={panelContent} onClose={onClose} />
+          {expandedKey === 'venusNow' && venusSign && (
+            <DetailPanel id="spine-panel-venus" onClose={onClose}>
+              <VenusDetail sign={venusSign} />
+            </DetailPanel>
           )}
 
           {sabbatToday && (
@@ -146,7 +150,9 @@ export default function CycleSpine({
                 <Chevron open={expandedKey === 'sabbat'} />
               </button>
               {expandedKey === 'sabbat' && (
-                <DetailPanel id="spine-panel-sabbat" content={panelContent} onClose={onClose} />
+                <DetailPanel id="spine-panel-sabbat" onClose={onClose}>
+                  <SabbatDetail sabbat={sabbatToday.name} />
+                </DetailPanel>
               )}
             </>
           )}
@@ -166,16 +172,18 @@ export default function CycleSpine({
                 className={`w-full flex items-center gap-3 text-left disclosure-base rounded-xl -mx-2 px-2 py-1.5 min-h-[44px] transition-colors hover:bg-hover-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/40 ${isOpen ? 'bg-hover-surface' : ''}`}
               >
                 <span className="text-lg w-6 text-center flex-shrink-0 select-none text-text-secondary" aria-hidden>
-                  {event.icon}
+                  {eventIcon(event)}
                 </span>
-                <span className="flex-1 min-w-0 text-sm text-foreground">{event.name}</span>
+                <span className="flex-1 min-w-0 text-sm text-foreground">{eventTitle(event)}</span>
                 <span className="text-xs text-text-tertiary flex-shrink-0 whitespace-nowrap">
-                  {formatRelativeDays(event.date, now, timezone)}
+                  {formatRelativeDays(event.day, today)}
                 </span>
                 <Chevron open={isOpen} />
               </button>
               {isOpen && (
-                <DetailPanel id={panelId} content={panelContent} onClose={onClose} />
+                <DetailPanel id={panelId} onClose={onClose}>
+                  <EventDetail event={event} ctx={ctx} />
+                </DetailPanel>
               )}
             </Node>
           );

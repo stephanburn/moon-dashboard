@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:tz": "for tz in Europe/London Australia/Sydney America/Los_Angeles Pacific/Kiritimati; do echo \"== device TZ $tz\"; TEST_TZ=$tz vitest run || exit 1; done"
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",

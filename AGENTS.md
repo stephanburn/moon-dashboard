@@ -12,15 +12,14 @@ A personal moon / sabbat dashboard. Single page, no backend, no DB, no external 
 
 **Shape:**
 - `src/app/page.tsx` is a thin server shell; the whole app is `src/components/Dashboard.tsx` (one `'use client'` component holding all state).
-- `src/lib/` = calculations (moon, moonDisc, astro, sabbats, planets, upcomingEvents), `timezones.ts` (zone list + hemisphere), `format.ts` (date formatting), `config.ts` constants. Tests in `src/lib/__tests__/`.
+- `src/lib/` = calculations (moon, moonDisc, astro, sabbats, planets), `events.ts` (the `SpineEvent` union), `dashboardModel.ts` (pure `buildDashboardModel(now, timezone)`: everything the UI shows), `days.ts` (calendar days), `names.ts` (name unions), `timezones.ts`, `format.ts` (all formatting), `config.ts`. Tests in `src/lib/__tests__/`.
 - `src/data/` = correspondence content (phases, signs, sabbats, Venus, moon-in-sign), kept separate from logic so content is editable in isolation.
-- `src/components/CycleSpine.tsx` renders the Now node + upcoming-event timeline; `DetailPanel.tsx` renders every expandable detail type; `TimezoneSelector.tsx` is a plain `<select>` (Dashboard persists the choice in `localStorage`).
+- `src/components/CycleSpine.tsx` renders the Now node + upcoming-event timeline; `DetailPanel.tsx` is the panel chrome, `details.tsx` the panel contents, and `eventKinds.tsx` maps each event kind to its icon, title and detail. Adding an event kind = extend `SpineEvent` + one `EVENT_KINDS` entry; `TimezoneSelector.tsx` is a plain `<select>` (Dashboard persists the choice in `localStorage`).
 
 **Watch out for:**
 - `planets.ts` Mercury/Venus tables are hand-maintained and expire end of 2027 (`PLANET_DATA_EXPIRY`). They are lookup data, not computed; `planetsTruth.test.ts` cross-checks them against `astronomy-engine`. Sun-sign dates (`astro.ts`) and solstice/equinox dates (`sabbats.ts`) are also fixed tables.
 - Hemisphere (N/S) is derived from the selected timezone via a hardcoded `SOUTHERN_TIMEZONES` set in `src/lib/timezones.ts` (a test checks it stays a subset of the selector list).
-- Timezone handling is manual (`Intl.DateTimeFormat` part-parsing in `toLocalDate` in `Dashboard.tsx` and `localDayIndex` in `format.ts`) — tread carefully around date-boundary logic.
-- Two kinds of `Date` flow through the app: **instants** (moon phases, moon-sign ingresses, Deipnon) and **calendar days** (sabbats, sun/Venus ingresses, Mercury dates), which are built as *device-local* midnights. Calendar days must never be formatted or compared with a `timeZone` option (see `formatCalendarDate`); `formatRelativeDays` currently breaks this rule (known bug, see the review doc).
+- Time model (`src/lib/days.ts`): **instants** are `Date`s; **calendar days** are `CalendarDay` strings (`'YYYY-MM-DD'`). An instant becomes a day only via `dayOf(instant, selectedTimezone)`. Never construct a "day" as a device-local midnight `Date`, and format days with `formatDay` (UTC-based). `npm run test:tz` runs the suite under four device zones to catch violations.
 - `.next/` sometimes accumulates duplicate `* 2.ts` / `* 3.ts` files (Finder/iCloud) that break `tsc`; delete `.next` if you see a spurious `Duplicate identifier` error.
 
-**Before committing:** run `npx tsc --noEmit` (must be clean), `npx eslint` and `npm test`.
+**Before committing:** run `npx tsc --noEmit` (must be clean), `npx eslint` and `npm run test:tz`. CI runs these plus `next build`.

@@ -1,5 +1,7 @@
+import type { PhaseName } from '@/lib/names';
+
 export interface MoonPhaseCorrespondence {
-  phaseName: string;
+  phaseName: PhaseName;
   description: string;
   energy: string;
   magicalWorkings: string[];
@@ -10,7 +12,7 @@ export interface MoonPhaseCorrespondence {
   esbatNote?: string;
 }
 
-export const MOON_CORRESPONDENCES: Record<string, MoonPhaseCorrespondence> = {
+export const MOON_CORRESPONDENCES: Record<PhaseName, MoonPhaseCorrespondence> = {
   'New Moon': {
     phaseName: 'New Moon',
     description:

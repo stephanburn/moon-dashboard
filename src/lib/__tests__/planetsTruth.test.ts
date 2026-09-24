@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { Body, GeoVector, Rotation_EQJ_ECT, RotateVector } from 'astronomy-engine';
 import { VENUS_INGRESSES, MERCURY_RETROGRADES, getCurrentVenusSign } from '../planets';
+import { dayOf, dayToUTCMs } from '../days';
 
 // The ordering checks in planets.test.ts can't tell a well-formed table from a
 // wrong one. These compare the hand-maintained tables against astronomy-engine
@@ -31,14 +32,14 @@ function dailyMotion(body: Body, t: number): number {
 
 // Distance in days from `t` to the nearest table ingress.
 function daysToNearestIngress(t: number): number {
-  return Math.min(...VENUS_INGRESSES.map(v => Math.abs(v.date.getTime() - t))) / DAY;
+  return Math.min(...VENUS_INGRESSES.map(v => Math.abs(dayToUTCMs(v.day) - t))) / DAY;
 }
 
 describe('Venus ingress table matches the ephemeris', () => {
   it('gives the true Venus sign on every day of 2025–2027 (±1 day at ingresses)', () => {
     const wrong: string[] = [];
-    for (let t = new Date(2025, 0, 1, 12).getTime(); t < new Date(2028, 0, 1).getTime(); t += DAY) {
-      const table = getCurrentVenusSign(new Date(t))?.name;
+    for (let t = Date.UTC(2025, 0, 1, 12); t < Date.UTC(2028, 0, 1); t += DAY) {
+      const table = getCurrentVenusSign(dayOf(new Date(t), 'UTC'));
       const truth = signAt(Body.Venus, t);
       if (table !== truth && daysToNearestIngress(t) > 1) {
         wrong.push(`${new Date(t).toDateString()}: table ${table}, ephemeris ${truth}`);
@@ -50,7 +51,8 @@ describe('Venus ingress table matches the ephemeris', () => {
 
 describe('Mercury retrograde table matches the ephemeris', () => {
   it('each stated retrograde start and end is within a day of a real station', () => {
-    for (const p of MERCURY_RETROGRADES) {
+    for (const rx of MERCURY_RETROGRADES) {
+      const p = { signs: rx.signs, retrogradeStart: new Date(dayToUTCMs(rx.retrogradeStart)), retrogradeEnd: new Date(dayToUTCMs(rx.retrogradeEnd)) };
       // Stations are where daily motion changes sign. Retrograde periods are
       // well inside the stated range; just outside it Mercury is direct.
       const mid = (p.retrogradeStart.getTime() + p.retrogradeEnd.getTime()) / 2;
@@ -63,7 +65,8 @@ describe('Mercury retrograde table matches the ephemeris', () => {
   });
 
   it('labels each period with the signs of its two stations', () => {
-    for (const p of MERCURY_RETROGRADES) {
+    for (const rx of MERCURY_RETROGRADES) {
+      const p = { signs: rx.signs, retrogradeStart: new Date(dayToUTCMs(rx.retrogradeStart)), retrogradeEnd: new Date(dayToUTCMs(rx.retrogradeEnd)) };
       const [startSign, endSign = startSign] = p.signs.split(' / ');
       expect(signAt(Body.Mercury, p.retrogradeStart.getTime() + 12 * HOUR)).toBe(startSign);
       expect(signAt(Body.Mercury, p.retrogradeEnd.getTime() + 12 * HOUR)).toBe(endSign);

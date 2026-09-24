@@ -1,8 +1,10 @@
+import type { SignName } from '@/lib/names';
+
 export interface VenusCorrespondence {
   energy: string;
 }
 
-export const VENUS_CORRESPONDENCES: Record<string, VenusCorrespondence> = {
+export const VENUS_CORRESPONDENCES: Record<SignName, VenusCorrespondence> = {
   Aries: {
     energy:
       'Venus in Aries loves boldly and impulsively. Desire is immediate, direct, and unashamed. Attraction is sparked by confidence and novelty; passion burns hot but may need tending to last. A time for pursuing what the heart wants without apology.',
