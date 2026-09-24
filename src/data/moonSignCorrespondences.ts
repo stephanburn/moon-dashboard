@@ -1,8 +1,10 @@
+import type { SignName } from '@/lib/names';
+
 export interface MoonSignCorrespondence {
   energy: string;
 }
 
-export const MOON_SIGN_CORRESPONDENCES: Record<string, MoonSignCorrespondence> = {
+export const MOON_SIGN_CORRESPONDENCES: Record<SignName, MoonSignCorrespondence> = {
   Aries: {
     energy:
       'Moon in Aries ignites emotional courage and the urge to act. Feelings are vivid, quick, and intense. This is a time for bold emotional expression, initiating new cycles, and clearing the air. Anger passes quickly; so does hesitation.',

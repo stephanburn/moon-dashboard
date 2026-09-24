@@ -1,8 +1,10 @@
+import type { SignName } from '@/lib/names';
+
 export interface VenusCorrespondence {
   energy: string;
 }
 
-export const VENUS_CORRESPONDENCES: Record<string, VenusCorrespondence> = {
+export const VENUS_CORRESPONDENCES: Record<SignName, VenusCorrespondence> = {
   Aries: {
     energy:
       'Venus in Aries loves boldly and impulsively. Desire is immediate, direct, and unashamed. Attraction is sparked by confidence and novelty; passion burns hot but may need tending to last. A time for pursuing what the heart wants without apology.',
@@ -13,7 +15,7 @@ export const VENUS_CORRESPONDENCES: Record<string, VenusCorrespondence> = {
   },
   Gemini: {
     energy:
-      'Venus in Gemini loves through wit, variety, and intellectual connection. Attraction thrives on conversation and playful exchange. Relationships feel lighter and more curious now — a good time for flirtation, social pleasure, and exploring new connections.',
+      'Venus in Gemini loves through wit, variety, and intellectual connection. Attraction thrives on conversation and playful exchange. Relationships feel lighter and more curious now, which makes this a good time for flirtation, social pleasure, and exploring new connections.',
   },
   Cancer: {
     energy:

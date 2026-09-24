@@ -91,7 +91,8 @@ describe('getMoonPhasePeak', () => {
 
 describe('getUpcomingMajorPhases', () => {
   it('returns chronological phases including a New Moon', () => {
-    const phases = getUpcomingMajorPhases(new Date('2026-06-29T12:00:00Z'), 2);
+    const from = new Date('2026-06-29T12:00:00Z');
+    const phases = getUpcomingMajorPhases(from, new Date(from.getTime() + 60 * DAY));
     expect(phases.length).toBeGreaterThan(0);
     expect(phases.some(p => p.name === 'New Moon')).toBe(true);
     for (let i = 1; i < phases.length; i++) {

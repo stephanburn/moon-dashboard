@@ -1,5 +1,7 @@
+import type { SignName } from '@/lib/names';
+
 export interface ZodiacCorrespondence {
-  name: string;
+  name: SignName;
   symbol: string;
   element: 'Fire' | 'Earth' | 'Air' | 'Water';
   modality: 'Cardinal' | 'Fixed' | 'Mutable';
@@ -11,7 +13,7 @@ export interface ZodiacCorrespondence {
   herbs: string[];
 }
 
-export const ZODIAC_CORRESPONDENCES: Record<string, ZodiacCorrespondence> = {
+export const ZODIAC_CORRESPONDENCES: Record<SignName, ZodiacCorrespondence> = {
   Aries: {
     name: 'Aries',
     symbol: '♈',

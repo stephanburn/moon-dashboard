@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { STORAGE_KEY } from '@/lib/timezones';
+import { safeRemove } from '@/lib/storage';
 
 // Backstop: if anything in the dashboard throws at render time, show a recoverable
 // screen instead of a blank page. The most likely culprit historically was a bad
@@ -18,11 +19,7 @@ export default function Error({
   }, [error]);
 
   const clearAndReset = () => {
-    try {
-      localStorage.removeItem(STORAGE_KEY);
-    } catch {
-      // ignore — localStorage may be unavailable
-    }
+    safeRemove(STORAGE_KEY);
     reset();
   };
 
