@@ -1,5 +1,6 @@
 'use client';
 
+import Chevron from './Chevron';
 import DetailPanel from './DetailPanel';
 import { SabbatDetail, VenusDetail, ZodiacDetail } from './details';
 import { EventDetail, eventIcon, eventTitle, type EventContext } from './eventKinds';
@@ -22,8 +23,11 @@ interface Props {
   events: SpineEvent[];
   ctx: EventContext;
   expandedKey: string | null;
-  onToggle: (key: string) => void;
+  /** `kind` names what was opened (for analytics); `key` identifies the item. */
+  onToggle: (key: string, kind: string) => void;
   onClose: () => void;
+  /** Bounce the first event's chevron once, to teach first-time visitors. */
+  nudge: boolean;
 }
 
 // ── Rail primitives ─────────────────────────────────────────────────────────
@@ -58,17 +62,6 @@ function Node({
   );
 }
 
-function Chevron({ open }: { open: boolean }) {
-  return (
-    <span
-      aria-hidden
-      className={`text-silver/75 text-base flex-shrink-0 inline-block transition-transform duration-300 motion-reduce:transition-none ${open ? 'rotate-180' : ''}`}
-    >
-      ▾
-    </span>
-  );
-}
-
 // ── Cycle spine ─────────────────────────────────────────────────────────────
 
 export default function CycleSpine({
@@ -82,6 +75,7 @@ export default function CycleSpine({
   expandedKey,
   onToggle,
   onClose,
+  nudge,
 }: Props) {
 
   return (
@@ -95,30 +89,32 @@ export default function CycleSpine({
             <span className="text-xs text-text-tertiary whitespace-nowrap">{todayLabel}</span>
           </div>
 
-          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+          <div className="mt-2 -ml-2 mr-2 flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={() => onToggle('sunSign')}
+              onClick={() => onToggle('sunSign', 'sun-sign')}
               aria-expanded={expandedKey === 'sunSign'}
               aria-controls="spine-panel-sun"
-              className="inline-flex items-center gap-2 disclosure-base rounded-lg -mx-1 px-1 py-0.5 min-h-[44px] transition-colors hover:bg-hover-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/40"
+              className="inline-flex items-center gap-2 text-left disclosure-base disclosure-row rounded-xl px-3 py-1 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/40"
             >
               <span className="text-sm text-foreground">
-                <span className="text-amber-light">{SIGN_SYMBOLS[sunSign.sign]}</span> {sunSign.sign}
-                <span className="text-text-tertiary"> · until {formatDay(dayOf(sunSign.until, ctx.timezone))}</span>
+                <span className="text-text-tertiary">Sun in</span>{' '}
+                <span className="whitespace-nowrap"><span className="text-amber-light">{SIGN_SYMBOLS[sunSign.sign]}</span> {sunSign.sign}</span>
+                <span className="text-text-tertiary whitespace-nowrap"> · until {formatDay(dayOf(sunSign.until, ctx.timezone))}</span>
               </span>
               <Chevron open={expandedKey === 'sunSign'} />
             </button>
 
             <button
               type="button"
-              onClick={() => onToggle('venusNow')}
+              onClick={() => onToggle('venusNow', 'venus-sign')}
               aria-expanded={expandedKey === 'venusNow'}
               aria-controls="spine-panel-venus"
-              className="inline-flex items-center gap-2 disclosure-base rounded-lg -mx-1 px-1 py-0.5 min-h-[44px] transition-colors hover:bg-hover-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/40"
+              className="inline-flex items-center gap-2 text-left disclosure-base disclosure-row rounded-xl px-3 py-1 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/40"
             >
-              <span className="text-sm text-text-tertiary">
-                <span className="text-white/20">·</span> <span className="text-amber-light/80">{SIGN_SYMBOLS[venusSign]}</span> {venusSign}
+              <span className="text-sm text-foreground">
+                <span className="text-text-tertiary">Venus in</span>{' '}
+                <span className="text-amber-light/80">{SIGN_SYMBOLS[venusSign]}</span> {venusSign}
               </span>
               <Chevron open={expandedKey === 'venusNow'} />
             </button>
@@ -139,10 +135,10 @@ export default function CycleSpine({
             <>
               <button
                 type="button"
-                onClick={() => onToggle('sabbat')}
+                onClick={() => onToggle('sabbat', 'sabbat-today')}
                 aria-expanded={expandedKey === 'sabbat'}
                 aria-controls="spine-panel-sabbat"
-                className="mt-2 w-full flex items-center gap-2 text-left disclosure-base rounded-lg -mx-1 px-1 py-0.5 min-h-[44px] transition-colors hover:bg-hover-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/40"
+                className="mt-2 -ml-2 w-full flex items-center gap-2 text-left disclosure-base disclosure-row rounded-xl px-3 py-1 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/40"
               >
                 <span className="text-sm text-amber-light flex-1">Blessed {sabbatToday.displayName}</span>
                 <Chevron open={expandedKey === 'sabbat'} />
@@ -164,10 +160,10 @@ export default function CycleSpine({
             <Node key={event.key} isLast={i === events.length - 1}>
               <button
                 type="button"
-                onClick={() => onToggle(event.key)}
+                onClick={() => onToggle(event.key, event.kind)}
                 aria-expanded={isOpen}
                 aria-controls={panelId}
-                className={`w-full flex items-center gap-3 text-left disclosure-base rounded-xl -mx-2 px-2 py-1.5 min-h-[44px] transition-colors hover:bg-hover-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/40 ${isOpen ? 'bg-hover-surface' : ''}`}
+                className="w-full flex items-center gap-3 text-left disclosure-base disclosure-row rounded-xl -mx-2 px-2 py-1 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/40"
               >
                 <span className="text-lg w-6 text-center flex-shrink-0 select-none text-text-secondary" aria-hidden>
                   {eventIcon(event)}
@@ -176,7 +172,7 @@ export default function CycleSpine({
                 <span className="text-xs text-text-tertiary flex-shrink-0 whitespace-nowrap">
                   {formatRelativeDays(event.day, today)}
                 </span>
-                <Chevron open={isOpen} />
+                <Chevron open={isOpen} nudge={nudge && i === 0} />
               </button>
               {isOpen && (
                 <DetailPanel id={panelId} onClose={onClose}>

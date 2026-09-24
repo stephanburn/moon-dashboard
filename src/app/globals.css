@@ -186,13 +186,53 @@ body::after {
   will-change: grid-template-rows, opacity;
 }
 
-/* Shared base for every tap-to-expand disclosure control */
-.disclosure-base {
-  background: transparent;
-  border: 0;
-  appearance: none;
-  cursor: pointer;
-  user-select: none;
+/* Shared base for every tap-to-expand disclosure control. In the components
+   layer so Tailwind utilities (hover:bg-*, which live in the utilities layer)
+   can override it; unlayered CSS would always win over them. */
+@layer components {
+  .disclosure-base {
+    background: transparent;
+    border: 0;
+    appearance: none;
+    cursor: pointer;
+    user-select: none;
+  }
+}
+
+/* Resting surface for disclosure rows, so they read as tappable on touch
+   screens (no hover) before anyone touches them. */
+.disclosure-row {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.disclosure-row:hover,
+.disclosure-row[aria-expanded="true"] {
+  background: var(--hover-surface);
+  border-color: rgba(201, 147, 58, 0.25);
+}
+
+.disclosure-row:active {
+  background: rgba(255, 255, 255, 0.09);
+}
+
+/* Chevron badge brightens with its row */
+.disclosure-base:hover .chevron-badge,
+.disclosure-base:focus-visible .chevron-badge {
+  border-color: rgba(232, 184, 90, 0.6);
+  background: rgba(201, 147, 58, 0.18);
+}
+
+/* One-off teaching nudge for first-time visitors: two soft downward bounces
+   with a glow. Uses `translate` so it composes with the open-state rotate. */
+@keyframes chevronNudge {
+  0%, 40%, 80%, 100% { translate: 0 0; box-shadow: 0 0 0 0 rgba(232, 184, 90, 0); }
+  20%, 60%           { translate: 0 3px; box-shadow: 0 0 0 5px rgba(232, 184, 90, 0.18); }
+}
+
+.chevron-nudge {
+  animation: chevronNudge 1.6s ease-in-out 1s 2;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -209,6 +249,10 @@ body::after {
   }
 
   .moon-glow {
+    animation: none;
+  }
+
+  .chevron-nudge {
     animation: none;
   }
 }

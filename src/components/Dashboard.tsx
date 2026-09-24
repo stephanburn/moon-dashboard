@@ -1,8 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { track } from '@vercel/analytics';
 import TimezoneSelector from './TimezoneSelector';
 import MoonDisc from './MoonDisc';
+import Chevron from './Chevron';
 import CycleSpine from './CycleSpine';
 import DetailPanel from './DetailPanel';
 import DashboardSkeleton from './DashboardSkeleton';
@@ -19,9 +21,14 @@ import { STORAGE_KEY, normalizeTimezone } from '@/lib/timezones';
 const PANEL_HERO = 'detail-panel-hero';
 const PANEL_HERO_SIGN = 'detail-panel-hero-sign';
 
-// Once the user has opened any disclosure, they've learned the gesture — retire
-// the "tap any item" hint for good.
-const HINT_DISMISSED_KEY = 'moon-dashboard-hint-dismissed';
+// Hero disclosures. Opening one of these doesn't prove the user has found the
+// timeline, which is where most of the content lives.
+const HERO_KEYS = new Set(['moon', 'moonSign']);
+
+// Once the user has opened something in the timeline card, they've learned the
+// gesture: retire the hint and the chevron nudge for good. (A new key: the old
+// one was set by any first tap, including the moon, so it can't be trusted.)
+const HINT_DISMISSED_KEY = 'moon-dashboard-spine-discovered';
 
 // How often a long-open tab recomputes, so peaks, the date and the spine don't
 // go stale across midnight or a phase/sign change.
@@ -51,7 +58,7 @@ function Disclosure({
       onClick={onToggle}
       aria-expanded={isOpen}
       aria-controls={panelId}
-      className={`w-full disclosure-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/40 ${className}`}
+      className={`disclosure-base focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/40 ${className}`}
     >
       {children}
     </button>
@@ -65,11 +72,13 @@ function DashboardContent({
   expandedKey,
   onToggle,
   onClose,
+  nudge,
 }: {
   model: DashboardModel;
   expandedKey: string | null;
-  onToggle: (key: string) => void;
+  onToggle: (key: string, kind: string) => void;
   onClose: () => void;
+  nudge: boolean;
 }) {
   const { moon, moonSign, timezone } = model;
 
@@ -84,12 +93,13 @@ function DashboardContent({
           {/* Clickable moon hero */}
           <Disclosure
             isOpen={expandedKey === 'moon'}
-            onToggle={() => onToggle('moon')}
+            onToggle={() => onToggle('moon', 'moon-phase-now')}
             panelId={PANEL_HERO}
-            className={`text-center space-y-4 rounded-xl px-4 pt-2 pb-2 transition-colors hover:bg-hover-surface ${expandedKey === 'moon' ? 'bg-hover-surface' : ''}`}
+            className={`group w-full text-center space-y-4 rounded-xl px-4 pt-2 pb-2 transition-colors hover:bg-hover-surface ${expandedKey === 'moon' ? 'bg-hover-surface' : ''}`}
           >
-            {/* Drawn moon with glow halo */}
-            <div className="relative inline-flex items-center justify-center" role="img" aria-label={moon.name}>
+            {/* Drawn moon with glow halo; lifts slightly on hover/focus so the
+                moon itself reads as something to tap. */}
+            <div className="relative inline-flex items-center justify-center transition-transform duration-500 group-hover:scale-[1.03] group-focus-visible:scale-[1.03] motion-reduce:transition-none motion-reduce:transform-none" role="img" aria-label={moon.name}>
               <div className="moon-glow" />
               <MoonDisc
                 fraction={moon.fraction}
@@ -112,7 +122,10 @@ function DashboardContent({
               </p>
 
               <div className="flex justify-center pt-1">
-                <span className={`text-silver/75 text-base inline-block transition-transform duration-300 motion-reduce:transition-none ${expandedKey === 'moon' ? 'rotate-180' : ''}`}>▾</span>
+                <span className="inline-flex items-center gap-2 text-xs tracking-[0.2em] uppercase text-amber-light/80">
+                  About this phase
+                  <Chevron open={expandedKey === 'moon'} />
+                </span>
               </div>
             </div>
           </Disclosure>
@@ -120,17 +133,17 @@ function DashboardContent({
           {/* Moon sign — separate clickable row; min-h-[44px] ensures touch target */}
           <Disclosure
             isOpen={expandedKey === 'moonSign'}
-            onToggle={() => onToggle('moonSign')}
+            onToggle={() => onToggle('moonSign', 'moon-sign')}
             panelId={PANEL_HERO_SIGN}
-            className={`min-h-[44px] flex items-center justify-center py-1 px-4 rounded-lg transition-colors hover:bg-hover-surface ${expandedKey === 'moonSign' ? 'bg-hover-surface' : ''}`}
+            className="disclosure-row mx-auto w-fit min-h-[44px] flex items-center justify-center gap-2 py-1 pl-4 pr-2 rounded-xl"
           >
-            <span className="text-xs text-text-tertiary">
+            <span className="text-sm text-text-tertiary">
               Moon in{' '}
-              <span className="text-text-secondary">
-                {moonSign} {SIGN_SYMBOLS[moonSign]}
+              <span className="text-foreground">
+                {moonSign} <span className="text-amber-light/80">{SIGN_SYMBOLS[moonSign]}</span>
               </span>
             </span>
-            <span className={`ml-1.5 text-silver/75 text-base inline-block transition-transform duration-300 motion-reduce:transition-none ${expandedKey === 'moonSign' ? 'rotate-180' : ''}`}>▾</span>
+            <Chevron open={expandedKey === 'moonSign'} />
           </Disclosure>
         </div>
 
@@ -171,6 +184,7 @@ function DashboardContent({
           expandedKey={expandedKey}
           onToggle={onToggle}
           onClose={onClose}
+          nudge={nudge}
         />
       </section>
     </>
@@ -229,12 +243,19 @@ export default function Dashboard() {
   }, []);
 
   // Toggle expand/collapse for a given item key
-  const handleToggle = useCallback((key: string) => {
-    setExpandedKey(prev => (prev === key ? null : key));
-    // First interaction teaches the gesture; retire the hint permanently.
-    setShowHint(false);
-    safeSet(HINT_DISMISSED_KEY, '1');
-  }, []);
+  const handleToggle = useCallback((key: string, kind: string) => {
+    const opening = expandedKey !== key;
+    setExpandedKey(opening ? key : null);
+    // Anonymous count of which kinds of panel get opened, to see whether the
+    // detail panels are being discovered. No-op outside Vercel.
+    if (opening) track('panel_open', { kind });
+    // Opening something in the timeline shows the gesture has been learned;
+    // retire the hint and nudge permanently. Hero taps alone don't count.
+    if (!HERO_KEYS.has(key)) {
+      setShowHint(false);
+      safeSet(HINT_DISMISSED_KEY, '1');
+    }
+  }, [expandedKey]);
 
   const closePanel = useCallback(() => setExpandedKey(null), []);
 
@@ -269,11 +290,11 @@ export default function Dashboard() {
 
       <main className="flex-1 px-4 sm:px-8 pt-4 pb-8 max-w-xl mx-auto w-full space-y-4">
 
-        {/* Discoverability hint: the disclosures aren't obviously tappable, so
-            name the gesture once, quietly, above the fold — until first tap. */}
+        {/* Discoverability hint: name the gesture above the fold until the
+            user has opened something in the timeline. */}
         {showHint && (
-          <p className="fade-in text-center text-xs text-text-tertiary">
-            Tap any item to reveal its meaning
+          <p className="fade-in text-center text-xs text-text-secondary">
+            Tap the moon or any item below to reveal its meaning
           </p>
         )}
 
@@ -283,6 +304,7 @@ export default function Dashboard() {
             expandedKey={expandedKey}
             onToggle={handleToggle}
             onClose={closePanel}
+            nudge={showHint}
           />
         ) : (
           <DashboardSkeleton />
@@ -291,7 +313,7 @@ export default function Dashboard() {
       </main>
 
       <footer className="px-6 py-5 text-center border-t border-white/5 space-y-1">
-        <p className="text-xs text-silver/55">Calculated locally. Anonymous page-view counts only.</p>
+        <p className="text-xs text-silver/55">Calculated locally. Anonymous usage counts only.</p>
         {process.env.NEXT_PUBLIC_COMMIT && (
           <p aria-hidden className="text-xs text-white/10 font-mono">{process.env.NEXT_PUBLIC_COMMIT}</p>
         )}

@@ -20,7 +20,7 @@ export default function DashboardSkeleton() {
           <div className="space-y-3 flex flex-col items-center">
             <Bar className="h-10 sm:h-12 w-56" />
             <Bar className="h-4 w-64" />
-            <span className="block h-6" />
+            <span className="block h-7" />
           </div>
         </div>
         <div className="min-h-[44px] flex items-center justify-center">
