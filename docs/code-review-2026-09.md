@@ -1,6 +1,7 @@
 # Code & documentation review — September 2026
 
 Baseline review at commit `0b8a824` (24 Sep 2026), ahead of expanding the app.
+The fix plan is in [implementation-plan-2026-09.md](implementation-plan-2026-09.md).
 
 ## Health check
 
