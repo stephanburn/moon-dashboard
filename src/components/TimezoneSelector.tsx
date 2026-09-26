@@ -1,13 +1,22 @@
 'use client';
 
-import { TIMEZONE_GROUPS } from '@/lib/timezones';
+import { TIMEZONE_GROUPS, listedZoneFor } from '@/lib/timezones';
 
 interface Props {
   value: string;
+  detectedZone: string | null; // the browser's zone, if it reported one
   onChange: (tz: string) => void;
 }
 
-export default function TimezoneSelector({ value, onChange }: Props) {
+const label = (zone: string) => zone.replace(/_/g, ' ');
+
+export default function TimezoneSelector({ value, detectedZone, onChange }: Props) {
+  // Zones outside the list (the browser's own, or a saved one from an earlier
+  // visit elsewhere) get their own options, so the select always shows the
+  // zone actually in use and the browser's zone can be picked again.
+  const extraZones = [...new Set([detectedZone, value])]
+    .filter((zone): zone is string => !!zone && !listedZoneFor(zone));
+
   return (
     <div className="flex items-center gap-2">
       <span className="text-xs text-silver/50 tracking-wide hidden sm:block">Timezone</span>
@@ -22,11 +31,16 @@ export default function TimezoneSelector({ value, onChange }: Props) {
           transition-colors cursor-pointer
         "
       >
+        {extraZones.map(zone => (
+          <option key={zone} value={zone}>
+            {zone === detectedZone ? `${label(zone)} (your timezone)` : label(zone)}
+          </option>
+        ))}
         {TIMEZONE_GROUPS.map(group => (
           <optgroup key={group.label} label={group.label}>
             {group.zones.map(zone => (
               <option key={zone} value={zone}>
-                {zone.replace(/_/g, ' ')}
+                {label(zone)}
               </option>
             ))}
           </optgroup>

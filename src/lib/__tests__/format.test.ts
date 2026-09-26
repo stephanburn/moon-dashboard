@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { formatDay, formatPeakText, formatRelativeDays } from '../format';
+import { formatDay, formatDayAndTime, formatPeakText, formatRelativeDays, formatTime } from '../format';
 import { makeDay } from '../days';
 
 describe('formatRelativeDays', () => {
@@ -57,5 +57,55 @@ describe('formatPeakText', () => {
     // 16:49 UTC is 06:49 on the 27th in Kiritimati (UTC+14).
     const now = new Date('2026-09-26T08:00:00Z'); // 22:00 on the 26th there
     expect(formatPeakText('Full Moon', peak, now, 'Pacific/Kiritimati')).toMatch(/^Full Moon peaks: 27 Sept? 2026 at 06:49$/);
+  });
+});
+
+// When clocks go back an hour of wall-clock time repeats, so a bare "01:30" is
+// ambiguous. Times in that hour carry the zone; all others stay bare.
+describe('formatTime around daylight saving changes', () => {
+  it('labels both passes through the repeated hour (London, 25 Oct 2026)', () => {
+    expect(formatTime(new Date('2026-10-25T00:30:00Z'), 'Europe/London')).toBe('01:30 BST');
+    expect(formatTime(new Date('2026-10-25T01:30:00Z'), 'Europe/London')).toBe('01:30 GMT');
+  });
+
+  it('labels the real Halifax case: Moon enters Leo, 1 Nov 2026', () => {
+    expect(formatTime(new Date('2026-11-01T04:18:45Z'), 'America/Halifax')).toBe('01:18 GMT-3');
+    expect(formatTime(new Date('2026-11-01T05:18:45Z'), 'America/Halifax')).toBe('01:18 GMT-4');
+  });
+
+  it('handles the 30-minute shift on Lord Howe Island', () => {
+    expect(formatTime(new Date('2027-04-03T14:45:00Z'), 'Australia/Lord_Howe')).toBe('01:45 GMT+11');
+    expect(formatTime(new Date('2027-04-03T15:15:00Z'), 'Australia/Lord_Howe')).toBe('01:45 GMT+10:30');
+  });
+
+  it('leaves ordinary times and the skipped spring-forward hour unlabelled', () => {
+    expect(formatTime(new Date('2026-09-26T16:49:00Z'), 'Europe/London')).toBe('17:49');
+    expect(formatTime(new Date('2027-03-28T00:59:00Z'), 'Europe/London')).toBe('00:59');
+    expect(formatTime(new Date('2027-03-28T01:00:00Z'), 'Europe/London')).toBe('02:00');
+  });
+
+  it('never shows two different instants the same way across a changeover night', () => {
+    const zones = ['Europe/London', 'America/New_York', 'America/Halifax', 'Australia/Sydney',
+      'Pacific/Auckland', 'America/Santiago', 'Australia/Lord_Howe', 'Africa/Casablanca'];
+    const HOUR = 3_600_000;
+    let changeovers = 0;
+    for (const tz of zones) {
+      // Find each changeover in the year (the wall-clock hour stops advancing
+      // by exactly one), then check every quarter hour for 3 hours either side:
+      // each displayed "day, time" must be unique.
+      const hourOf = (t: number) => Number(new Date(t).toLocaleString('en-GB', { timeZone: tz, hour: '2-digit', hourCycle: 'h23' }));
+      for (let t = Date.parse('2026-09-26T00:00:00Z'); t < Date.parse('2027-09-26T00:00:00Z'); t += HOUR) {
+        if ((hourOf(t) + 1) % 24 === hourOf(t + HOUR)) continue;
+        changeovers++;
+        const seen = new Map<string, string>();
+        for (let s = t - 3 * HOUR; s <= t + 3 * HOUR; s += 15 * 60_000) {
+          const shown = formatDayAndTime(new Date(s), tz);
+          const clash = seen.get(shown);
+          expect(clash, `${tz}: ${new Date(s).toISOString()} and ${clash} both show as "${shown}"`).toBeUndefined();
+          seen.set(shown, new Date(s).toISOString());
+        }
+      }
+    }
+    expect(changeovers).toBeGreaterThanOrEqual(14); // 7 DST zones × 2, plus Casablanca's Ramadan shifts
   });
 });

@@ -38,7 +38,7 @@ const SPINE_EVENT_COUNT = 8;
 const SAME_PEAK_WINDOW_MS = 3 * 86_400_000;
 
 export function buildDashboardModel(now: Date, timezone: string): DashboardModel {
-  const hemisphere = hemisphereFromTimezone(timezone);
+  const hemisphere = hemisphereFromTimezone(timezone, now);
   const today = dayOf(now, timezone);
   const moon = getMoonPhaseInfo(now);
   const moonPeak = getMoonPhasePeak(now, moon.name);

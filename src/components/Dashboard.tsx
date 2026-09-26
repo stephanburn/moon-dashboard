@@ -15,7 +15,7 @@ import { dayOf } from '@/lib/days';
 import { formatDay } from '@/lib/format';
 import { SIGN_SYMBOLS } from '@/lib/names';
 import { safeGet, safeSet } from '@/lib/storage';
-import { STORAGE_KEY, normalizeTimezone } from '@/lib/timezones';
+import { STORAGE_KEY, detectBrowserTimezone, normalizeTimezone, resolveTimezone } from '@/lib/timezones';
 
 // Stable IDs linking each disclosure trigger to its detail panel via aria-controls.
 const PANEL_HERO = 'detail-panel-hero';
@@ -195,6 +195,7 @@ function DashboardContent({
 
 export default function Dashboard() {
   const [timezone, setTimezone] = useState(DEFAULT_TZ);
+  const [detectedZone, setDetectedZone] = useState<string | null>(null);
   // null during the server render and hydration: everything shown depends on
   // the current time, so it is only computed in the browser (finding P0-2).
   const [now, setNow] = useState<Date | null>(null);
@@ -211,13 +212,16 @@ export default function Dashboard() {
     safeSet(STORAGE_KEY, safeTz);
   }, []);
 
-  // First client render: restore the stored timezone and start the clock in
-  // the same pass, so the first real frame already uses the right zone.
+  // First client render: pick the zone (saved choice, else the browser's) and
+  // start the clock in the same pass, so the first real frame already uses the
+  // right zone.
   useEffect(() => {
     // Browser-only state can't be read during render without breaking
     // hydration, so it is picked up here.
+    const detected = detectBrowserTimezone();
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    setTimezone(normalizeTimezone(safeGet(STORAGE_KEY)));
+    setDetectedZone(detected);
+    setTimezone(resolveTimezone(safeGet(STORAGE_KEY), detected));
     setNow(new Date());
     // Show the tap hint only to users who haven't dismissed it before.
     if (safeGet(HINT_DISMISSED_KEY) !== '1') {
@@ -283,7 +287,7 @@ export default function Dashboard() {
                 <span className="hidden sm:inline">· until {formatDay(dayOf(mercury.period.retrogradeEnd, timezone))}</span>
               </div>
             )}
-            <TimezoneSelector value={timezone} onChange={handleTimezoneChange} />
+            <TimezoneSelector value={timezone} detectedZone={detectedZone} onChange={handleTimezoneChange} />
           </div>
         </div>
       </header>

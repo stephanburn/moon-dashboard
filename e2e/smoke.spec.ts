@@ -47,6 +47,58 @@ for (const timezoneId of ['UTC', 'America/Los_Angeles', 'Australia/Sydney']) {
   });
 }
 
+// First visit, nothing saved: the page should follow the browser's zone.
+// Asia/Calcutta is the legacy name Chrome reports for India; the selector
+// lists Asia/Kolkata. Phoenix has no listed equivalent (no DST), and UTC is
+// treated as a privacy setting.
+for (const [timezoneId, expected] of [
+  ['America/Los_Angeles', 'America/Los_Angeles'],
+  ['Australia/Sydney', 'Australia/Sydney'],
+  ['Asia/Calcutta', 'Asia/Kolkata'],
+  ['America/Phoenix', 'America/Phoenix'],
+  ['UTC', 'Europe/London'],
+] as const) {
+  test.describe(`first visit from ${timezoneId}`, () => {
+    test.use({ timezoneId });
+
+    test(`selects ${expected}`, async ({ page }) => {
+      await page.goto('/');
+      await expect(page.getByRole('heading', { level: 2 })).toHaveText(PHASE_NAME);
+      await expect(page.getByLabel('Timezone')).toHaveValue(expected);
+    });
+  });
+}
+
+test.describe('first visit from a zone outside the list', () => {
+  test.use({ timezoneId: 'America/Phoenix' });
+
+  test('offers it as "your timezone" and can switch back to it', async ({ page }) => {
+    await page.goto('/');
+    const select = page.getByLabel('Timezone');
+    await expect(select.locator('option:checked')).toHaveText('America/Phoenix (your timezone)');
+    await select.selectOption('America/Denver');
+    await select.selectOption('America/Phoenix');
+    await page.reload();
+    await expect(select).toHaveValue('America/Phoenix');
+  });
+});
+
+test.describe('a saved choice', () => {
+  test.use({ timezoneId: 'America/Los_Angeles' });
+
+  test('beats the browser zone on a later visit from elsewhere', async ({ page, browser }) => {
+    await page.goto('/');
+    await page.getByLabel('Timezone').selectOption('Asia/Tokyo');
+    const storageState = await page.context().storageState();
+
+    const elsewhere = await browser.newContext({ timezoneId: 'Australia/Sydney', storageState });
+    const later = await elsewhere.newPage();
+    await later.goto(page.url());
+    await expect(later.getByLabel('Timezone')).toHaveValue('Asia/Tokyo');
+    await elsewhere.close();
+  });
+});
+
 test('remembers the selected timezone across reloads', async ({ page }) => {
   await page.goto('/');
   await page.getByLabel('Timezone').selectOption('Australia/Sydney');

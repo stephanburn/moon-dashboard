@@ -8,7 +8,7 @@ A personal moon / sabbat dashboard — moon phases, zodiac transits, and the Whe
 
 - **Hero moon** — a photographic lunar disc masked by a translucent shadow computed from true illuminated fraction and hemisphere, with the current phase name and peak time ("peaked yesterday" / "peaks in 3 days").
 - **Cycle spine** — a single vertical timeline: a "Now" node (Sun sign, Venus sign, today's sabbat) followed by upcoming events — moon phases, sun sign ingresses, sabbats, Venus ingresses (including retrograde re-entries), Mercury retrograde (with its shadow period), Hekate's Deipnon — each with relative-time labels and an inline detail panel of correspondences (colours, crystals, herbs, ritual notes).
-- **Timezone-correct days** — every date is the calendar day in the selected timezone, so e.g. the September 2026 equinox is Mabon on 22 Sep in New York and 23 Sep in London.
+- **Timezone-correct days** — opens in the browser's own timezone (any IANA zone, not just the listed ones) unless the viewer has picked one. Every date is the calendar day in that zone, so e.g. the September 2026 equinox is Mabon on 22 Sep in New York and 23 Sep in London. Daylight saving comes from the browser's tz database; a time in the repeated hour after clocks go back carries its zone ("01:30 BST" / "01:30 GMT").
 - **Hemisphere-aware Wheel of the Year** — switching timezone to a Southern Hemisphere city automatically inverts the sabbat calendar and its date notes.
 - **Mercury retrograde badge**, dynamic OG image for link previews, deploy commit hash in the footer.
 
@@ -37,7 +37,7 @@ src/
     dashboardModel.ts     -- pure (now, timezone) -> everything the dashboard shows
     days.ts               -- CalendarDay ('YYYY-MM-DD') vs instants; dayOf(instant, tz)
     names.ts              -- SignName / SabbatName / PhaseName unions used as content keys
-    timezones.ts          -- selectable zones, hemisphere lookup, stored-value validation
+    timezones.ts          -- selectable zones, browser-zone detection, hemisphere lookup, stored-value validation
     format.ts             -- all date/time formatting
     storage.ts            -- localStorage helpers that never throw
     config.ts             -- DEFAULT_TZ
@@ -52,7 +52,7 @@ src/
     details.tsx           -- the content of every detail panel
     eventKinds.tsx        -- per-event-kind icon, title and detail (the registry)
     DashboardSkeleton.tsx -- what the server renders: layout placeholders, no dates
-    TimezoneSelector.tsx  -- zone <select> (persistence is handled in Dashboard)
+    TimezoneSelector.tsx  -- zone <select>, plus the browser's zone if unlisted (persistence is handled in Dashboard)
 ```
 
 Every astronomical value is computed with `astronomy-engine`; there are no hand-maintained tables and nothing expires. `ephemeris.test.ts` checks the results against published almanac values.

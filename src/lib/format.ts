@@ -26,12 +26,45 @@ export function formatRelativeDays(target: CalendarDay, today: CalendarDay): str
 
 // ── Instants, shown in the viewer's selected timezone ─────────────────────
 
+const wallClockFormatters = new Map<string, Intl.DateTimeFormat>();
+
+function wallClock(ms: number, timezone: string): string {
+  let fmt = wallClockFormatters.get(timezone);
+  if (!fmt) {
+    fmt = new Intl.DateTimeFormat('en-GB', {
+      timeZone: timezone,
+      year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit',
+    });
+    wallClockFormatters.set(timezone, fmt);
+  }
+  return fmt.format(ms);
+}
+
+// When clocks go back, an hour of wall-clock time happens twice (the shift is
+// 30 minutes on Lord Howe Island), so a time in it is ambiguous on its own.
+const DST_SHIFTS_MS = [60, 30].map(m => m * 60_000);
+
+function isRepeatedWallTime(instant: Date, timezone: string): boolean {
+  const t = instant.getTime();
+  const wall = wallClock(t, timezone);
+  return DST_SHIFTS_MS.some(d => wallClock(t - d, timezone) === wall || wallClock(t + d, timezone) === wall);
+}
+
+/**
+ * "14:05". In the repeated hour after clocks go back, the zone is appended
+ * ("01:30 BST" vs "01:30 GMT") so the two occurrences can be told apart.
+ */
 export function formatTime(instant: Date, timezone: string): string {
-  return instant.toLocaleTimeString('en-GB', {
+  const time = instant.toLocaleTimeString('en-GB', {
     hour: '2-digit',
     minute: '2-digit',
     timeZone: timezone,
   });
+  if (!isRepeatedWallTime(instant, timezone)) return time;
+  const zone = new Intl.DateTimeFormat('en-GB', { timeZone: timezone, timeZoneName: 'short' })
+    .formatToParts(instant)
+    .find(p => p.type === 'timeZoneName')?.value;
+  return zone ? `${time} ${zone}` : time;
 }
 
 /** "Thu 24 Sept, 14:05" — used for moon-sign ingress times. */
