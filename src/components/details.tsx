@@ -9,9 +9,20 @@ import { VENUS_CORRESPONDENCES } from '@/data/venusCorrespondences';
 import type { MoonSignChange } from '@/lib/astro';
 import { MERCURY_RETROGRADE_CORRESPONDENCES } from '@/data/mercuryRetrogradeCorrespondences';
 import { mercuryRetrogradeSigns, type MercuryRetrogradePeriod } from '@/lib/planets';
+import {
+  CRAFT_STORAGE_KEY,
+  craftText,
+  parseSavedPick,
+  randomSeed,
+  rerollPick,
+  resolvePick,
+  type CraftContext,
+  type SavedCraftPick,
+} from '@/lib/craft';
 import { dayOf } from '@/lib/days';
 import { formatDay, formatDayAndTime } from '@/lib/format';
 import { SIGN_SYMBOLS, type PhaseName, type SabbatName, type SignName } from '@/lib/names';
+import { safeGet, safeSet } from '@/lib/storage';
 import type { Hemisphere } from '@/lib/timezones';
 
 // The body of each detail panel. DetailPanel supplies the chrome (animation,
@@ -296,6 +307,50 @@ export function DeipnonDetail() {
           on the way home.
         </p>
       </div>
+    </div>
+  );
+}
+
+// ── Daily craft ────────────────────────────────────────────────────────────
+
+/**
+ * One small activity for today. The first pick is fixed for the day; "Draw
+ * another" re-rolls, and the choice is saved so it survives a reload.
+ */
+export function DailyCraftDetail({ craft }: { craft: CraftContext }) {
+  // Only rendered after a tap, so reading storage here can't affect hydration.
+  const [saved, setSaved] = useState<SavedCraftPick | null>(() => parseSavedPick(safeGet(CRAFT_STORAGE_KEY)));
+  const pick = resolvePick(saved, craft);
+
+  const drawAnother = () => {
+    const next = rerollPick(pick, craft, randomSeed());
+    const record: SavedCraftPick = { ...next, day: craft.today };
+    setSaved(record);
+    safeSet(CRAFT_STORAGE_KEY, JSON.stringify(record));
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3">
+        <span className="font-display text-3xl text-amber-light" aria-hidden>✦</span>
+        <div>
+          <p className="font-display text-xl text-foreground">Daily craft</p>
+          <p className="text-xs text-text-tertiary mt-0.5">Something small to keep your hand in</p>
+        </div>
+      </div>
+
+      <p key={`${pick.id}-${pick.seed}`} aria-live="polite" className="fade-in text-foreground/90 text-base leading-relaxed">
+        {craftText(pick, craft)}
+      </p>
+
+      <button
+        type="button"
+        onClick={drawAnother}
+        className="inline-flex items-center gap-2 min-h-[44px] px-4 rounded-full border border-amber/35 bg-amber/10 text-xs tracking-[0.2em] uppercase text-amber-light/90 transition-colors hover:bg-amber/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/40"
+      >
+        <span aria-hidden>↻</span>
+        Draw another
+      </button>
     </div>
   );
 }

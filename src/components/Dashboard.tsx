@@ -180,6 +180,7 @@ function DashboardContent({
           venusSign={model.venusSign}
           sabbatToday={model.sabbatToday}
           events={model.events}
+          craft={model.craft}
           ctx={{ timezone, hemisphere: model.hemisphere }}
           expandedKey={expandedKey}
           onToggle={onToggle}

@@ -154,3 +154,24 @@ test('the tap hint stays until something in the timeline is opened', async ({ pa
   await expect(page.getByRole('heading', { level: 2 })).toHaveText(PHASE_NAME);
   await expect(hint).toBeHidden();
 });
+
+test('daily craft shows an activity and draws another', async ({ page }) => {
+  const errors = watchForErrors(page);
+  await page.goto('/');
+  await page.getByRole('button', { name: "Today's craft" }).click();
+  const panel = page.locator('#spine-panel-craft');
+  const activity = panel.locator('p[aria-live]');
+  const first = await activity.textContent();
+  expect(first?.length).toBeGreaterThan(20);
+  expect(first!.length).toBeLessThanOrEqual(130);
+
+  await panel.getByRole('button', { name: 'Draw another' }).click();
+  await expect(activity).not.toHaveText(first!);
+  const second = await activity.textContent();
+
+  // The re-rolled choice is kept across a reload.
+  await page.reload();
+  await page.getByRole('button', { name: "Today's craft" }).click();
+  await expect(page.locator('#spine-panel-craft p[aria-live]')).toHaveText(second!);
+  expect(errors).toEqual([]);
+});

@@ -9,6 +9,7 @@ import {
 import { getSabbatContext, type Sabbat } from './sabbats';
 import { getMercuryStatus, getCurrentVenusSign, type MercuryInfo } from './planets';
 import { getUpcomingEvents, type SpineEvent } from './events';
+import { getCraftContext, type CraftContext } from './craft';
 import { dayOf, type CalendarDay } from './days';
 import { formatDay, formatPeakText } from './format';
 import { hemisphereFromTimezone, type Hemisphere } from './timezones';
@@ -30,6 +31,7 @@ export interface DashboardModel {
   mercury: MercuryInfo;
   sabbatToday: Sabbat | null;
   events: SpineEvent[];
+  craft: CraftContext;
 }
 
 const SPINE_EVENT_COUNT = 8;
@@ -68,5 +70,6 @@ export function buildDashboardModel(now: Date, timezone: string): DashboardModel
     mercury: getMercuryStatus(now),
     sabbatToday: getSabbatContext(today, hemisphere, timezone).today,
     events,
+    craft: getCraftContext(now, timezone, hemisphere),
   };
 }
