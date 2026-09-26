@@ -2,10 +2,11 @@
 
 import Chevron from './Chevron';
 import DetailPanel from './DetailPanel';
-import { SabbatDetail, VenusDetail, ZodiacDetail } from './details';
+import { DailyCraftDetail, SabbatDetail, VenusDetail, ZodiacDetail } from './details';
 import { EventDetail, eventIcon, eventTitle, type EventContext } from './eventKinds';
 import type { SpineEvent } from '@/lib/events';
 import type { SunSignInfo } from '@/lib/astro';
+import type { CraftContext } from '@/lib/craft';
 import type { Sabbat } from '@/lib/sabbats';
 import { dayOf, type CalendarDay } from '@/lib/days';
 import { SIGN_SYMBOLS, type SignName } from '@/lib/names';
@@ -21,6 +22,7 @@ interface Props {
   venusSign: SignName;
   sabbatToday: Sabbat | null;
   events: SpineEvent[];
+  craft: CraftContext;
   ctx: EventContext;
   expandedKey: string | null;
   /** `kind` names what was opened (for analytics); `key` identifies the item. */
@@ -71,6 +73,7 @@ export default function CycleSpine({
   venusSign,
   sabbatToday,
   events,
+  craft,
   ctx,
   expandedKey,
   onToggle,
@@ -118,6 +121,19 @@ export default function CycleSpine({
               </span>
               <Chevron open={expandedKey === 'venusNow'} />
             </button>
+
+            <button
+              type="button"
+              onClick={() => onToggle('craft', 'daily-craft')}
+              aria-expanded={expandedKey === 'craft'}
+              aria-controls="spine-panel-craft"
+              className="inline-flex items-center gap-2 text-left disclosure-base disclosure-row rounded-xl px-3 py-1 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/40"
+            >
+              <span className="text-sm text-foreground">
+                <span className="text-amber-light/80" aria-hidden>✦</span> Today&apos;s craft
+              </span>
+              <Chevron open={expandedKey === 'craft'} />
+            </button>
           </div>
 
           {expandedKey === 'sunSign' && (
@@ -128,6 +144,11 @@ export default function CycleSpine({
           {expandedKey === 'venusNow' && (
             <DetailPanel id="spine-panel-venus" onClose={onClose}>
               <VenusDetail sign={venusSign} />
+            </DetailPanel>
+          )}
+          {expandedKey === 'craft' && (
+            <DetailPanel id="spine-panel-craft" onClose={onClose}>
+              <DailyCraftDetail craft={craft} />
             </DetailPanel>
           )}
 
