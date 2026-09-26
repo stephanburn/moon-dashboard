@@ -68,7 +68,8 @@ describe('dashboard model in every zone, around midnights and DST changes', () =
 
         const peakDiff = Math.round((Date.parse(dayOf(m.moonPeak.peakTime, tz)) - Date.parse(m.today)) / (24 * HOUR));
         if ((peakDiff === 0) !== /today/.test(m.moonPeakText)) problems.push(`"${m.moonPeakText}": ${where}`);
-        if (peakDiff === -1 && !/yesterday/.test(m.moonPeakText)) problems.push(`"${m.moonPeakText}": ${where}`);
+        if ((peakDiff === 1) !== /tomorrow/.test(m.moonPeakText)) problems.push(`"${m.moonPeakText}": ${where}`);
+        if ((peakDiff === -1) !== /yesterday/.test(m.moonPeakText)) problems.push(`"${m.moonPeakText}": ${where}`);
       }
     }
     expect(problems).toEqual([]);

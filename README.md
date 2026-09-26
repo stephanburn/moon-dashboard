@@ -6,7 +6,7 @@ A personal moon / sabbat dashboard — moon phases, zodiac transits, and the Whe
 
 ## What it does
 
-- **Hero moon** — a photographic lunar disc masked by a translucent shadow computed from true illuminated fraction and hemisphere, with the current phase name and peak time ("peaked yesterday" / "peaks in 3 days").
+- **Hero moon** — a photographic lunar disc masked by a translucent shadow computed from true illuminated fraction and hemisphere, with the current phase name and peak time ("peaks today at 17:49" / "peaks tomorrow" / "peaked yesterday", else the date).
 - **Cycle spine** — a single vertical timeline: a "Now" node (Sun sign, Venus sign, today's sabbat) followed by upcoming events — moon phases, sun sign ingresses, sabbats, Venus ingresses (including retrograde re-entries), Mercury retrograde (with its shadow period), Hekate's Deipnon — each with relative-time labels and an inline detail panel of correspondences (colours, crystals, herbs, ritual notes).
 - **Timezone-correct days** — opens in the browser's own timezone (any IANA zone, not just the listed ones) unless the viewer has picked one. Every date is the calendar day in that zone, so e.g. the September 2026 equinox is Mabon on 22 Sep in New York and 23 Sep in London. Daylight saving comes from the browser's tz database; a time in the repeated hour after clocks go back carries its zone ("01:30 BST" / "01:30 GMT").
 - **Hemisphere-aware Wheel of the Year** — switching timezone to a Southern Hemisphere city automatically inverts the sabbat calendar and its date notes.

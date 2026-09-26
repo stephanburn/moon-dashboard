@@ -53,10 +53,20 @@ describe('formatPeakText', () => {
     expect(formatPeakText('Full Moon', peak, now, 'Europe/London')).toBe('Full Moon peaked yesterday at 17:49');
   });
 
+  it('says "peaks tomorrow" the day before', () => {
+    const now = new Date('2026-09-25T08:00:00Z');
+    expect(formatPeakText('Full Moon', peak, now, 'Europe/London')).toBe('Full Moon peaks tomorrow at 17:49');
+  });
+
+  it('names the date two or more days out', () => {
+    const now = new Date('2026-09-24T08:00:00Z');
+    expect(formatPeakText('Full Moon', peak, now, 'Europe/London')).toMatch(/^Full Moon peaks: 26 Sept? 2026 at 17:49$/);
+  });
+
   it('crosses the date line correctly', () => {
     // 16:49 UTC is 06:49 on the 27th in Kiritimati (UTC+14).
     const now = new Date('2026-09-26T08:00:00Z'); // 22:00 on the 26th there
-    expect(formatPeakText('Full Moon', peak, now, 'Pacific/Kiritimati')).toMatch(/^Full Moon peaks: 27 Sept? 2026 at 06:49$/);
+    expect(formatPeakText('Full Moon', peak, now, 'Pacific/Kiritimati')).toBe('Full Moon peaks tomorrow at 06:49');
   });
 });
 
@@ -93,7 +103,8 @@ describe('formatTime around daylight saving changes', () => {
       // Find each changeover in the year (the wall-clock hour stops advancing
       // by exactly one), then check every quarter hour for 3 hours either side:
       // each displayed "day, time" must be unique.
-      const hourOf = (t: number) => Number(new Date(t).toLocaleString('en-GB', { timeZone: tz, hour: '2-digit', hourCycle: 'h23' }));
+      const hourFormat = new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', hourCycle: 'h23' });
+      const hourOf = (t: number) => Number(hourFormat.format(t));
       for (let t = Date.parse('2026-09-26T00:00:00Z'); t < Date.parse('2027-09-26T00:00:00Z'); t += HOUR) {
         if ((hourOf(t) + 1) % 24 === hourOf(t + HOUR)) continue;
         changeovers++;

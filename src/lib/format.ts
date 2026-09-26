@@ -74,8 +74,9 @@ export function formatDayAndTime(instant: Date, timezone: string): string {
 }
 
 /**
- * "Full Moon peaks today at 17:49" / "peaked yesterday at …" / "peaks: 26 Sept
- * 2026 at …", with day boundaries evaluated in `timezone`.
+ * "Full Moon peaks today at 17:49" / "peaks tomorrow at …" / "peaked yesterday
+ * at …" / "peaks: 26 Sept 2026 at …", with day boundaries evaluated in
+ * `timezone`.
  */
 export function formatPeakText(phaseName: string, peakTime: Date, now: Date, timezone: string): string {
   const diff = diffDays(dayOf(peakTime, timezone), dayOf(now, timezone));
@@ -87,6 +88,7 @@ export function formatPeakText(phaseName: string, peakTime: Date, now: Date, tim
       ? `${phaseName} peaked today at ${timeStr}`
       : `${phaseName} peaks today at ${timeStr}`;
   }
+  if (diff === 1) return `${phaseName} peaks tomorrow at ${timeStr}`;
   if (diff === -1) return `${phaseName} peaked yesterday at ${timeStr}`;
 
   const verb = isPast ? 'peaked' : 'peaks';
