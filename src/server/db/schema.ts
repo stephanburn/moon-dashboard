@@ -14,6 +14,9 @@ export const user = pgTable('user', {
   email: text('email').notNull().unique(),
   emailVerified: boolean('email_verified').notNull().default(false),
   image: text('image'),
+  // Set by hand in the database; declared to Better Auth with input: false so
+  // no one can set it through the auth API.
+  isAdmin: boolean('is_admin').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });

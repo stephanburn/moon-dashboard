@@ -4,7 +4,7 @@ import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { nextCookies } from 'better-auth/next-js';
 import { discord } from 'better-auth/social-providers';
 import { headers } from 'next/headers';
-import { redirect } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { getDb } from './db';
 import * as schema from './db/schema';
 import { recordRefusedSignIn, recordSignIn, requestInfo } from './activity';
@@ -29,6 +29,9 @@ function createAuth() {
         clientId,
         clientSecret,
         scope: ['guilds.members.read'],
+        // Always show Discord's authorize screen, so someone logged into the
+        // wrong Discord account can see which one it is and switch.
+        prompt: 'consent',
         // Keep name and avatar in step with Discord on every sign-in.
         overrideUserInfoOnSignIn: true,
         // Returning null makes Better Auth refuse the sign-in (it redirects
@@ -54,6 +57,11 @@ function createAuth() {
       // We never call Discord after sign-in, but the tokens are stored anyway;
       // keep them encrypted at rest.
       encryptOAuthTokens: true,
+    },
+    user: {
+      additionalFields: {
+        isAdmin: { type: 'boolean', defaultValue: false, input: false },
+      },
     },
     session: {
       expiresIn: 60 * 60 * 24 * SESSION_DAYS,
@@ -97,5 +105,12 @@ export async function getCurrentUser() {
 export async function requireUser() {
   const user = await getCurrentUser();
   if (!user) redirect('/signin');
+  return user;
+}
+
+// Admin pages answer 404 to everyone else, so they don't advertise themselves.
+export async function requireAdmin() {
+  const user = await requireUser();
+  if (!user.isAdmin) notFound();
   return user;
 }

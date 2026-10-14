@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { eq } from 'drizzle-orm';
-import { userSettings, user as userTable, visitLog } from '../src/server/db/schema';
+import { signInLog, userSettings, user as userTable, visitLog } from '../src/server/db/schema';
 import { E2E_DATABASE_URL, seedSignedInUser, testDb } from './accounts';
 
 // Runs only when E2E_DATABASE_URL points at a migrated Postgres (CI sets it).
@@ -43,6 +43,7 @@ test.describe('signed out', () => {
     await page.waitForURL(/^https:\/\/discord\.com\//);
     const url = new URL(page.url());
     expect(url.searchParams.get('client_id')).toBe('e2e-client-id');
+    expect(url.searchParams.get('prompt')).toBe('consent');
     expect(url.searchParams.get('scope')?.split(' ')).toEqual(
       expect.arrayContaining(['identify', 'email', 'guilds.members.read']),
     );
@@ -50,7 +51,7 @@ test.describe('signed out', () => {
 
   test('a refused sign-in explains why', async ({ page }) => {
     await page.goto('/signin?error=unable_to_get_user_info');
-    await expect(page.getByRole('alert').filter({ hasText: "isn't a member of the server" })).toBeVisible();
+    await expect(page.getByRole('alert').filter({ hasText: "isn't in our server" })).toBeVisible();
   });
 });
 
@@ -121,6 +122,47 @@ test.describe('signed in', () => {
 
     await page.getByRole('combobox', { name: 'Timezone' }).selectOption('Asia/Tokyo');
     await expect.poll(() => syncedTimezone(user.id)).toBe('Asia/Tokyo');
+    expect(errors).toEqual([]);
+    await context.close();
+  });
+
+  test('the admin page is invisible to members', async ({ browser }) => {
+    const { cookies } = await seedSignedInUser('Ffion');
+    const context = await browser.newContext();
+    await context.addCookies(cookies);
+    const page = await context.newPage();
+    await page.goto('/settings');
+    await expect(page.getByRole('link', { name: 'Admin' })).toHaveCount(0);
+    const res = await page.goto('/admin');
+    expect(res?.status()).toBe(404);
+    await context.close();
+  });
+
+  test('admins see members and refused sign-ins', async ({ browser }) => {
+    // Unique names: the e2e database keeps earlier runs' rows.
+    const name = `Isolde ${crypto.randomUUID().slice(0, 8)}`;
+    const stranger = `stranger_${crypto.randomUUID().slice(0, 8)}`;
+    const { user, cookies } = await seedSignedInUser(name);
+    await testDb().update(userTable).set({ isAdmin: true }).where(eq(userTable.id, user.id));
+    await testDb().insert(signInLog).values({
+      outcome: 'refused',
+      discordId: '42',
+      discordName: stranger,
+      userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Version/18.0 Mobile/15E148 Safari/604.1',
+    });
+    const context = await browser.newContext();
+    await context.addCookies(cookies);
+    const page = await context.newPage();
+    const errors = watchForErrors(page);
+    await page.goto('/settings');
+    await page.getByRole('link', { name: 'Admin' }).click();
+    await expect(page.getByRole('heading', { name: 'Admin', level: 1 })).toBeVisible();
+    const members = page.getByRole('region', { name: /^Members/ });
+    await expect(members.getByText(name)).toBeVisible();
+    const signIns = page.getByRole('region', { name: /^Sign-ins/ });
+    const refusedRow = signIns.getByRole('listitem').filter({ hasText: stranger });
+    await expect(refusedRow).toContainText('refused, not in the server');
+    await expect(refusedRow).toContainText('Safari on iPhone');
     expect(errors).toEqual([]);
     await context.close();
   });

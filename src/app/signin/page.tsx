@@ -25,7 +25,7 @@ export default async function SignInPage({
         {error && (
           <p role="alert" className="text-sm text-amber-light">
             {error === 'unable_to_get_user_info'
-              ? "That Discord account isn't a member of the server, or Discord couldn't confirm it. If you are a member, try again."
+              ? "That Discord account isn't in our server, or Discord couldn't confirm it. If you have more than one Discord account, check which one Discord shows on the next screen and switch if needed, then try again."
               : 'Sign-in didn\'t complete. Please try again.'}
           </p>
         )}

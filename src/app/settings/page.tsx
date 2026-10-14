@@ -20,9 +20,16 @@ export default async function SettingsPage() {
 
   return (
     <main className="relative z-10 min-h-dvh px-4 sm:px-8 py-8 max-w-xl mx-auto w-full space-y-4">
-      <Link href="/" className="inline-block text-sm text-text-secondary hover:text-foreground">
-        ← Back to the moon
-      </Link>
+      <div className="flex items-center justify-between">
+        <Link href="/" className="inline-block text-sm text-text-secondary hover:text-foreground">
+          ← Back to the moon
+        </Link>
+        {user.isAdmin && (
+          <Link href="/admin" className="inline-block text-sm text-amber-light hover:text-foreground">
+            Admin
+          </Link>
+        )}
+      </div>
 
       <section className="card p-5 flex items-center gap-4">
         {user.image && (
