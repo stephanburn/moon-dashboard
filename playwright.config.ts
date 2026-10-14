@@ -1,10 +1,11 @@
 import { defineConfig, devices } from '@playwright/test';
-
-const PORT = 3100;
+import { E2E_PORT as PORT, accountsServerEnv } from './e2e/env';
 
 // Smoke tests against a production build. The server runs with TZ=UTC and a
 // non-English LANG, so any server/browser formatting difference that would
-// break hydration shows up here rather than in production.
+// break hydration shows up here rather than in production. With
+// E2E_DATABASE_URL set (as in CI), accounts are switched on and the account
+// tests run against that database too.
 export default defineConfig({
   testDir: 'e2e',
   fullyParallel: true,
@@ -15,10 +16,10 @@ export default defineConfig({
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
-    command: `npm run build && npm run start -- -p ${PORT}`,
+    command: `npm run db:migrate && npm run build && npm run start -- -p ${PORT}`,
     url: `http://localhost:${PORT}`,
     reuseExistingServer: !process.env.CI,
     timeout: 180_000,
-    env: { TZ: 'UTC', LANG: 'ja_JP.UTF-8' },
+    env: { TZ: 'UTC', LANG: 'ja_JP.UTF-8', ...accountsServerEnv() },
   },
 });

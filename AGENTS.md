@@ -6,15 +6,24 @@ This version has breaking changes — APIs, conventions, and file structure may 
 
 # Project orientation
 
-A personal moon / sabbat dashboard. Single page, no backend, no DB, no external data APIs — everything is computed locally. The page shell is statically prerendered with ISR (`revalidate = 3600`, which keeps the date-stamped OG meta tag current). `Dashboard` holds `now = null` during SSR and hydration and renders `DashboardSkeleton`; the real content is computed only in the browser, so server and client HTML always match. Aesthetic and astronomical/spiritual accuracy matter more than generic SaaS patterns.
+A personal moon / sabbat dashboard. The dashboard itself has no backend and no external data APIs: everything is computed locally. Optional accounts (Discord sign-in for members of one server, Postgres) live alongside it; see "Accounts" below. The page shell is statically prerendered with ISR (`revalidate = 3600`, which keeps the date-stamped OG meta tag current). `Dashboard` holds `now = null` during SSR and hydration and renders `DashboardSkeleton`; the real content is computed only in the browser, so server and client HTML always match. Aesthetic and astronomical/spiritual accuracy matter more than generic SaaS patterns.
 
-**Stack:** Next.js 16 (App Router), React 19, Tailwind v4, `astronomy-engine` (all astronomy), Vitest. Deployed on Vercel with Vercel Analytics.
+**Stack:** Next.js 16 (App Router), React 19, Tailwind v4, `astronomy-engine` (all astronomy), Vitest. Accounts: Better Auth (Discord), Drizzle ORM, Postgres (Neon on Vercel). Deployed on Vercel with Vercel Analytics.
 
 **Shape:**
 - `src/app/page.tsx` is a thin server shell; the whole app is `src/components/Dashboard.tsx` (one `'use client'` component holding all state).
 - `src/lib/` = calculations (`ephemeris.ts`, moon, moonDisc, astro, sabbats, planets), `events.ts` (the `SpineEvent` union), `dashboardModel.ts` (pure `buildDashboardModel(now, timezone)`: everything the UI shows), `days.ts` (calendar days), `names.ts` (name unions), `timezones.ts`, `format.ts` (all formatting), `storage.ts`, `config.ts`. Tests in `src/lib/__tests__/`.
 - `src/data/` = correspondence content (phases, signs, sabbats, Venus, moon-in-sign, Mercury retrograde by station sign), kept separate from logic so content is editable in isolation. Records are keyed by the unions in `names.ts`, so a missing entry fails `tsc`. Sabbat `dateDescription` has `north` and `south` variants. House style: no em dashes in user-facing copy (`content.test.ts` enforces it for `src/data`).
 - `src/components/CycleSpine.tsx` renders the Now node + upcoming-event timeline; `DetailPanel.tsx` is the panel chrome, `details.tsx` the panel contents, and `eventKinds.tsx` maps each event kind to its icon, title and detail. Adding an event kind = extend `SpineEvent` + one `EVENT_KINDS` entry; `TimezoneSelector.tsx` is a plain `<select>` (Dashboard persists the choice in `localStorage`). With nothing saved, the zone is the browser's own (`resolveTimezone` in `timezones.ts`); the detected zone is never saved, and an unlisted one gets its own "(your timezone)" option.
+
+**Accounts** (plan and setup: `docs/accounts-plan.md`):
+- On only in builds where `DATABASE_URL`, `BETTER_AUTH_SECRET` and the three `DISCORD_` variables are all set: `next.config.ts` bakes the result into `NEXT_PUBLIC_ACCOUNTS` (`ACCOUNTS_ENABLED` in `src/lib/account.ts`, `accountsEnabled()` on the server). Off, the dashboard behaves exactly as before and the account routes 404. The sign-in base URL comes from Vercel's system variables (`src/server/baseUrl.ts`); `BETTER_AUTH_URL` overrides it locally.
+- Server code is in `src/server/`: `db/schema.ts` (Drizzle; Better Auth's tables plus app tables), `auth.ts` (`getAuth`, `getCurrentUser`, `requireUser`), `discord.ts` (server-membership check, fails closed), `actions.ts` (Server Actions), `settings.ts`, `activity.ts` (sign-in log incl. refused attempts, written from Better Auth's session hook and the membership check; daily visit log, written from `/api/me` with `after()`; logging never throws). Pages: `/signin`, `/settings`, `/admin` (`requireAdmin()`: 404 for non-admins; data in `server/admin.ts`); `/api/me` feeds the dashboard.
+- Admins: `user.is_admin`, set by hand in SQL. It is declared to Better Auth with `input: false`, so the auth API can't set it; keep it that way.
+- Every app table references `user.id` with `ON DELETE CASCADE`; account deletion relies on it. Use `timestamp(..., { withTimezone: true })`, and store calendar days as `CalendarDay` strings.
+- `requireUser()` (or `getCurrentUser()`) in every page and action that touches user data is the real authorization check. Never trust a user id from the client.
+- The dashboard learns about the user only after mount (`useAccount`), so `/` stays prerendered and hydration-safe. Don't read cookies or the session while rendering `/`.
+- Schema change: edit `schema.ts`, run `npm run db:generate`, commit the new `drizzle/` migration. Vercel runs `vercel-build`, which migrates before building.
 
 **Watch out for:**
 - All astronomy is computed with `astronomy-engine` through `src/lib/ephemeris.ts` (geocentric apparent tropical longitude; sign changes, stations and longitude crossings bisected to the minute). Don't reintroduce hand-maintained date tables. Tests in `ephemeris.test.ts` compare against *published* almanac values (sources listed in the file); never paste the code's own output in as a fixture.
@@ -26,4 +35,4 @@ A personal moon / sabbat dashboard. Single page, no backend, no DB, no external 
 - Use `lib/storage.ts` (`safeGet`/`safeSet`), never `localStorage` directly: it throws when site storage is blocked.
 - `.next/` sometimes accumulates duplicate `* 2.ts` / `* 3.ts` files (Finder/iCloud) that break `tsc`; delete `.next` if you see a spurious `Duplicate identifier` error.
 
-**Before committing:** run `npx tsc --noEmit` (must be clean), `npx eslint`, `npm run test:tz`, and `npm run test:e2e` for UI changes. CI runs all of these.
+**Before committing:** run `npx tsc --noEmit` (must be clean), `npx eslint`, `npm run test:tz`, and `npm run test:e2e` for UI changes. CI runs all of these. The account e2e tests (`e2e/accounts.spec.ts`) skip unless `E2E_DATABASE_URL` points at a Postgres database (CI provides one); they seed sessions directly, so no Discord is needed.

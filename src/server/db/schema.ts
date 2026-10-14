@@ -1,0 +1,101 @@
+// Database schema. The first four tables are the ones Better Auth expects
+// (user, session, account, verification); app tables follow. Every app table
+// references user.id with ON DELETE CASCADE, so deleting an account removes
+// all of its data.
+//
+// After changing this file, run `npm run db:generate` to write a migration
+// into drizzle/ and commit it.
+
+import { boolean, index, integer, pgTable, primaryKey, text, timestamp } from 'drizzle-orm/pg-core';
+
+export const user = pgTable('user', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  email: text('email').notNull().unique(),
+  emailVerified: boolean('email_verified').notNull().default(false),
+  image: text('image'),
+  // Set by hand in the database; declared to Better Auth with input: false so
+  // no one can set it through the auth API.
+  isAdmin: boolean('is_admin').notNull().default(false),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const session = pgTable('session', {
+  id: text('id').primaryKey(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  token: text('token').notNull().unique(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  ipAddress: text('ip_address'),
+  userAgent: text('user_agent'),
+  userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+});
+
+export const account = pgTable('account', {
+  id: text('id').primaryKey(),
+  accountId: text('account_id').notNull(),
+  providerId: text('provider_id').notNull(),
+  userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+  accessToken: text('access_token'),
+  refreshToken: text('refresh_token'),
+  idToken: text('id_token'),
+  accessTokenExpiresAt: timestamp('access_token_expires_at', { withTimezone: true }),
+  refreshTokenExpiresAt: timestamp('refresh_token_expires_at', { withTimezone: true }),
+  scope: text('scope'),
+  password: text('password'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const verification = pgTable('verification', {
+  id: text('id').primaryKey(),
+  identifier: text('identifier').notNull(),
+  value: text('value').notNull(),
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+// ── App tables ─────────────────────────────────────────────────────────────
+
+// Preferences that follow the user across devices. `timezone` is only ever an
+// explicit choice from the selector, never the browser-detected zone (the same
+// rule as the localStorage copy).
+export const userSettings = pgTable('user_settings', {
+  userId: text('user_id').primaryKey().references(() => user.id, { onDelete: 'cascade' }),
+  timezone: text('timezone'),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+// One row per sign-in attempt that reached the membership check. Refused
+// attempts (Discord accounts not in the server) have no user_id; they are
+// identified by their Discord id and name instead, and are kept when an
+// account is deleted.
+export const signInLog = pgTable(
+  'sign_in_log',
+  {
+    id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+    at: timestamp('at', { withTimezone: true }).notNull().defaultNow(),
+    outcome: text('outcome', { enum: ['signed-in', 'refused'] }).notNull(),
+    userId: text('user_id').references(() => user.id, { onDelete: 'cascade' }),
+    discordId: text('discord_id'),
+    discordName: text('discord_name'),
+    ipAddress: text('ip_address'),
+    userAgent: text('user_agent'),
+  },
+  table => [index('sign_in_log_at_idx').on(table.at)],
+);
+
+// Dashboard visits by signed-in members, one row per member per UTC day.
+export const visitLog = pgTable(
+  'visit_log',
+  {
+    userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+    day: text('day').notNull(), // CalendarDay in UTC
+    firstAt: timestamp('first_at', { withTimezone: true }).notNull().defaultNow(),
+    lastAt: timestamp('last_at', { withTimezone: true }).notNull().defaultNow(),
+    count: integer('count').notNull().default(1),
+  },
+  table => [primaryKey({ columns: [table.userId, table.day] })],
+);

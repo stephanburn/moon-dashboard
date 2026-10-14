@@ -6,11 +6,12 @@ interface Props {
   value: string;
   detectedZone: string | null; // the browser's zone, if it reported one
   onChange: (tz: string) => void;
+  narrow?: boolean; // leave room for the account button on small screens
 }
 
 const label = (zone: string) => zone.replace(/_/g, ' ');
 
-export default function TimezoneSelector({ value, detectedZone, onChange }: Props) {
+export default function TimezoneSelector({ value, detectedZone, onChange, narrow = false }: Props) {
   // Zones outside the list (the browser's own, or a saved one from an earlier
   // visit elsewhere) get their own options, so the select always shows the
   // zone actually in use and the browser's zone can be picked again.
@@ -24,12 +25,12 @@ export default function TimezoneSelector({ value, detectedZone, onChange }: Prop
         value={value}
         onChange={e => onChange(e.target.value)}
         aria-label="Timezone"
-        className="
+        className={`
           text-xs bg-white/5 border border-white/10 rounded-md
-          text-silver/70 px-2 py-2.5 min-h-[44px] max-w-[42vw] sm:max-w-none
+          text-silver/70 px-2 py-2.5 min-h-[44px] ${narrow ? 'max-w-[34vw]' : 'max-w-[42vw]'} sm:max-w-none
           hover:border-white/20 focus-visible:outline-none focus-visible:border-amber/40 focus-visible:ring-2 focus-visible:ring-amber/40
           transition-colors cursor-pointer
-        "
+        `}
       >
         {extraZones.map(zone => (
           <option key={zone} value={zone}>
