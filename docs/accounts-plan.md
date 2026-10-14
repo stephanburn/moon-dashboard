@@ -136,25 +136,53 @@ snapshot, so it is not proposed for v1.
 
 ## Setup (to switch accounts on)
 
+Discord only accepts exact redirect URLs, and every Vercel deployment gets a
+new random URL, so sign-in can't work on those per-deployment links. Vercel
+also gives each branch a **stable** URL that always points at its latest
+deployment:
+
+    https://<project>-git-<branch>-<team>.vercel.app
+
+(shown on the deployment page under "Domains"). That is the test address.
+Testing happens in three places:
+
+- **Automated tests** never touch Discord (they seed sessions), so CI needs
+  none of this.
+- **Locally** (`npm run dev`) with the real Discord login.
+- **A preview branch** on its stable URL, before switching production on.
+
 1. **Discord application.** At https://discord.com/developers/applications
    create an application. Under OAuth2, copy the Client ID and Client Secret
-   and add redirect URLs:
+   and add these redirect URLs:
    - `http://localhost:3000/api/auth/callback/discord`
+   - `https://<branch URL>/api/auth/callback/discord` (one per test branch)
    - `https://<production domain>/api/auth/callback/discord`
-
-   Discord needs exact URLs, so per-deployment preview URLs can't sign in.
-   Use production (or a fixed preview domain) for sign-in testing.
 2. **Server ID.** In Discord, turn on Developer Mode (Settings, Advanced),
    right-click the server, Copy Server ID.
 3. **Database.** In the Vercel project, Storage, add Neon (Postgres). It sets
-   `DATABASE_URL` for you.
-4. **Environment variables** in Vercel (Production, and Preview if wanted):
+   `DATABASE_URL`, and gives each preview its own database branch, so test
+   accounts never mix with real ones.
+4. **Preview environment variables.** In Vercel, Settings, Environment
+   Variables, choose **Preview** and limit them to the test branch:
    `NEXT_PUBLIC_ACCOUNTS=1`, `BETTER_AUTH_SECRET` (`openssl rand -base64 32`),
-   `BETTER_AUTH_URL=https://<production domain>`, `DISCORD_CLIENT_ID`,
-   `DISCORD_CLIENT_SECRET`, `DISCORD_GUILD_ID`.
-5. **Deploy.** `vercel-build` applies migrations, then builds. Always sign in
-   on the domain in `BETTER_AUTH_URL`; another alias of the same deployment
-   would fail the OAuth state check.
+   `BETTER_AUTH_URL=https://<branch URL>`, `DISCORD_CLIENT_ID`,
+   `DISCORD_CLIENT_SECRET`, `DISCORD_GUILD_ID`. Redeploy the branch and sign
+   in **on the branch URL**, not the per-deployment link.
+5. **Production**, once happy: the same variables for **Production**, with
+   `BETTER_AUTH_URL=https://<production domain>` and its own
+   `BETTER_AUTH_SECRET`. `vercel-build` applies migrations, then builds.
+
+Always sign in on the exact domain in `BETTER_AUTH_URL`: on any other
+address (another alias, a per-deployment link) Discord either rejects the
+redirect or the sign-in fails its security check on return.
+
+Vercel's Deployment Protection puts previews behind a Vercel login by
+default. That's fine for you; other members testing a preview would need it
+relaxed for that branch.
+
+If testing on many branches becomes routine, Better Auth's `oauthProxy`
+plugin can route every preview's sign-in through production instead. Not
+worth it for now.
 
 Locally: copy `.env.example` to `.env.local`, point `DATABASE_URL` at any
 Postgres, `npm run db:migrate`, `npm run dev`.
