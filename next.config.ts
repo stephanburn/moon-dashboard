@@ -17,6 +17,10 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_COMMIT: commitHash,
   },
+  images: {
+    // Discord avatars, shown for signed-in users.
+    remotePatterns: [new URL('https://cdn.discordapp.com/**')],
+  },
 };
 
 export default nextConfig;

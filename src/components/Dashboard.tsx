@@ -8,7 +8,10 @@ import Chevron from './Chevron';
 import CycleSpine from './CycleSpine';
 import DetailPanel from './DetailPanel';
 import DashboardSkeleton from './DashboardSkeleton';
+import AccountButton from './AccountButton';
+import { useAccount } from './useAccount';
 import { MoonPhaseDetail, MoonSignDetail } from './details';
+import Link from 'next/link';
 import { buildDashboardModel, type DashboardModel } from '@/lib/dashboardModel';
 import { DEFAULT_TZ } from '@/lib/config';
 import { dayOf } from '@/lib/days';
@@ -207,11 +210,18 @@ export default function Dashboard() {
   const model = useMemo(() => (now ? buildDashboardModel(now, timezone) : null), [now, timezone]);
   const mercury = model?.mercury;
 
-  const handleTimezoneChange = useCallback((tz: string) => {
+  const applyTimezone = useCallback((tz: string) => {
     const safeTz = normalizeTimezone(tz);
     setTimezone(safeTz);
     safeSet(STORAGE_KEY, safeTz);
+    return safeTz;
   }, []);
+  // Signed-in users get their saved zone on every device.
+  const { user, timezoneChosen } = useAccount(applyTimezone);
+
+  const handleTimezoneChange = useCallback((tz: string) => {
+    timezoneChosen(applyTimezone(tz));
+  }, [applyTimezone, timezoneChosen]);
 
   // First client render: pick the zone (saved choice, else the browser's) and
   // start the clock in the same pass, so the first real frame already uses the
@@ -288,7 +298,8 @@ export default function Dashboard() {
                 <span className="hidden sm:inline">· until {formatDay(dayOf(mercury.period.retrogradeEnd, timezone))}</span>
               </div>
             )}
-            <TimezoneSelector value={timezone} detectedZone={detectedZone} onChange={handleTimezoneChange} />
+            <TimezoneSelector value={timezone} detectedZone={detectedZone} onChange={handleTimezoneChange} narrow={!!user} />
+            {user && <AccountButton user={user} />}
           </div>
         </div>
       </header>
@@ -319,6 +330,11 @@ export default function Dashboard() {
 
       <footer className="px-6 py-5 text-center border-t border-white/5 space-y-1">
         <p className="text-xs text-silver/55">Calculated locally. Anonymous usage counts only.</p>
+        {user === null && (
+          <p className="fade-in text-xs text-silver/55">
+            <Link href="/signin" className="underline hover:text-text-secondary">Members&apos; sign in</Link>
+          </p>
+        )}
         {process.env.NEXT_PUBLIC_COMMIT && (
           <p aria-hidden className="text-xs text-white/10 font-mono">{process.env.NEXT_PUBLIC_COMMIT}</p>
         )}

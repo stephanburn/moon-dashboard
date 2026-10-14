@@ -1,7 +1,13 @@
 # Accounts branch: investigation
 
-Status: proposal, nothing built yet. Covers Discord login, per-user data, and
-the first three features (Book of Shadows, rituals, correspondences).
+Status: step 1 (foundation) built, behind a flag. Covers Discord login,
+per-user data, and the next three features (Book of Shadows, rituals,
+correspondences).
+
+Decisions so far: sign-in is for members of one Discord server only (small
+audience); Postgres on Neon via Vercel; timezone syncs across devices
+(Discord doesn't expose a user's timezone, only their language, so the
+choice made in the dashboard is what syncs); Book of Shadows uses Markdown.
 
 ## What changes
 
@@ -21,10 +27,10 @@ account.
 /api/auth/[...all] auth library route handler
 ```
 
-The only thing `/` gains is a small account button. It must not read the
-session cookie during prerender, so it is either a client component that asks
-`/api/auth/get-session` after mount (simplest, matches the existing
-"`now = null` until mounted" pattern) or a server island behind `<Suspense>`.
+The only thing `/` gains is an avatar in the header (signed in) or a
+"Members' sign in" link in the footer (signed out). Both come from `/api/me`,
+fetched after mount, matching the existing "`now = null` until mounted"
+pattern, so the session cookie is never read while rendering `/`.
 
 ## Stack choices
 
@@ -36,14 +42,17 @@ session cookie during prerender, so it is either a client component that asks
 | Validation | Zod | For Server Action inputs. |
 | Editor | Plain `<textarea>` with Markdown, rendered with `react-markdown` | Start simple; a rich editor can come later. |
 
-Discord OAuth scope: `identify` only (plus `email` if we want a contact
-address). If this is meant for a specific community, add `guilds` and allow
-sign-in only for members of a given server ID; that is a one-line check in
-the sign-in callback.
+Discord OAuth scopes: `identify`, `email` (Better Auth requires an email)
+and `guilds.members.read`. On every sign-in the server asks Discord
+`GET /users/@me/guilds/{DISCORD_GUILD_ID}/member` with the user's own token;
+anything but a 200 refuses the sign-in (`src/server/discord.ts`). No bot is
+needed. Someone who leaves the server keeps access until their session
+expires (30 days).
 
-Proxy (`src/proxy.ts`) only does optimistic redirects for `/book`,
-`/rituals`, `/settings` based on the cookie. Real authorization happens in
-each Server Action / data function (`requireUser()`), per the Next guide.
+No `proxy.ts`: each page and Server Action calls `requireUser()` /
+`getCurrentUser()`, which is the real check per the Next guide. Sign-in, sign
+out and account deletion are Server Actions, so there is no client-side auth
+library.
 
 ## Data model (first cut)
 
@@ -80,10 +89,12 @@ Notes:
 
 ## Features, in order
 
-1. **Foundation.** Better Auth + Discord, Neon + Drizzle, `/settings` with
-   sign out and delete account. Timezone moves from `localStorage` to
-   `user_settings` when signed in (local value is still the fallback and is
-   imported on first sign-in).
+1. **Foundation. Done.** Better Auth + Discord (server members only),
+   Drizzle + Postgres, `/signin`, `/settings` with sign out and delete
+   account. A signed-in user's explicit timezone choice is saved to
+   `user_settings` and applied on every device; on first sign-in the
+   device's saved choice is uploaded. The browser-detected zone is still
+   never saved.
 2. **Correspondences library** (`/correspondences`). Public, read-only pages
    generated from the existing `src/data` files: browse by phase, sign,
    sabbat, herb, crystal, colour. No accounts needed, so this could ship to
@@ -121,9 +132,32 @@ snapshot, so it is not proposed for v1.
 - CI needs a Postgres service container (or PGlite in tests) and migrations
   run before e2e. Playwright tests sign in by seeding a session row rather
   than driving Discord.
-- New env vars: `DATABASE_URL`, `BETTER_AUTH_SECRET`, `BETTER_AUTH_URL`,
-  `DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`. A Discord application is
-  needed with redirect URLs for localhost, previews and production.
+- New env vars: see `.env.example` and "Setup" below.
+
+## Setup (to switch accounts on)
+
+1. **Discord application.** At https://discord.com/developers/applications
+   create an application. Under OAuth2, copy the Client ID and Client Secret
+   and add redirect URLs:
+   - `http://localhost:3000/api/auth/callback/discord`
+   - `https://<production domain>/api/auth/callback/discord`
+
+   Discord needs exact URLs, so per-deployment preview URLs can't sign in.
+   Use production (or a fixed preview domain) for sign-in testing.
+2. **Server ID.** In Discord, turn on Developer Mode (Settings, Advanced),
+   right-click the server, Copy Server ID.
+3. **Database.** In the Vercel project, Storage, add Neon (Postgres). It sets
+   `DATABASE_URL` for you.
+4. **Environment variables** in Vercel (Production, and Preview if wanted):
+   `NEXT_PUBLIC_ACCOUNTS=1`, `BETTER_AUTH_SECRET` (`openssl rand -base64 32`),
+   `BETTER_AUTH_URL=https://<production domain>`, `DISCORD_CLIENT_ID`,
+   `DISCORD_CLIENT_SECRET`, `DISCORD_GUILD_ID`.
+5. **Deploy.** `vercel-build` applies migrations, then builds. Always sign in
+   on the domain in `BETTER_AUTH_URL`; another alias of the same deployment
+   would fail the OAuth state check.
+
+Locally: copy `.env.example` to `.env.local`, point `DATABASE_URL` at any
+Postgres, `npm run db:migrate`, `npm run dev`.
 
 ## Branching
 
