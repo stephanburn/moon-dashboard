@@ -162,19 +162,25 @@ Testing happens in three places:
 3. **Database.** In the Vercel project, Storage, add Neon (Postgres). It sets
    `DATABASE_URL`, and gives each preview its own database branch, so test
    accounts never mix with real ones.
-4. **Preview environment variables.** In Vercel, Settings, Environment
-   Variables, choose **Preview** and limit them to the test branch:
-   `NEXT_PUBLIC_ACCOUNTS=1`, `BETTER_AUTH_SECRET` (`openssl rand -base64 32`),
-   `BETTER_AUTH_URL=https://<branch URL>`, `DISCORD_CLIENT_ID`,
-   `DISCORD_CLIENT_SECRET`, `DISCORD_GUILD_ID`. Redeploy the branch and sign
-   in **on the branch URL**, not the per-deployment link.
-5. **Production**, once happy: the same variables for **Production**, with
-   `BETTER_AUTH_URL=https://<production domain>` and its own
-   `BETTER_AUTH_SECRET`. `vercel-build` applies migrations, then builds.
+4. **Environment variables.** In Vercel, Settings, Environment Variables,
+   for **Preview and Production**:
+   - as **Config**: `DISCORD_CLIENT_ID`, `DISCORD_GUILD_ID`
+   - as **Secret**: `DISCORD_CLIENT_SECRET`, `BETTER_AUTH_SECRET`
+     (`openssl rand -base64 32`)
 
-Always sign in on the exact domain in `BETTER_AUTH_URL`: on any other
-address (another alias, a per-deployment link) Discord either rejects the
-redirect or the sign-in fails its security check on return.
+   Accounts switch on in any build that has these plus `DATABASE_URL`
+   (`next.config.ts`), and the sign-in address is worked out from Vercel's
+   system variables (`src/server/baseUrl.ts`): the branch URL in previews,
+   the production domain in production. Nothing changes in production
+   until this code is merged.
+5. **Test**: redeploy the branch and sign in **on the branch URL**, not the
+   per-deployment link. Then merge; `vercel-build` applies migrations to the
+   production database, then builds.
+
+Always sign in on the branch URL or the production domain: on any other
+address (another alias, a per-deployment link) Discord rejects the redirect.
+Previews of other branches also get accounts switched on, but sign-in there
+fails until their branch URL is added to the Discord app.
 
 Vercel's Deployment Protection puts previews behind a Vercel login by
 default. That's fine for you; other members testing a preview would need it
@@ -191,8 +197,7 @@ Postgres, `npm run db:migrate`, `npm run dev`.
 
 A long-lived branch will drift from `main` as the dashboard keeps changing.
 Better: land work on `main` in small PRs where nothing is linked from `/`
-until it is ready (the routes simply exist), or behind a `NEXT_PUBLIC_ACCOUNTS`
-flag. The correspondences library can go straight to `main`.
+until it is ready (the routes simply exist). The correspondences library can go straight to `main`.
 
 ## Open questions
 

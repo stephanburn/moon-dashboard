@@ -6,6 +6,7 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { getDb } from './db';
 import * as schema from './db/schema';
+import { authBaseURL } from './baseUrl';
 import { isGuildMember } from './discord';
 
 const SESSION_DAYS = 30;
@@ -18,7 +19,8 @@ function createAuth() {
 
   return betterAuth({
     appName: 'Moon & Sabbat',
-    // baseURL and secret come from BETTER_AUTH_URL and BETTER_AUTH_SECRET.
+    baseURL: authBaseURL(),
+    // The secret comes from BETTER_AUTH_SECRET.
     database: drizzleAdapter(getDb(), { provider: 'pg', schema }),
     socialProviders: {
       discord: {

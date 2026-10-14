@@ -8,7 +8,6 @@ export const E2E_SECRET = 'e2e-secret-not-for-production-0123456789';
 export function accountsServerEnv(): Record<string, string> {
   if (!E2E_DATABASE_URL) return {};
   return {
-    NEXT_PUBLIC_ACCOUNTS: '1',
     DATABASE_URL: E2E_DATABASE_URL,
     BETTER_AUTH_SECRET: E2E_SECRET,
     BETTER_AUTH_URL: `http://localhost:${E2E_PORT}`,

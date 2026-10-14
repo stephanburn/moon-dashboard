@@ -1,7 +1,7 @@
 // Shared between the dashboard (client) and /api/me (server).
 
-// Accounts are switched on per deployment, so the dashboard stays exactly as
-// it was until the database and Discord app are set up.
+// Set by next.config.ts: on only in builds where the database and Discord app
+// are configured, so until then the dashboard stays exactly as it was.
 export const ACCOUNTS_ENABLED = process.env.NEXT_PUBLIC_ACCOUNTS === '1';
 
 export interface AccountUser {
