@@ -6,6 +6,7 @@ import { accountsEnabled, requireUser } from '@/server/auth';
 import { getUserSettings } from '@/server/settings';
 import { signOut } from '@/server/actions';
 import DeleteAccountForm from './DeleteAccountForm';
+import TimezoneSetting from './TimezoneSetting';
 
 export const metadata: Metadata = { title: 'Account · Moon Dashboard' };
 
@@ -35,16 +36,7 @@ export default async function SettingsPage() {
 
       <section className="card p-5 space-y-2">
         <h2 className="text-xs uppercase tracking-widest text-text-tertiary">Timezone</h2>
-        {timezone ? (
-          <p className="text-sm text-text-secondary">
-            <span className="text-foreground">{timezone.replace(/_/g, ' ')}</span>, used on every device you sign in on.
-            Change it from the dashboard.
-          </p>
-        ) : (
-          <p className="text-sm text-text-secondary">
-            Not chosen yet, so each device uses its own. Pick one on the dashboard to use it everywhere.
-          </p>
-        )}
+        <TimezoneSetting saved={timezone} />
       </section>
 
       <section className="card p-5 space-y-3">

@@ -92,6 +92,25 @@ test.describe('signed in', () => {
     await context.close();
   });
 
+  test('settings page keeps the zone this device is already using', async ({ browser }) => {
+    const { user, cookies } = await seedSignedInUser('Brigid');
+    const context = await browser.newContext({ timezoneId: 'Europe/London' });
+    await context.addCookies(cookies);
+    const page = await context.newPage();
+    const errors = watchForErrors(page);
+    await page.goto('/settings');
+    await expect(page.getByText('This one is using Europe/London.')).toBeVisible();
+
+    await page.getByRole('button', { name: 'Use Europe/London everywhere' }).click();
+    await expect(page.getByText('used on every device you sign in on')).toBeVisible();
+    expect(await syncedTimezone(user.id)).toBe('Europe/London');
+
+    await page.getByRole('combobox', { name: 'Timezone' }).selectOption('Asia/Tokyo');
+    await expect.poll(() => syncedTimezone(user.id)).toBe('Asia/Tokyo');
+    expect(errors).toEqual([]);
+    await context.close();
+  });
+
   test('settings page signs out', async ({ browser }) => {
     const { cookies } = await seedSignedInUser('Rowan');
     const context = await browser.newContext();
