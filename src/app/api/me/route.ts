@@ -1,3 +1,5 @@
+import { after } from 'next/server';
+import { recordVisit } from '@/server/activity';
 import { getCurrentUser } from '@/server/auth';
 import { getUserSettings } from '@/server/settings';
 import type { MeResponse } from '@/lib/account';
@@ -6,6 +8,8 @@ import type { MeResponse } from '@/lib/account';
 // signed-out visitor gets `user: null` (not a 401), which is the normal case.
 export async function GET(): Promise<Response> {
   const user = await getCurrentUser();
+  // Logged once the response has gone, so it never slows the dashboard.
+  if (user) after(() => recordVisit(user.id));
   const body: MeResponse = user
     ? {
         user: { name: user.name, image: user.image ?? null },

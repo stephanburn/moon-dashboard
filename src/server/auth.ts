@@ -1,3 +1,4 @@
+import { tryGetCurrentAuthEndpointContext } from '@better-auth/core/context';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import { nextCookies } from 'better-auth/next-js';
@@ -6,6 +7,7 @@ import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { getDb } from './db';
 import * as schema from './db/schema';
+import { recordRefusedSignIn, recordSignIn, requestInfo } from './activity';
 import { authBaseURL } from './baseUrl';
 import { isGuildMember } from './discord';
 
@@ -33,7 +35,17 @@ function createAuth() {
         // with ?error=unable_to_get_user_info).
         getUserInfo: async (token) => {
           if (!token.accessToken) return null;
-          if (!(await isGuildMember(token.accessToken, process.env.DISCORD_GUILD_ID))) return null;
+          if (!(await isGuildMember(token.accessToken, process.env.DISCORD_GUILD_ID))) {
+            // Note who tried, for the sign-in log.
+            const profile = await discordProfile.getUserInfo(token).catch(() => null);
+            const ctx = tryGetCurrentAuthEndpointContext();
+            await recordRefusedSignIn(
+              profile?.data.id ?? null,
+              profile?.data.username ?? null,
+              requestInfo(ctx?.request?.headers ?? ctx?.headers),
+            );
+            return null;
+          }
           return discordProfile.getUserInfo(token);
         },
       },
@@ -45,6 +57,18 @@ function createAuth() {
     },
     session: {
       expiresIn: 60 * 60 * 24 * SESSION_DAYS,
+    },
+    databaseHooks: {
+      // A new session is only ever created by a successful sign-in.
+      session: {
+        create: {
+          after: session =>
+            recordSignIn(session.userId, {
+              ipAddress: session.ipAddress ?? null,
+              userAgent: session.userAgent ?? null,
+            }),
+        },
+      },
     },
     plugins: [nextCookies()],
   });

@@ -6,7 +6,7 @@
 // After changing this file, run `npm run db:generate` to write a migration
 // into drizzle/ and commit it.
 
-import { boolean, pgTable, text, timestamp } from 'drizzle-orm/pg-core';
+import { boolean, index, integer, pgTable, primaryKey, text, timestamp } from 'drizzle-orm/pg-core';
 
 export const user = pgTable('user', {
   id: text('id').primaryKey(),
@@ -64,3 +64,35 @@ export const userSettings = pgTable('user_settings', {
   timezone: text('timezone'),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
+
+// One row per sign-in attempt that reached the membership check. Refused
+// attempts (Discord accounts not in the server) have no user_id; they are
+// identified by their Discord id and name instead, and are kept when an
+// account is deleted.
+export const signInLog = pgTable(
+  'sign_in_log',
+  {
+    id: integer('id').primaryKey().generatedAlwaysAsIdentity(),
+    at: timestamp('at', { withTimezone: true }).notNull().defaultNow(),
+    outcome: text('outcome', { enum: ['signed-in', 'refused'] }).notNull(),
+    userId: text('user_id').references(() => user.id, { onDelete: 'cascade' }),
+    discordId: text('discord_id'),
+    discordName: text('discord_name'),
+    ipAddress: text('ip_address'),
+    userAgent: text('user_agent'),
+  },
+  table => [index('sign_in_log_at_idx').on(table.at)],
+);
+
+// Dashboard visits by signed-in members, one row per member per UTC day.
+export const visitLog = pgTable(
+  'visit_log',
+  {
+    userId: text('user_id').notNull().references(() => user.id, { onDelete: 'cascade' }),
+    day: text('day').notNull(), // CalendarDay in UTC
+    firstAt: timestamp('first_at', { withTimezone: true }).notNull().defaultNow(),
+    lastAt: timestamp('last_at', { withTimezone: true }).notNull().defaultNow(),
+    count: integer('count').notNull().default(1),
+  },
+  table => [primaryKey({ columns: [table.userId, table.day] })],
+);

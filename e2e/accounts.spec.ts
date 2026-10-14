@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { eq } from 'drizzle-orm';
-import { userSettings, user as userTable } from '../src/server/db/schema';
+import { userSettings, user as userTable, visitLog } from '../src/server/db/schema';
 import { E2E_DATABASE_URL, seedSignedInUser, testDb } from './accounts';
 
 // Runs only when E2E_DATABASE_URL points at a migrated Postgres (CI sets it).
@@ -89,6 +89,20 @@ test.describe('signed in', () => {
     await page.goto('/');
     await expect(page.getByRole('link', { name: 'Account: Tamsin' })).toBeVisible();
     await expect.poll(() => syncedTimezone(user.id)).toBe('Asia/Tokyo');
+    await context.close();
+  });
+
+  test('dashboard visits are counted per day', async ({ browser }) => {
+    const { user, cookies } = await seedSignedInUser('Elspeth');
+    const context = await browser.newContext();
+    await context.addCookies(cookies);
+    const page = await context.newPage();
+    for (let i = 0; i < 2; i++) {
+      await page.goto('/');
+      await expect(page.getByRole('link', { name: 'Account: Elspeth' })).toBeVisible();
+    }
+    const visits = () => testDb().select().from(visitLog).where(eq(visitLog.userId, user.id));
+    await expect.poll(async () => (await visits()).map(v => v.count)).toEqual([2]);
     await context.close();
   });
 
