@@ -91,10 +91,11 @@ Notes:
 
 1. **Foundation. Done.** Better Auth + Discord (server members only),
    Drizzle + Postgres, `/signin`, `/settings` with sign out and delete
-   account. A signed-in user's explicit timezone choice is saved to
-   `user_settings` and applied on every device; on first sign-in the
-   device's saved choice is uploaded. The browser-detected zone is still
-   never saved.
+   account. A signed-in user's timezone is saved to `user_settings` and
+   applied on every device. An account with no zone yet adopts whatever the
+   dashboard is showing on the first signed-in visit (members found having
+   to re-pick an already-correct zone confusing); later changes on any
+   device update it.
 2. **Correspondences library** (`/correspondences`). Public, read-only pages
    generated from the existing `src/data` files: browse by phase, sign,
    sabbat, herb, crystal, colour. No accounts needed, so this could ship to

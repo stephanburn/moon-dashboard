@@ -8,8 +8,9 @@ import { saveTimezone } from '@/server/actions';
 
 const label = (zone: string) => zone.replace(/_/g, ' ');
 
-// The account's timezone. Before one is saved, each device follows its own
-// zone; this shows the one this device is using so it can be kept with one tap.
+// The account's timezone. The dashboard saves the zone it shows on the first
+// signed-in visit, so "not saved" is rare here; it still offers this device's
+// zone so it can be kept with one tap.
 export default function TimezoneSetting({ saved: initialSaved }: { saved: string | null }) {
   const [saved, setSaved] = useState(initialSaved);
   // This device's zone and the browser's own, known only after mount.
@@ -47,7 +48,7 @@ export default function TimezoneSetting({ saved: initialSaved }: { saved: string
         </p>
       ) : (
         <p className="text-sm text-text-secondary">
-          Each device uses its own timezone until you save one.
+          No timezone saved yet.
           {deviceZone && <> This one is using <span className="text-foreground">{label(deviceZone)}</span>.</>}
         </p>
       )}

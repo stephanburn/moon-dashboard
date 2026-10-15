@@ -217,7 +217,7 @@ export default function Dashboard() {
     return safeTz;
   }, []);
   // Signed-in users get their saved zone on every device.
-  const { user, timezoneChosen } = useAccount(applyTimezone);
+  const { user, timezoneChosen } = useAccount(timezone, applyTimezone);
 
   const handleTimezoneChange = useCallback((tz: string) => {
     timezoneChosen(applyTimezone(tz));
