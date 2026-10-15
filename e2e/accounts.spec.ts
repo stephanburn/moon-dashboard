@@ -81,6 +81,18 @@ test.describe('signed in', () => {
     await phone.close();
   });
 
+  test("an account with no zone keeps the one the dashboard shows", async ({ browser }) => {
+    const { user, cookies } = await seedSignedInUser('Niamh');
+    // Nothing saved anywhere: the dashboard shows the browser's own zone.
+    const context = await browser.newContext({ timezoneId: 'Australia/Sydney' });
+    await context.addCookies(cookies);
+    const page = await context.newPage();
+    await page.goto('/');
+    await expect(page.getByRole('link', { name: 'Account: Niamh' })).toBeVisible();
+    await expect.poll(() => syncedTimezone(user.id)).toBe('Australia/Sydney');
+    await context.close();
+  });
+
   test('a device choice made before signing up is uploaded', async ({ browser }) => {
     const { user, cookies } = await seedSignedInUser('Tamsin');
     const context = await browser.newContext();
