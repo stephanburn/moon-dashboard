@@ -307,7 +307,7 @@ Book of Shadows code is written.
 | 4 | How recent must a sign-in be to delete the account? | 10 minutes. |
 | 5 | Export format? | JSON now; JSON and Markdown once writing exists. |
 | 6 | Which Node version everywhere? | 24 (an LTS release), matching local development. |
-| 7 | Licence for the code? | None while the repository is private; revisit if it's made public. |
+| 7 | Licence for the code? | None for now. The repository is public, so the code can be read but not reused without permission; add a licence if others should be able to reuse it. |
 
 ## Owner checklist
 
