@@ -37,7 +37,7 @@ jobs:
       - run: npx tsc --noEmit
       - run: npx eslint
       - run: npm run test:tz
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install --with-deps chromium webkit
       # Builds the app, serves it with TZ=UTC and a non-English LANG, and
       # fails on any console or hydration error. With E2E_DATABASE_URL set,
       # accounts are switched on and the signed-in flows are tested too.
