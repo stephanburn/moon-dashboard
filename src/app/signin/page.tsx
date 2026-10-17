@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound, redirect } from 'next/navigation';
 import { accountsEnabled, getCurrentUser } from '@/server/auth';
 import { signInWithDiscord } from '@/server/actions';
+import { LOG_RETENTION_DAYS } from '@/server/activity';
 
 export const metadata: Metadata = { title: 'Sign in · Moon Dashboard' };
 
@@ -37,6 +38,11 @@ export default async function SignInPage({
             Continue with Discord
           </button>
         </form>
+        <p className="text-xs text-text-tertiary text-left">
+          What&apos;s recorded: your Discord name and avatar; each sign-in attempt, including refused ones, with
+          its time, IP address and browser; and how many times a day you visit. These logs are deleted after{' '}
+          {LOG_RETENTION_DAYS} days. Deleting your account removes everything tied to it.
+        </p>
         <p className="text-xs text-text-tertiary">
           The dashboard works without an account. <Link href="/" className="underline hover:text-text-secondary">Back to the moon</Link>
         </p>

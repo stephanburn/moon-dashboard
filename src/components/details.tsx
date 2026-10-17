@@ -31,7 +31,7 @@ import type { Hemisphere } from '@/lib/timezones';
 function CorrespondenceRow({ label, items }: { label: string; items: string[] }) {
   return (
     <div>
-      <p className="text-amber/60 text-xs uppercase tracking-wider mb-0.5">{label}</p>
+      <p className="text-amber/85 text-xs uppercase tracking-wider mb-0.5">{label}</p>
       <p className="text-text-secondary text-sm leading-relaxed">{items.join(', ')}</p>
     </div>
   );
@@ -86,7 +86,7 @@ export function MoonPhaseDetail({ phase, current }: { phase: PhaseName; current?
 
       {current && current.moonSignChanges.length > 0 && (
         <div className="pt-2 border-t border-white/5 space-y-1">
-          <p className="text-amber/60 text-xs uppercase tracking-wider mb-2">Lunar Transits</p>
+          <p className="text-amber/85 text-xs uppercase tracking-wider mb-2">Lunar Transits</p>
           {current.moonSignChanges.map(change => {
             const key = `${change.sign}-${change.enterTime.getTime()}`;
             const isOpen = expandedTransit === key;
@@ -184,7 +184,7 @@ export function SabbatDetail({ sabbat, hemisphere }: { sabbat: SabbatName; hemis
         {data.alternateNames.length > 0 && (
           <p className="text-xs text-text-tertiary mb-1">{data.alternateNames.join(' · ')}</p>
         )}
-        <p className="text-xs text-amber-light/60 mb-3">{data.dateDescription[hemisphere]}</p>
+        <p className="text-xs text-amber-light/75 mb-3">{data.dateDescription[hemisphere]}</p>
         <p className="text-foreground/90 text-sm leading-relaxed">{data.mythology}</p>
       </div>
 
