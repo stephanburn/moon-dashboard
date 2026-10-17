@@ -129,7 +129,9 @@ test('still renders when site storage is blocked', async ({ page }) => {
   expect(errors).toEqual([]);
 });
 
-test('every disclosure shows a visible chevron and opens a panel', async ({ page }) => {
+test('every disclosure shows a visible chevron and opens a panel', async ({ page, browserName }) => {
+  // Opens every panel in turn; CI's WebKit takes about 3 s for each.
+  test.slow(browserName === 'webkit');
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 2 })).toHaveText(PHASE_NAME);
   const disclosures = page.locator('main button[aria-expanded]');
