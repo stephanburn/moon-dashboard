@@ -30,7 +30,7 @@ export const SABBAT_CORRESPONDENCES: Record<SabbatName, SabbatCorrespondence> = 
     herbs: ['blackberry', 'willow', 'rowan', 'angelica', 'lavender'],
     foods: ['dairy', 'oat bread', 'seeds', 'honey', 'warm milk'],
     ritualFocus:
-      'Light candles through your space to mark the returning light. Make a Brigid\'s cross to hang above a door or hearth, as people have long done for protection. Set out your creative intentions for the season ahead, and dedicate a new tool or project in her name if you work with her.',
+      'Light candles through your space to mark the returning light, and stay with them while they burn. Make a Brigid\'s cross to hang above a door or hearth, as people have long done for protection. Set out your creative intentions for the season ahead, and dedicate a new tool or project in her name if you work with her.',
   },
 
   Ostara: {
@@ -45,7 +45,7 @@ export const SABBAT_CORRESPONDENCES: Record<SabbatName, SabbatCorrespondence> = 
     themes: ['balance', 'renewal', 'awakening', 'growth', 'new beginnings'],
     colours: ['pastel green', 'soft yellow', 'lavender', 'light blue', 'blush pink'],
     crystals: ['rose quartz', 'amazonite', 'green aventurine', 'aquamarine'],
-    herbs: ['daffodil', 'jasmine', 'violet', 'rose', 'primrose'],
+    herbs: ['daffodil (poisonous)', 'jasmine', 'violet', 'rose', 'primrose'],
     foods: ['decorated eggs', 'spring greens', 'honey', 'hot cross buns', 'fresh herbs'],
     ritualFocus:
       'Go outside and notice the particular quality of spring light, longer and warmer by the day. Plant seeds, literally or as intentions for the months ahead. Clear out what no longer belongs in your space and let the season of opening in. Decorating eggs is a simple way to hold a wish for the season.',
@@ -66,7 +66,7 @@ export const SABBAT_CORRESPONDENCES: Record<SabbatName, SabbatCorrespondence> = 
     herbs: ['hawthorn', 'rowan', 'elder', 'rose', 'nettle', 'mint'],
     foods: ['oatcakes', 'fresh berries', 'honey mead', 'spring cheeses', 'dairy'],
     ritualFocus:
-      'Light a fire or candles and leap the flame, even symbolically, for luck and a clean start to the warmer half of the year. Weave a flower crown or dress a May bush with coloured ribbons. Mark your own aliveness however suits you, with dancing, feasting, and good company.',
+      'Light a fire where it is safe and permitted, or simply light candles, for luck and a clean start to the warmer half of the year. Leaping the flames is best kept symbolic: walk between two candles set well apart, echoing the cattle driven between the Beltane fires. Weave a flower crown or dress a May bush with coloured ribbons, untying them afterwards if the bush is outdoors so birds don\'t get tangled. Mark your own aliveness however suits you, with dancing, feasting, and good company.',
   },
 
   Litha: {
@@ -84,7 +84,7 @@ export const SABBAT_CORRESPONDENCES: Record<SabbatName, SabbatCorrespondence> = 
     herbs: ['St John\'s wort', 'lavender', 'chamomile', 'elder flower', 'oak', 'rose'],
     foods: ['summer fruits', 'strawberries', 'honey mead', 'garden salads', 'fire-cooked foods'],
     ritualFocus:
-      'Rise early and watch the dawn. At the solstice the sun rises at the far end of its yearly swing along the horizon and the light has a particular quality. Spend time outdoors at the height of the day. Gather herbs and flowers at their peak and dry them for later use. In the evening, light a fire or candles and sit with what has grown and flourished this season, knowing the wheel is already turning.',
+      'Rise early and watch the dawn. At the solstice the sun rises at the far end of its yearly swing along the horizon and the light has a particular quality. Spend time outdoors at the height of the day, with shade and water to hand. Gather herbs and flowers at their peak to dry for later use, taking only what you can name with certainty and leaving plenty for the bees. In the evening, light a fire where it is safe and permitted, or candles, and sit with what has grown and flourished this season, knowing the wheel is already turning.',
   },
 
   Lughnasadh: {
@@ -117,10 +117,10 @@ export const SABBAT_CORRESPONDENCES: Record<SabbatName, SabbatCorrespondence> = 
     themes: ['balance', 'gratitude', 'completion', 'preparation', 'letting go', 'turning inward'],
     colours: ['deep red', 'burnt orange', 'harvest gold', 'brown', 'russet'],
     crystals: ['smoky quartz', 'amber', 'carnelian', 'jasper', 'peridot'],
-    herbs: ['apple', 'blackberry', 'hazel', 'ivy', 'myrrh', 'sage'],
+    herbs: ['apple', 'blackberry', 'hazel', 'ivy (poisonous)', 'myrrh', 'sage'],
     foods: ['apples', 'root vegetables', 'squash', 'cider', 'nuts', 'late harvest fruit'],
     ritualFocus:
-      'Walk in the autumn landscape and let the season speak for itself; this light is fleeting and worth the attention. Gather the last of the harvest from your garden or the hedgerows. Make something warm to drink and sit with what has come to fruition this year. Notice what is ready to be let go as the world turns inward, and make a little space for the quieter months ahead.',
+      'Walk in the autumn landscape and let the season speak for itself; this light is fleeting and worth the attention. Gather the last of the harvest from your garden or the hedgerows, picking only what you can identify with certainty and leaving plenty for the birds. Make something warm to drink and sit with what has come to fruition this year. Notice what is ready to be let go as the world turns inward, and make a little space for the quieter months ahead.',
   },
 
   Samhain: {
@@ -135,10 +135,10 @@ export const SABBAT_CORRESPONDENCES: Record<SabbatName, SabbatCorrespondence> = 
     themes: ['the ancestors', 'death and rebirth', 'the thinning veil', 'divination', 'the new year', 'shadow work'],
     colours: ['black', 'deep orange', 'dark purple', 'blood crimson', 'silver'],
     crystals: ['obsidian', 'black tourmaline', 'labradorite', 'garnet', 'onyx'],
-    herbs: ['mugwort', 'wormwood', 'rosemary', 'bay', 'blackthorn', 'apple'],
+    herbs: ['mugwort', 'wormwood (poisonous)', 'rosemary', 'bay', 'blackthorn', 'apple'],
     foods: ['apples', 'pomegranate', 'root vegetables', 'soul cakes', 'bone broth', 'red wine'],
     ritualFocus:
-      'Set a place at your table for the beloved dead and light a candle in a window to guide them home. Scry by candlelight or a dark mirror if that is part of your practice. Write the names of those who have passed and burn the slips as an offering of remembrance and release.',
+      'Set a place at your table for the beloved dead and light a candle in a window to guide them home, kept clear of curtains and never left burning unattended (a battery candle serves as well). Scry by candlelight or a dark mirror if that is part of your practice. Write the names of those who have passed and burn the slips in a fireproof dish as an offering of remembrance and release, or bury or tear them if a flame isn\'t practical.',
   },
 
   Yule: {
@@ -153,9 +153,9 @@ export const SABBAT_CORRESPONDENCES: Record<SabbatName, SabbatCorrespondence> = 
     themes: ['endurance', 'the returning light', 'hope', 'rest', 'gathering', 'renewal'],
     colours: ['deep red', 'forest green', 'bright gold', 'silver', 'white', 'midnight blue'],
     crystals: ['clear quartz', 'bloodstone', 'ruby', 'garnet', 'emerald'],
-    herbs: ['holly', 'ivy', 'mistletoe', 'pine', 'fir', 'frankincense', 'myrrh'],
+    herbs: ['holly (poisonous)', 'ivy (poisonous)', 'mistletoe (poisonous)', 'pine', 'fir', 'frankincense', 'myrrh'],
     foods: ['mulled wine', 'roasted foods', 'gingerbread', 'dried fruits', 'nuts', 'wassail'],
     ritualFocus:
-      'Sit with candles through the longest night, not as obligation but as quiet company with the dark. Decorate with evergreens, which keep their colour through winter as a reminder that life carries on. At dawn, go out and greet the returning sun. Gather with people you love, eat well, and rest deeply. The wheel turns whether we mark it or not; marking it makes the turning felt.',
+      'Sit with candles through the longest night, not as obligation but as quiet company with the dark, and put them out before you sleep. Decorate with evergreens, which keep their colour through winter as a reminder that life carries on, and keep holly, ivy, and mistletoe berries out of reach of children and pets. At dawn, go out and greet the returning sun. Gather with people you love, eat well, and rest deeply. The wheel turns whether we mark it or not; marking it makes the turning felt.',
   },
 };
