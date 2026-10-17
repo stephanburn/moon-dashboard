@@ -15,12 +15,11 @@ import { MoonPhaseDetail, MoonSignDetail } from './details';
 import Link from 'next/link';
 import { ACCOUNTS_ENABLED } from '@/lib/account';
 import { buildDashboardModel, type DashboardModel } from '@/lib/dashboardModel';
-import { DEFAULT_TZ } from '@/lib/config';
 import { dayOf } from '@/lib/days';
 import { formatDay } from '@/lib/format';
 import { SIGN_SYMBOLS } from '@/lib/names';
-import { safeGet, safeSet } from '@/lib/storage';
-import { STORAGE_KEY, detectBrowserTimezone, normalizeTimezone, resolveTimezone } from '@/lib/timezones';
+import { safeGet, safeRemove, safeSet } from '@/lib/storage';
+import { AUTO_TIMEZONE, STORAGE_KEY, detectBrowserTimezone, normalizeTimezone, resolveTimezone, zoneChoiceFrom } from '@/lib/timezones';
 import { WHEEL_STORAGE_KEY, parseWheelChoice, type WheelChoice } from '@/lib/wheel';
 
 // Stable IDs linking each disclosure trigger to its detail panel via aria-controls.
@@ -207,9 +206,11 @@ function DashboardContent({
 // ── Dashboard ──────────────────────────────────────────────────────────────
 
 export default function Dashboard() {
-  const [timezone, setTimezone] = useState(DEFAULT_TZ);
+  // A saved zone, or AUTO_TIMEZONE to follow the browser's own.
+  const [zoneChoice, setZoneChoice] = useState(AUTO_TIMEZONE);
   const [wheelChoice, setWheelChoice] = useState<WheelChoice>('auto');
   const [detectedZone, setDetectedZone] = useState<string | null>(null);
+  const timezone = useMemo(() => resolveTimezone(zoneChoice, detectedZone), [zoneChoice, detectedZone]);
   // null during the server render and hydration: everything shown depends on
   // the current time, so it is only computed in the browser (finding P0-2).
   const [now, setNow] = useState<Date | null>(null);
@@ -224,8 +225,13 @@ export default function Dashboard() {
   const mercury = model?.mercury;
 
   const applyTimezone = useCallback((tz: string) => {
+    if (tz === AUTO_TIMEZONE) {
+      setZoneChoice(AUTO_TIMEZONE);
+      safeRemove(STORAGE_KEY);
+      return AUTO_TIMEZONE;
+    }
     const safeTz = normalizeTimezone(tz);
-    setTimezone(safeTz);
+    setZoneChoice(safeTz);
     safeSet(STORAGE_KEY, safeTz);
     return safeTz;
   }, []);
@@ -260,7 +266,7 @@ export default function Dashboard() {
     const detected = detectBrowserTimezone();
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setDetectedZone(detected);
-    setTimezone(resolveTimezone(safeGet(STORAGE_KEY), detected));
+    setZoneChoice(zoneChoiceFrom(safeGet(STORAGE_KEY)));
     setWheelChoice(parseWheelChoice(safeGet(WHEEL_STORAGE_KEY)));
     setNow(new Date());
     // Show the tap hint only to users who haven't dismissed it before.
@@ -327,7 +333,7 @@ export default function Dashboard() {
                 <span className="hidden sm:inline">· until {formatDay(dayOf(mercury.period.retrogradeEnd, timezone))}</span>
               </div>
             )}
-            <TimezoneSelector value={timezone} detectedZone={detectedZone} onChange={handleTimezoneChange} />
+            <TimezoneSelector value={zoneChoice} detectedZone={detectedZone} onChange={handleTimezoneChange} />
             {user && <AccountButton user={user} />}
           </div>
         </div>

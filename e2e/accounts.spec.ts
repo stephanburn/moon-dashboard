@@ -467,4 +467,57 @@ test.describe('log retention', () => {
     const visits = await testDb().select().from(visitLog).where(eq(visitLog.userId, user.id));
     expect(visits.map(r => r.day)).toEqual(['2026-07-19']);
   });
+
+  test('Automatic is kept on the account and each device follows its own zone', async ({ browser }) => {
+    const { user, cookies } = await seedSignedInUser('Ottilie');
+    const laptop = await browser.newContext({ timezoneId: 'Europe/London' });
+    await laptop.addCookies(cookies);
+    const page = await laptop.newPage();
+    await page.goto('/');
+    await expect(page.getByRole('link', { name: 'Account: Ottilie' })).toBeVisible();
+    await page.getByRole('combobox', { name: 'Timezone' }).selectOption('auto');
+    await expect.poll(() => syncedTimezone(user.id)).toBe('auto');
+    await laptop.close();
+
+    const phone = await browser.newContext({ timezoneId: 'Asia/Tokyo' });
+    await phone.addCookies(cookies);
+    const phonePage = await phone.newPage();
+    await phonePage.goto('/');
+    const select = phonePage.getByRole('combobox', { name: 'Timezone' });
+    await expect(phonePage.getByRole('link', { name: 'Account: Ottilie' })).toBeVisible();
+    await expect(select).toHaveValue('auto');
+    await expect(select.locator('option:checked')).toHaveText('Automatic (Asia/Tokyo)');
+    await phone.close();
+  });
+
+  test('signing out in one tab signs the dashboard out in another', async ({ browser }) => {
+    const { cookies } = await seedSignedInUser('Bryony');
+    const context = await browser.newContext();
+    await context.addCookies(cookies);
+    const dashboard = await context.newPage();
+    await dashboard.goto('/');
+    await expect(dashboard.getByRole('link', { name: 'Account: Bryony' })).toBeVisible();
+
+    const settings = await context.newPage();
+    await settings.goto('/settings');
+    await settings.getByRole('button', { name: 'Sign out' }).click();
+    await expect(settings).toHaveURL(/\/$/);
+
+    await expect(dashboard.getByRole('link', { name: "Members' sign in" })).toBeVisible({ timeout: 10_000 });
+    await expect(dashboard.getByRole('link', { name: 'Account: Bryony' })).toHaveCount(0);
+    await context.close();
+  });
+
+  test('an open tab checking again does not count a visit', async ({ browser }) => {
+    const { user, cookies } = await seedSignedInUser('Linden');
+    const context = await browser.newContext();
+    await context.addCookies(cookies);
+    const me = await (await context.request.get('/api/me?check=1')).json();
+    expect(me.user?.name).toBe('Linden');
+    // Give after() time to write, had it been going to.
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    const visits = await testDb().select().from(visitLog).where(eq(visitLog.userId, user.id));
+    expect(visits).toEqual([]);
+    await context.close();
+  });
 });

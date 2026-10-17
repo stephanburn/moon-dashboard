@@ -1,9 +1,9 @@
 'use client';
 
-import { TIMEZONE_GROUPS, listedZoneFor } from '@/lib/timezones';
+import { AUTO_TIMEZONE, TIMEZONE_GROUPS, listedZoneFor, resolveTimezone } from '@/lib/timezones';
 
 interface Props {
-  value: string;
+  value: string; // a zone, or AUTO_TIMEZONE to follow the device
   detectedZone: string | null; // the browser's zone, if it reported one
   onChange: (tz: string) => void;
 }
@@ -15,7 +15,7 @@ export default function TimezoneSelector({ value, detectedZone, onChange }: Prop
   // visit elsewhere) get their own options, so the select always shows the
   // zone actually in use and the browser's zone can be picked again.
   const extraZones = [...new Set([detectedZone, value])]
-    .filter((zone): zone is string => !!zone && !listedZoneFor(zone));
+    .filter((zone): zone is string => !!zone && zone !== AUTO_TIMEZONE && !listedZoneFor(zone));
 
   return (
     <div className="min-w-0 flex items-center gap-2">
@@ -31,6 +31,7 @@ export default function TimezoneSelector({ value, detectedZone, onChange }: Prop
           transition-colors cursor-pointer
         `}
       >
+        <option value={AUTO_TIMEZONE}>Automatic ({label(resolveTimezone(null, detectedZone))})</option>
         {extraZones.map(zone => (
           <option key={zone} value={zone}>
             {zone === detectedZone ? `${label(zone)} (your timezone)` : label(zone)}
