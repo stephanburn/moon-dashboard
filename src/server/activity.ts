@@ -1,6 +1,6 @@
-import { sql } from 'drizzle-orm';
-import { dayOf } from '@/lib/days';
-import { getDb } from './db';
+import { lt, sql } from 'drizzle-orm';
+import { addDays, dayOf, type CalendarDay } from '@/lib/days';
+import { getDb, type Db } from './db';
 import { signInLog, visitLog } from './db/schema';
 
 // Logging must never break sign-in or the dashboard, so failures are only
@@ -46,4 +46,27 @@ export function recordVisit(userId: string, now: Date = new Date()): Promise<voi
         set: { lastAt: now, count: sql`${visitLog.count} + 1` },
       }),
   );
+}
+
+// Sign-in and visit logs are kept this long, then deleted by the daily cron
+// (app/api/cron/purge-logs). The sign-in page tells members so.
+export const LOG_RETENTION_DAYS = 90;
+
+export function logCutoffs(now: Date): { signInBefore: Date; visitDayBefore: CalendarDay } {
+  return {
+    signInBefore: new Date(now.getTime() - LOG_RETENTION_DAYS * 24 * 60 * 60 * 1000),
+    visitDayBefore: addDays(dayOf(now, 'UTC'), -LOG_RETENTION_DAYS),
+  };
+}
+
+// Unlike the writes above, this throws on failure, so the cron run shows as
+// failed.
+export async function purgeOldLogs(
+  now: Date = new Date(),
+  db: Db = getDb(),
+): Promise<{ signIns: number; visits: number }> {
+  const { signInBefore, visitDayBefore } = logCutoffs(now);
+  const signIns = await db.delete(signInLog).where(lt(signInLog.at, signInBefore));
+  const visits = await db.delete(visitLog).where(lt(visitLog.day, visitDayBefore));
+  return { signIns: signIns.rowCount ?? 0, visits: visits.rowCount ?? 0 };
 }

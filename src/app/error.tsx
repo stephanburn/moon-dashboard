@@ -1,22 +1,30 @@
 'use client';
 
 import { useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { STORAGE_KEY } from '@/lib/timezones';
 import { safeRemove } from '@/lib/storage';
 
-// Backstop: if anything in the dashboard throws at render time, show a recoverable
-// screen instead of a blank page. The most likely culprit historically was a bad
-// stored timezone reaching Intl.DateTimeFormat, so we offer to clear it and retry.
+// Backstop: if anything throws at render time, show a recoverable screen
+// instead of a blank page. On the dashboard the most likely culprit
+// historically was a bad stored timezone reaching Intl.DateTimeFormat, so there
+// we offer to clear it and retry. Elsewhere, and for errors from the server
+// (which carry a digest), it's more likely the database or sign-in, where
+// clearing the zone wouldn't help.
 export default function Error({
   error,
   reset,
+  retry,
 }: {
   error: Error & { digest?: string };
   reset: () => void;
+  retry: () => void;
 }) {
   useEffect(() => {
     console.error(error);
   }, [error]);
+
+  const zoneMayBeAtFault = usePathname() === '/' && !error.digest;
 
   const clearAndReset = () => {
     safeRemove(STORAGE_KEY);
@@ -29,14 +37,16 @@ export default function Error({
         🌑
       </div>
       <h1 className="font-display text-2xl text-foreground">Something went out of phase</h1>
-      <p className="text-sm text-silver/50 max-w-sm">
-        The dashboard hit an unexpected error. Resetting your saved timezone usually clears it.
+      <p className="text-sm text-text-secondary max-w-sm">
+        {zoneMayBeAtFault
+          ? 'The dashboard hit an unexpected error. Resetting your saved timezone usually clears it.'
+          : 'This page hit an unexpected error. Please try again in a moment.'}
       </p>
       <button
-        onClick={clearAndReset}
+        onClick={zoneMayBeAtFault ? clearAndReset : retry}
         className="text-xs bg-white/5 border border-white/10 rounded-md text-silver/70 px-3 py-1.5 hover:border-white/20 transition-colors cursor-pointer"
       >
-        Reset and try again
+        {zoneMayBeAtFault ? 'Reset and try again' : 'Try again'}
       </button>
     </div>
   );

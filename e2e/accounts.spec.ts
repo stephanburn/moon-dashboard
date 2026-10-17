@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { eq } from 'drizzle-orm';
+import { purgeOldLogs } from '../src/server/activity';
 import { signInLog, userSettings, user as userTable, visitLog } from '../src/server/db/schema';
 import { E2E_DATABASE_URL, seedSignedInUser, testDb } from './accounts';
 
@@ -204,5 +205,31 @@ test.describe('signed in', () => {
     const rows = await testDb().select().from(userTable).where(eq(userTable.id, user.id));
     expect(rows).toEqual([]);
     await context.close();
+  });
+});
+
+test.describe('log retention', () => {
+  test('the purge endpoint refuses requests without the cron secret', async ({ request }) => {
+    // The server under test has no CRON_SECRET, so even this is refused.
+    const res = await request.get('/api/cron/purge-logs', { headers: { authorization: 'Bearer undefined' } });
+    expect(res.status()).toBe(401);
+  });
+
+  test('logs older than 90 days are purged, newer ones kept', async () => {
+    const { user } = await seedSignedInUser('Maren');
+    const now = new Date('2026-10-17T12:00:00Z');
+    await testDb().insert(signInLog).values([
+      { outcome: 'signed-in', userId: user.id, at: new Date('2026-07-19T11:00:00Z') },
+      { outcome: 'signed-in', userId: user.id, at: new Date('2026-07-19T13:00:00Z') },
+    ]);
+    await testDb().insert(visitLog).values([
+      { userId: user.id, day: '2026-07-18' },
+      { userId: user.id, day: '2026-07-19' },
+    ]);
+    await purgeOldLogs(now, testDb());
+    const signIns = await testDb().select().from(signInLog).where(eq(signInLog.userId, user.id));
+    expect(signIns.map(r => r.at.toISOString())).toEqual(['2026-07-19T13:00:00.000Z']);
+    const visits = await testDb().select().from(visitLog).where(eq(visitLog.userId, user.id));
+    expect(visits.map(r => r.day)).toEqual(['2026-07-19']);
   });
 });

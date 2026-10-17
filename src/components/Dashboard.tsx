@@ -332,11 +332,11 @@ export default function Dashboard() {
       </main>
 
       <footer className="px-6 py-5 text-center border-t border-white/5 space-y-1">
-        <p className="text-xs text-silver/55">
+        <p className="text-xs text-text-tertiary">
           Calculated locally. Anonymous usage counts{ACCOUNTS_ENABLED ? ', plus sign-in and visit logs for members' : ' only'}.
         </p>
         {user === null && (
-          <p className="fade-in text-xs text-silver/55">
+          <p className="fade-in text-xs text-text-tertiary">
             <Link href="/signin" className="underline hover:text-text-secondary">Members&apos; sign in</Link>
           </p>
         )}

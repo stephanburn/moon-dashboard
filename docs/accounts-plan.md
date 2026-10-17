@@ -168,6 +168,10 @@ Testing happens in three places:
    - as **Config**: `DISCORD_CLIENT_ID`, `DISCORD_GUILD_ID`
    - as **Secret**: `DISCORD_CLIENT_SECRET`, `BETTER_AUTH_SECRET`
      (`openssl rand -base64 32`)
+   - as **Secret**, Production only: `CRON_SECRET` (same command). Vercel
+     Cron sends it to `/api/cron/purge-logs` (scheduled in `vercel.json`),
+     which deletes sign-in and visit logs older than 90 days; without it the
+     purge refuses every request. Crons run only on production.
 
    Accounts switch on in any build that has these plus `DATABASE_URL`
    (`next.config.ts`), and the sign-in address is worked out from Vercel's

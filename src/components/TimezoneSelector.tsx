@@ -20,7 +20,7 @@ export default function TimezoneSelector({ value, detectedZone, onChange, narrow
 
   return (
     <div className="flex items-center gap-2">
-      <span className="text-xs text-silver/50 tracking-wide hidden sm:block">Timezone</span>
+      <span className="text-xs text-text-tertiary tracking-wide hidden sm:block">Timezone</span>
       <select
         value={value}
         onChange={e => onChange(e.target.value)}

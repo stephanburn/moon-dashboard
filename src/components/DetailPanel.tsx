@@ -53,7 +53,7 @@ export default function DetailPanel({ id, onClose, children }: Props) {
           {/* Close button — min 44px touch target */}
           <button
             onClick={close}
-            className="absolute top-2 right-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-silver/50 hover:text-text-secondary transition-colors text-lg leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/40 focus-visible:rounded"
+            className="absolute top-2 right-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-text-tertiary hover:text-text-secondary transition-colors text-lg leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/40 focus-visible:rounded"
             aria-label="Close panel"
           >
             ×
