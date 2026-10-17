@@ -255,16 +255,31 @@ test.describe('signed in', () => {
     await context.close();
   });
 
-  test('settings says so when a save finds the session gone', async ({ browser }) => {
-    const { user, cookies } = await seedSignedInUser('Eira');
+  test('settings says so when a save finds the session cookie expired', async ({ browser }) => {
+    const { cookies } = await seedSignedInUser('Eira');
     const context = await browser.newContext();
     await context.addCookies(cookies);
     const page = await context.newPage();
     await page.goto('/settings');
     await expect(page.getByRole('heading', { name: 'Eira' })).toBeVisible();
-    await testDb().delete(sessionTable).where(eq(sessionTable.userId, user.id));
+    await context.clearCookies();
     await page.getByRole('combobox', { name: 'Timezone' }).selectOption('Asia/Tokyo');
     await expect(page.getByRole('alert').filter({ hasText: "You've been signed out" })).toBeVisible();
+    await context.close();
+  });
+
+  // Better Auth clears the cookie of a session it can't find, which makes
+  // Next re-render the page, and settings then sends the visitor to sign in.
+  test('settings sends a revoked session to sign in on the next save', async ({ browser }) => {
+    const { user, cookies } = await seedSignedInUser('Carys');
+    const context = await browser.newContext();
+    await context.addCookies(cookies);
+    const page = await context.newPage();
+    await page.goto('/settings');
+    await expect(page.getByRole('heading', { name: 'Carys' })).toBeVisible();
+    await testDb().delete(sessionTable).where(eq(sessionTable.userId, user.id));
+    await page.getByRole('combobox', { name: 'Timezone' }).selectOption('Asia/Tokyo');
+    await expect(page).toHaveURL(/\/signin$/);
     await context.close();
   });
 
