@@ -6,7 +6,7 @@ import {
   getUpcomingMercuryRetrogrades,
   type MercuryRetrogradePeriod,
 } from './planets';
-import { addDays, dayOf, type CalendarDay } from './days';
+import { addDays, dayOf, startOfDay, type CalendarDay } from './days';
 import type { MajorPhaseName, SignName } from './names';
 import type { Hemisphere } from './timezones';
 
@@ -48,9 +48,9 @@ export function getUpcomingEvents(
   const through = addDays(today, HORIZON_DAYS);
   const events: SpineEvent[] = [];
 
-  // Search from a day early so events earlier today, and a Deipnon today for a
-  // new moon tomorrow, are found; the day filter below trims the rest.
-  const from = new Date(now.getTime() - DAY_MS);
+  // Search from the start of today in the selected zone, so events earlier
+  // today are found even on a 25-hour day; the day filter below trims the end.
+  const from = startOfDay(today, timezone);
   const to = new Date(now.getTime() + (HORIZON_DAYS + 1) * DAY_MS);
 
   const phases = getUpcomingMajorPhases(from, to);

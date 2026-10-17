@@ -84,3 +84,17 @@ describe('getUpcomingEvents', () => {
     expect(events[0].day).toBe('2026-09-26');
   });
 });
+
+describe('a 25-hour day', () => {
+  // Anchorage set its clocks back on 5 Nov 2023, and that day's Last Quarter
+  // (USNO: 08:37 UTC) fell at 00:37 local time, in the day's first hour. At
+  // 23:50 the same evening it is more than 24 hours ago but still today.
+  it('keeps an event from the first hour late in the evening', () => {
+    const now = new Date('2023-11-06T08:50:00Z');
+    expect(dayOf(now, 'America/Anchorage')).toBe('2023-11-05');
+    const events = getUpcomingEvents(now, 'America/Anchorage', 'north', 8);
+    const lastQuarter = events.find(e => e.kind === 'moon-phase' && e.phase === 'Last Quarter');
+    expect(lastQuarter?.day).toBe('2023-11-05');
+    expect(Math.abs(lastQuarter!.at!.getTime() - Date.parse('2023-11-05T08:37:00Z'))).toBeLessThan(2 * 60_000);
+  });
+});
