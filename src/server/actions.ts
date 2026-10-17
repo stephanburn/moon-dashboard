@@ -4,12 +4,13 @@ import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
-import type { SaveTimezoneResult } from '@/lib/account';
+import type { SaveResult } from '@/lib/account';
 import { canonicalZone, listedZoneFor } from '@/lib/timezones';
+import { WHEEL_CHOICES, type WheelChoice } from '@/lib/wheel';
 import { accountsEnabled, getAuth, getCurrentUser, requireAdmin, requireUser } from './auth';
 import { getDb } from './db';
 import { session as sessionTable, user as userTable } from './db/schema';
-import { setUserTimezone } from './settings';
+import { setUserTimezone, setUserWheel } from './settings';
 
 export async function signInWithDiscord(): Promise<void> {
   if (!accountsEnabled()) redirect('/');
@@ -40,11 +41,19 @@ export async function deleteAccount(): Promise<void> {
 // Called when a signed-in user picks a zone. 'signed-out' means the session
 // has gone (expired or revoked); the choice is still kept in localStorage.
 // Database failures throw, so callers can tell them apart.
-export async function saveTimezone(timezone: string): Promise<SaveTimezoneResult> {
+export async function saveTimezone(timezone: string): Promise<SaveResult> {
   if (typeof timezone !== 'string' || timezone.length > 64 || !canonicalZone(timezone)) return 'invalid';
   const user = await getCurrentUser();
   if (!user) return 'signed-out';
   await setUserTimezone(user.id, listedZoneFor(timezone) ?? timezone);
+  return 'saved';
+}
+
+export async function saveWheel(wheel: WheelChoice): Promise<SaveResult> {
+  if (!WHEEL_CHOICES.includes(wheel)) return 'invalid';
+  const user = await getCurrentUser();
+  if (!user) return 'signed-out';
+  await setUserWheel(user.id, wheel);
   return 'saved';
 }
 

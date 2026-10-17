@@ -23,7 +23,8 @@ import { dayOf } from '@/lib/days';
 import { formatDay, formatDayAndTime } from '@/lib/format';
 import { SIGN_SYMBOLS, type PhaseName, type SabbatName, type SignName } from '@/lib/names';
 import { safeGet, safeSet } from '@/lib/storage';
-import type { Hemisphere } from '@/lib/timezones';
+import type { EventContext } from './eventKinds';
+import WheelSelector from './WheelSelector';
 
 // The body of each detail panel. DetailPanel supplies the chrome (animation,
 // close button); these supply the content.
@@ -175,7 +176,7 @@ export function ZodiacDetail({ sign }: { sign: SignName }) {
 
 // ── Sabbat ─────────────────────────────────────────────────────────────────
 
-export function SabbatDetail({ sabbat, hemisphere }: { sabbat: SabbatName; hemisphere: Hemisphere }) {
+export function SabbatDetail({ sabbat, ctx }: { sabbat: SabbatName; ctx: EventContext }) {
   const data = SABBAT_CORRESPONDENCES[sabbat];
 
   return (
@@ -184,9 +185,11 @@ export function SabbatDetail({ sabbat, hemisphere }: { sabbat: SabbatName; hemis
         {data.alternateNames.length > 0 && (
           <p className="text-xs text-text-tertiary mb-1">{data.alternateNames.join(' · ')}</p>
         )}
-        <p className="text-xs text-amber-light/75 mb-3">{data.dateDescription[hemisphere]}</p>
+        <p className="text-xs text-amber-light/75 mb-3">{data.dateDescription[ctx.wheel]}</p>
         <p className="text-foreground/90 text-sm leading-relaxed">{data.mythology}</p>
       </div>
+
+      <WheelSelector value={ctx.wheelChoice} inferred={ctx.hemisphere} onChange={ctx.onWheelChange} />
 
       <div>
         <p className="text-xs text-text-tertiary uppercase tracking-wider mb-1">Themes</p>

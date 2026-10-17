@@ -203,3 +203,21 @@ test('detail panels do not animate with reduced motion', async ({ page }) => {
     .evaluate(el => getComputedStyle(el).transitionDuration);
   expect(duration).toBe('0s');
 });
+
+test('the seasonal wheel can be chosen apart from the timezone', async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-10-17T12:00:00Z'));
+  await page.goto('/');
+  await page.getByLabel('Timezone').selectOption('Europe/London');
+  await page.getByRole('button', { name: /^Samhain/ }).click();
+  const wheel = page.getByRole('combobox', { name: 'Seasonal wheel' });
+  await expect(wheel).toHaveValue('auto');
+  await expect(wheel.locator('option[value="auto"]')).toHaveText('From timezone (Northern)');
+  await wheel.selectOption('south');
+
+  // Southern Beltane (1 November) replaces Samhain; times stay in London.
+  await expect(page.getByRole('button', { name: /^Samhain/ })).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByLabel('Timezone')).toHaveValue('Europe/London');
+  await page.getByRole('button', { name: /^Beltane/ }).click();
+  await expect(page.getByRole('combobox', { name: 'Seasonal wheel' })).toHaveValue('south');
+});

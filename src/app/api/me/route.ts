@@ -10,11 +10,10 @@ export async function GET(): Promise<Response> {
   const user = await getCurrentUser();
   // Logged once the response has gone, so it never slows the dashboard.
   if (user) after(() => recordVisit(user.id));
-  const body: MeResponse = user
-    ? {
-        user: { name: user.name, image: user.image ?? null },
-        timezone: (await getUserSettings(user.id)).timezone,
-      }
-    : { user: null, timezone: null };
+  let body: MeResponse = { user: null, timezone: null, wheel: null };
+  if (user) {
+    const { timezone, wheel } = await getUserSettings(user.id);
+    body = { user: { name: user.name, image: user.image ?? null }, timezone, wheel };
+  }
   return Response.json(body, { headers: { 'cache-control': 'private, no-store' } });
 }

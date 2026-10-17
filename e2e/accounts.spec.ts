@@ -82,6 +82,32 @@ test.describe('signed in', () => {
     await phone.close();
   });
 
+  test('the seasonal wheel syncs to the account and follows to a new device', async ({ browser }) => {
+    const { user, cookies } = await seedSignedInUser('Seren');
+    const laptop = await browser.newContext({ timezoneId: 'Europe/London' });
+    await laptop.addCookies(cookies);
+    const page = await laptop.newPage();
+    await page.clock.setFixedTime(new Date('2026-10-17T12:00:00Z'));
+    await page.goto('/');
+    await expect(page.getByRole('link', { name: 'Account: Seren' })).toBeVisible();
+    await page.getByRole('button', { name: /^Samhain/ }).click();
+    await page.getByRole('combobox', { name: 'Seasonal wheel' }).selectOption('south');
+    const syncedWheel = async () => {
+      const [row] = await testDb().select().from(userSettings).where(eq(userSettings.userId, user.id));
+      return row?.wheel ?? null;
+    };
+    await expect.poll(syncedWheel).toBe('south');
+    await laptop.close();
+
+    const phone = await browser.newContext({ timezoneId: 'Europe/London' });
+    await phone.addCookies(cookies);
+    const phonePage = await phone.newPage();
+    await phonePage.clock.setFixedTime(new Date('2026-10-17T12:00:00Z'));
+    await phonePage.goto('/');
+    await expect(phonePage.getByRole('button', { name: /^Beltane/ })).toBeVisible();
+    await phone.close();
+  });
+
   test("an account with no zone keeps the one the dashboard shows", async ({ browser }) => {
     const { user, cookies } = await seedSignedInUser('Niamh');
     // Nothing saved anywhere: the dashboard shows the browser's own zone.
@@ -311,7 +337,7 @@ test.describe('signed in', () => {
       route.request().headers()['next-action'] ? route.abort() : route.fallback();
     await page.route('**/*', failActions);
     await page.getByRole('combobox', { name: 'Timezone' }).selectOption('Asia/Tokyo');
-    const notice = page.getByRole('status').filter({ hasText: "Couldn't save this timezone" });
+    const notice = page.getByRole('status').filter({ hasText: "Couldn't save that" });
     await expect(notice).toBeVisible();
 
     await page.unroute('**/*', failActions);
