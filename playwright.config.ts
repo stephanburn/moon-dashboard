@@ -8,6 +8,11 @@ import { E2E_DATABASE_URL, E2E_PORT as PORT, accountsServerEnv } from './e2e/env
 // tests run against that database too; without it, accounts are switched off
 // explicitly and no migration runs, so the tests can't reach a database
 // configured in the shell or .env.local.
+//
+// The smoke and layout tests also run on a 360 px Android phone and an
+// iPhone (WebKit); the account tests run on desktop Chromium only.
+const PHONE_SPECS = /(smoke|layout)\.spec\.ts$/;
+
 export default defineConfig({
   testDir: 'e2e',
   fullyParallel: true,
@@ -18,7 +23,11 @@ export default defineConfig({
     // Kept only for failing tests; CI uploads them (test-results/).
     trace: 'retain-on-failure',
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    { name: 'phone-360', testMatch: PHONE_SPECS, use: { ...devices['Galaxy S8'] } },
+    { name: 'iphone-webkit', testMatch: PHONE_SPECS, use: { ...devices['iPhone 15'] } },
+  ],
   webServer: {
     command: `${E2E_DATABASE_URL ? 'npm run db:migrate && ' : ''}npm run build && npm run start -- -p ${PORT}`,
     url: `http://localhost:${PORT}`,

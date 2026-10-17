@@ -106,7 +106,7 @@ export default function CycleSpine({
               <span className="text-sm text-foreground">
                 <span className="text-text-tertiary">Sun in</span>{' '}
                 <span className="whitespace-nowrap"><span className="text-amber-light">{SIGN_SYMBOLS[sunSign.sign]}</span> {sunSign.sign}</span>
-                <span className="text-text-tertiary whitespace-nowrap"> · until {formatDay(dayOf(sunSign.until, ctx.timezone))}</span>
+                {' '}<span className="text-text-tertiary whitespace-nowrap">· until {formatDay(dayOf(sunSign.until, ctx.timezone))}</span>
               </span>
               <Chevron open={expandedKey === 'sunSign'} />
             </button>
@@ -150,9 +150,9 @@ export default function CycleSpine({
                   <span className="text-text-tertiary">Mercury</span>{' '}
                   <span className="whitespace-nowrap">
                     {mercuryNow.status === 'retrograde' ? <><span className="text-amber-light/80">℞</span> retrograde</> : 'post-shadow'}
-                  </span>
+                  </span>{' '}
                   <span className="text-text-tertiary whitespace-nowrap">
-                    {' · until '}
+                    {'· until '}
                     {formatDay(dayOf(mercuryNow.until, ctx.timezone))}
                   </span>
                 </span>

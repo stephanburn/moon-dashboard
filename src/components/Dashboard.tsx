@@ -307,14 +307,14 @@ export default function Dashboard() {
     <div className="relative z-10 min-h-dvh flex flex-col">
       {/* Header — full-bleed border, content constrained to match main */}
       <header className="border-b border-white/5">
-        <div className="flex items-center justify-between px-4 sm:px-8 py-4 max-w-xl mx-auto w-full">
-          <div>
-            <h1 className="font-display text-base sm:text-lg tracking-wider sm:tracking-widest text-text-secondary uppercase whitespace-nowrap">
-              Moon &amp; Sabbat
-            </h1>
-          </div>
-          {/* Right side: flex-nowrap prevents wrapping to two rows at 360px */}
-          <div className="flex items-center gap-2 sm:gap-3 flex-nowrap">
+        <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-4 sm:px-8 py-4 max-w-xl mx-auto w-full">
+          <h1 className="font-display text-base sm:text-lg tracking-wider sm:tracking-widest text-text-secondary uppercase whitespace-nowrap">
+            Moon &amp; Sabbat
+          </h1>
+          {/* Right side: when it doesn't fit beside the title (narrow phones,
+              large text), it moves to a second row rather than squeezing the
+              timezone select. */}
+          <div className="ml-auto min-w-0 flex flex-wrap items-center justify-end gap-2 sm:gap-3">
             {/* Retrograde badge: informational, not interactive. Shadow
                 periods are shown in the Mercury retrograde panel instead. */}
             {mercury?.status === 'retrograde' && mercury.period && (
@@ -327,7 +327,7 @@ export default function Dashboard() {
                 <span className="hidden sm:inline">· until {formatDay(dayOf(mercury.period.retrogradeEnd, timezone))}</span>
               </div>
             )}
-            <TimezoneSelector value={timezone} detectedZone={detectedZone} onChange={handleTimezoneChange} narrow={!!user} />
+            <TimezoneSelector value={timezone} detectedZone={detectedZone} onChange={handleTimezoneChange} />
             {user && <AccountButton user={user} />}
           </div>
         </div>
