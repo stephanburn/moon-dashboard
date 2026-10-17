@@ -1,3 +1,4 @@
+import 'server-only';
 import { lt, sql } from 'drizzle-orm';
 import { addDays, dayOf, type CalendarDay } from '@/lib/days';
 import { getDb, type Db } from './db';

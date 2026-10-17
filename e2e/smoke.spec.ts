@@ -10,7 +10,8 @@ function watchForErrors(page: Page): string[] {
   page.on('pageerror', e => errors.push(`pageerror: ${e.message}`));
   page.on('console', msg => {
     if (msg.type() !== 'error') return;
-    if (msg.location().url.includes('/_vercel/insights')) return;
+    // With nosniff, Chrome also reports the 404 as a script it refused to run.
+    if (msg.location().url.includes('/_vercel/insights') || msg.text().includes('/_vercel/insights')) return;
     if (msg.text().startsWith('Failed to load resource')) return;
     errors.push(`console: ${msg.text()}`);
   });
@@ -250,4 +251,27 @@ test('the footer explains how dates are calculated', async ({ page }) => {
   await page.goto('/');
   await page.getByText('How dates are calculated').click();
   await expect(page.getByText(/calendar day before the astronomical new moon/)).toBeVisible();
+});
+
+test('sends the security headers and breaks no content security rule', async ({ page }) => {
+  // Report-only violations never block anything, so collect them directly.
+  await page.addInitScript(() => {
+    const w = window as unknown as { cspViolations: string[] };
+    w.cspViolations = [];
+    document.addEventListener('securitypolicyviolation', e => {
+      w.cspViolations.push(`${e.effectiveDirective}: ${e.blockedURI}`);
+    });
+  });
+  const res = await page.goto('/');
+  const headers = res!.headers();
+  expect(headers['content-security-policy-report-only']).toContain("default-src 'self'");
+  expect(headers['content-security-policy']).toBe("frame-ancestors 'none'");
+  expect(headers['x-frame-options']).toBe('DENY');
+  expect(headers['x-content-type-options']).toBe('nosniff');
+  expect(headers['referrer-policy']).toBe('strict-origin-when-cross-origin');
+
+  const spine = page.getByRole('region', { name: 'Cycle of sacred time' });
+  await spine.getByRole('button', { expanded: false }).nth(3).click();
+  await page.waitForLoadState('networkidle');
+  expect(await page.evaluate(() => (window as unknown as { cspViolations: string[] }).cspViolations)).toEqual([]);
 });

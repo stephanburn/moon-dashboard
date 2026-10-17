@@ -23,7 +23,41 @@ console.log(
   accountsConfigured ? 'Accounts: on' : `Accounts: off (not set: ${missingAccountVars.join(', ')})`,
 );
 
+const isDev = process.env.NODE_ENV === 'development';
+
+// Report-only for now: violations show in the browser console and nothing is
+// blocked. `/` is prerendered (ISR), so there is no per-request nonce and
+// Next's inline scripts need 'unsafe-inline'. Everything else is same-origin:
+// next/font serves the fonts, next/image proxies Discord avatars through
+// /_next/image, and Vercel Analytics loads from /_vercel/insights. Sign-in
+// without JavaScript is a form post that redirects to Discord, hence
+// form-action. frame-ancestors is ignored in a report-only policy, so it is
+// sent enforcing on its own below. In development React needs eval and
+// Vercel Analytics loads its debug script from its CDN.
+const cspReportOnly = [
+  "default-src 'self'",
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval' https://va.vercel-scripts.com" : ''}`,
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data: blob: https://cdn.discordapp.com",
+  "font-src 'self'",
+  "connect-src 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self' https://discord.com",
+].join('; ');
+
+const securityHeaders = [
+  { key: 'Content-Security-Policy-Report-Only', value: cspReportOnly },
+  { key: 'Content-Security-Policy', value: "frame-ancestors 'none'" },
+  { key: 'X-Frame-Options', value: 'DENY' },
+  { key: 'X-Content-Type-Options', value: 'nosniff' },
+  { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+];
+
 const nextConfig: NextConfig = {
+  async headers() {
+    return [{ source: '/:path*', headers: securityHeaders }];
+  },
   env: {
     NEXT_PUBLIC_COMMIT: commitHash,
     NEXT_PUBLIC_ACCOUNTS: accountsConfigured ? '1' : '0',

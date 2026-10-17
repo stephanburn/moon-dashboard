@@ -2,16 +2,26 @@
 // Membership is checked with the user's own OAuth token and the
 // `guilds.members.read` scope, so no bot is needed.
 
-const DISCORD_API = 'https://discord.com/api/v10';
+import 'server-only';
 
-export type FetchLike = (url: string, init: { headers: Record<string, string> }) => Promise<Response>;
+const DISCORD_API = 'https://discord.com/api/v10';
+// A stalled Discord call would otherwise hold the sign-in callback open for
+// the platform's whole request allowance.
+const DISCORD_TIMEOUT_MS = 5000;
+
+export type FetchLike = (
+  url: string,
+  init: { headers: Record<string, string>; signal: AbortSignal },
+) => Promise<Response>;
 
 // True only on a definite yes. Anything else (not a member, Discord down, rate
-// limited, misconfigured guild) fails closed and the sign-in is refused.
+// limited, timed out, misconfigured guild) fails closed and the sign-in is
+// refused.
 export async function isGuildMember(
   accessToken: string,
   guildId: string | undefined,
   fetchImpl: FetchLike = fetch,
+  timeoutMs = DISCORD_TIMEOUT_MS,
 ): Promise<boolean> {
   if (!guildId) {
     console.error('DISCORD_GUILD_ID is not set; refusing all sign-ins');
@@ -20,6 +30,7 @@ export async function isGuildMember(
   try {
     const res = await fetchImpl(`${DISCORD_API}/users/@me/guilds/${encodeURIComponent(guildId)}/member`, {
       headers: { authorization: `Bearer ${accessToken}` },
+      signal: AbortSignal.timeout(timeoutMs),
     });
     // 404 is Discord's answer for "not a member of this server".
     if (res.status !== 200 && res.status !== 404) {

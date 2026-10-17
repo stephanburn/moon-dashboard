@@ -36,7 +36,7 @@ describe('moonwater', () => {
 
   it('fills in the moonwater text', () => {
     const ctx = london('2026-09-25T12:00:00Z');
-    expect(craftText({ id: 'moonwater', seed: 0 }, ctx)).toBe('It is the day before the Full Moon, make moonwater.');
+    expect(craftText({ id: 'moonwater', seed: 0 }, ctx)).toBe('It is the day before the Full Moon, make moonwater in a clean, lidded jar. Only drink it if it started as drinking water.');
   });
 });
 

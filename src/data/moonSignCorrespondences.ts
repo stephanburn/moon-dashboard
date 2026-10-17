@@ -19,7 +19,7 @@ export const MOON_SIGN_CORRESPONDENCES: Record<SignName, MoonSignCorrespondence>
   },
   Cancer: {
     energy:
-      'Moon in Cancer is the Moon in her home sign. Intuition is at its sharpest and emotional sensitivity is heightened. Deep nurturing, ancestral connection, and work with the home as sacred space are all amplified. Listen to your gut without question.',
+      'Moon in Cancer is the Moon in her home sign. Intuition is at its sharpest and emotional sensitivity is heightened. Deep nurturing, ancestral connection, and work with the home as sacred space are all amplified. Give your instincts a fair hearing.',
   },
   Leo: {
     energy:
@@ -27,7 +27,7 @@ export const MOON_SIGN_CORRESPONDENCES: Record<SignName, MoonSignCorrespondence>
   },
   Virgo: {
     energy:
-      'Moon in Virgo turns feelings inward toward discernment and refinement. This is a fine time for cleansing rituals, health-focused magic, and the careful tending of sacred spaces or practices. Emotional healing comes through order, service, and practical care.',
+      'Moon in Virgo turns feelings inward toward discernment and refinement. This is a fine time for cleansing rituals, health-focused magic (alongside, never instead of, medical care), and the careful tending of sacred spaces or practices. Emotional healing comes through order, service, and practical care.',
   },
   Libra: {
     energy:

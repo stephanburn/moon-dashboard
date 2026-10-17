@@ -9,6 +9,7 @@ describe('isGuildMember', () => {
     expect(await isGuildMember('tok', '123', fetchImpl)).toBe(true);
     expect(fetchImpl).toHaveBeenCalledWith('https://discord.com/api/v10/users/@me/guilds/123/member', {
       headers: { authorization: 'Bearer tok' },
+      signal: expect.any(AbortSignal),
     });
   });
 
@@ -21,6 +22,14 @@ describe('isGuildMember', () => {
     expect(await isGuildMember('tok', '123', respond(429))).toBe(false);
     expect(await isGuildMember('tok', '123', respond(500))).toBe(false);
     expect(await isGuildMember('tok', '123', async () => { throw new Error('offline'); })).toBe(false);
+  });
+
+  it('gives up and fails closed when Discord does not answer in time', async () => {
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    // Answers only by rejecting once the request is aborted, as fetch does.
+    const stalled: FetchLike = (_url, { signal }) =>
+      new Promise((_resolve, reject) => signal.addEventListener('abort', () => reject(signal.reason)));
+    expect(await isGuildMember('tok', '123', stalled, 20)).toBe(false);
   });
 
   it('refuses everyone when no server is configured', async () => {

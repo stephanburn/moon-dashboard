@@ -6,6 +6,7 @@ import { VENUS_CORRESPONDENCES } from '@/data/venusCorrespondences';
 import { ZODIAC_CORRESPONDENCES } from '@/data/zodiacCorrespondences';
 import { MERCURY_RETROGRADE_CORRESPONDENCES } from '@/data/mercuryRetrogradeCorrespondences';
 import { CRAFT_ACTIVITIES } from '@/data/craftActivities';
+import { HERB_NOTE } from '@/data/cautions';
 
 // House style for user-facing copy: no em dashes (see commit 89e6021).
 function strings(value: unknown): string[] {
@@ -24,6 +25,7 @@ describe('correspondence content', () => {
     ZODIAC_CORRESPONDENCES,
     MERCURY_RETROGRADE_CORRESPONDENCES,
     CRAFT_ACTIVITIES,
+    HERB_NOTE,
   };
 
   for (const [name, records] of Object.entries(all)) {

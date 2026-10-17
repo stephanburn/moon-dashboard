@@ -104,7 +104,7 @@ export const MOON_CORRESPONDENCES: Record<PhaseName, MoonPhaseCorrespondence> = 
     magicalWorkings: ['banishing', 'cord-cutting', 'forgiveness work', 'breaking bad habits', 'uncrossing'],
     colours: ['black', 'deep grey', 'deep purple', 'dark midnight blue'],
     crystals: ['obsidian', 'black tourmaline', 'smoky quartz', 'jet'],
-    herbs: ['agrimony', 'hyssop', 'sage', 'rue'],
+    herbs: ['agrimony', 'hyssop', 'sage', 'rue (poisonous)'],
     esbat: false,
   },
 
@@ -116,7 +116,7 @@ export const MOON_CORRESPONDENCES: Record<PhaseName, MoonPhaseCorrespondence> = 
     magicalWorkings: ['shadow work', 'dream work', 'deep meditation', 'psychic cleansing', 'banishing'],
     colours: ['deep indigo', 'dark charcoal', 'midnight blue', 'black'],
     crystals: ['amethyst', 'labradorite', 'black moonstone', 'smoky quartz'],
-    herbs: ['mugwort', 'valerian', 'wormwood', 'myrrh'],
+    herbs: ['mugwort', 'valerian', 'wormwood (poisonous)', 'myrrh'],
     esbat: false,
   },
 };

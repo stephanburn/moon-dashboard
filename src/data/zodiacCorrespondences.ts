@@ -67,7 +67,7 @@ export const ZODIAC_CORRESPONDENCES: Record<SignName, ZodiacCorrespondence> = {
       'The Sun in Cancer draws us inward, to home, family, and emotional roots. Intuition deepens and the need for belonging and comfort becomes strong. It is a beautiful time for kitchen witchery, ancestral work, and tending to the home as sacred space.',
     colours: ['silver', 'pearl white', 'sea green', 'pale blue'],
     crystals: ['moonstone', 'pearl', 'selenite', 'labradorite'],
-    herbs: ['jasmine', 'chamomile', 'lemon balm', 'lily', 'water lily'],
+    herbs: ['jasmine', 'chamomile', 'lemon balm', 'lily (deadly to cats)', 'water lily'],
   },
 
   Leo: {
@@ -123,7 +123,7 @@ export const ZODIAC_CORRESPONDENCES: Record<SignName, ZodiacCorrespondence> = {
       'The Sun in Scorpio descends into the depths, demanding truth, transformation, and a reckoning with the shadow self. The veil between worlds thins and mystery feels close. This is a potent time for depth work, divination, and any magic that touches the themes of death, rebirth, and the unseen.',
     colours: ['deep black', 'dark crimson', 'burgundy', 'deep purple'],
     crystals: ['obsidian', 'garnet', 'labradorite', 'dark tourmaline'],
-    herbs: ['mugwort', 'wormwood', 'nettle', 'dragon\'s blood', 'yew'],
+    herbs: ['mugwort', 'wormwood (poisonous)', 'nettle', 'dragon\'s blood', 'yew (poisonous)'],
   },
 
   Sagittarius: {
