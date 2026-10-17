@@ -7,17 +7,24 @@ import { dayOf } from '@/lib/days';
 import { formatDay, formatDayAndTime } from '@/lib/format';
 import { describeUserAgent } from '@/lib/userAgent';
 import { revokeSessions } from '@/server/actions';
-import { listMembers, recentSignIns } from '@/server/admin';
+import { LOG_RETENTION_DAYS, VISIT_GAP_MINUTES } from '@/server/activity';
+import { countMembers, listMembers, recentSignIns } from '@/server/admin';
 import { accountsEnabled, requireAdmin } from '@/server/auth';
 import { getUserSettings } from '@/server/settings';
 
 export const metadata: Metadata = { title: 'Admin · Moon Dashboard', robots: { index: false } };
 
-export default async function AdminPage() {
+export default async function AdminPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}) {
   if (!accountsEnabled()) notFound();
   const admin = await requireAdmin();
-  const [members, signIns, settings] = await Promise.all([
-    listMembers(),
+  const { after } = await searchParams;
+  const [{ members, nextAfter }, memberCount, signIns, settings] = await Promise.all([
+    listMembers(typeof after === 'string' ? after : undefined),
+    countMembers(),
     recentSignIns(),
     getUserSettings(admin.id),
   ]);
@@ -37,8 +44,11 @@ export default async function AdminPage() {
 
       <section className="card p-5 space-y-3" aria-labelledby="members-heading">
         <h2 id="members-heading" className="text-xs uppercase tracking-widest text-text-tertiary">
-          Members ({members.length})
+          Members ({memberCount})
         </h2>
+        <p className="text-xs text-text-tertiary">
+          Visits over the last {LOG_RETENTION_DAYS} days. Dashboard loads less than {VISIT_GAP_MINUTES} minutes apart count as one visit.
+        </p>
         <ul className="divide-y divide-white/5">
           {members.map(m => (
             <li key={m.id} className="py-3 flex items-start gap-3">
@@ -77,6 +87,16 @@ export default async function AdminPage() {
             </li>
           ))}
         </ul>
+        {(after || nextAfter) && (
+          <nav aria-label="Member pages" className="flex justify-between text-sm">
+            {after ? <Link href="/admin" className="text-text-secondary hover:text-foreground">← Newest</Link> : <span />}
+            {nextAfter && (
+              <Link href={`/admin?after=${encodeURIComponent(nextAfter)}`} className="text-text-secondary hover:text-foreground">
+                Older members →
+              </Link>
+            )}
+          </nav>
+        )}
       </section>
 
       <section className="card p-5 space-y-3" aria-labelledby="signins-heading">

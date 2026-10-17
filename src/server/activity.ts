@@ -37,14 +37,22 @@ export function recordRefusedSignIn(discordId: string | null, discordName: strin
   );
 }
 
+// Dashboard loads closer together than this are one visit, so reloading
+// doesn't inflate the count.
+export const VISIT_GAP_MINUTES = 30;
+
 export function recordVisit(userId: string, now: Date = new Date()): Promise<void> {
+  const newVisitIfBefore = new Date(now.getTime() - VISIT_GAP_MINUTES * 60_000).toISOString();
   return quietly('visit', () =>
     getDb()
       .insert(visitLog)
       .values({ userId, day: dayOf(now, 'UTC'), firstAt: now, lastAt: now })
       .onConflictDoUpdate({
         target: [visitLog.userId, visitLog.day],
-        set: { lastAt: now, count: sql`${visitLog.count} + 1` },
+        set: {
+          lastAt: now,
+          count: sql`case when ${visitLog.lastAt} <= ${newVisitIfBefore} then ${visitLog.count} + 1 else ${visitLog.count} end`,
+        },
       }),
   );
 }

@@ -10,7 +10,8 @@
 // seeder load it outside Next, and it holds table definitions, not data or
 // secrets. The connection (./index.ts) is server-only.
 
-import { boolean, index, integer, pgTable, primaryKey, text, timestamp, unique } from 'drizzle-orm/pg-core';
+import { sql } from 'drizzle-orm';
+import { boolean, check, index, integer, pgTable, primaryKey, text, timestamp, unique } from 'drizzle-orm/pg-core';
 
 export const user = pgTable('user', {
   id: text('id').primaryKey(),
@@ -79,12 +80,16 @@ export const verification = pgTable('verification', {
 // dashboard showed on the first signed-in visit, then whatever the user picks.
 // `wheel` is the seasonal wheel ('auto' follows the timezone); null until the
 // user first chooses one.
-export const userSettings = pgTable('user_settings', {
-  userId: text('user_id').primaryKey().references(() => user.id, { onDelete: 'cascade' }),
-  timezone: text('timezone'),
-  wheel: text('wheel', { enum: ['auto', 'north', 'south'] }),
-  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
-});
+export const userSettings = pgTable(
+  'user_settings',
+  {
+    userId: text('user_id').primaryKey().references(() => user.id, { onDelete: 'cascade' }),
+    timezone: text('timezone'),
+    wheel: text('wheel', { enum: ['auto', 'north', 'south'] }),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  table => [check('user_settings_wheel_check', sql`${table.wheel} in ('auto', 'north', 'south')`)],
+);
 
 // One row per sign-in attempt that reached the membership check. Refused
 // attempts (Discord accounts not in the server) have no user_id; they are
@@ -103,7 +108,10 @@ export const signInLog = pgTable(
     ipAddress: text('ip_address'),
     userAgent: text('user_agent'),
   },
-  table => [index('sign_in_log_at_idx').on(table.at)],
+  table => [
+    index('sign_in_log_at_idx').on(table.at),
+    check('sign_in_log_outcome_check', sql`${table.outcome} in ('signed-in', 'refused')`),
+  ],
 );
 
 // Dashboard visits by signed-in members, one row per member per UTC day,
@@ -121,5 +129,6 @@ export const visitLog = pgTable(
     primaryKey({ columns: [table.userId, table.day] }),
     // For the retention cleanup, which deletes by day alone.
     index('visit_log_day_idx').on(table.day),
+    check('visit_log_count_check', sql`${table.count} > 0`),
   ],
 );

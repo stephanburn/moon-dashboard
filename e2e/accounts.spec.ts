@@ -135,17 +135,84 @@ test.describe('signed in', () => {
     await context.close();
   });
 
-  test('dashboard visits are counted per day', async ({ browser }) => {
+  test('dashboard loads close together count as one visit', async ({ browser }) => {
     const { user, cookies } = await seedSignedInUser('Elspeth');
     const context = await browser.newContext();
     await context.addCookies(cookies);
     const page = await context.newPage();
-    for (let i = 0; i < 2; i++) {
+    const row = async () => (await testDb().select().from(visitLog).where(eq(visitLog.userId, user.id)))[0];
+    const load = async () => {
       await page.goto('/');
       await expect(page.getByRole('link', { name: 'Account: Elspeth' })).toBeVisible();
+    };
+
+    await load();
+    await expect.poll(async () => (await row())?.count).toBe(1);
+    const firstLast = (await row()).lastAt.getTime();
+    await load();
+    // The second load is recorded (last_at moves) but not counted.
+    await expect.poll(async () => (await row()).lastAt.getTime()).toBeGreaterThan(firstLast);
+    expect((await row()).count).toBe(1);
+
+    // After a 30-minute gap, the next load is a new visit.
+    await testDb()
+      .update(visitLog)
+      .set({ lastAt: new Date(Date.now() - 31 * 60_000) })
+      .where(eq(visitLog.userId, user.id));
+    await load();
+    await expect.poll(async () => (await row()).count).toBe(2);
+    await context.close();
+  });
+
+  test('the database rejects values the app never writes', async () => {
+    const insertOutcome = testDb()
+      .insert(signInLog)
+      .values({ outcome: 'bogus' as 'refused', discordName: 'check-constraint test' });
+    await expect(insertOutcome).rejects.toThrow();
+    const { user } = await seedSignedInUser('Wren');
+    const badWheel = testDb()
+      .insert(userSettings)
+      .values({ userId: user.id, wheel: 'east' as 'north' });
+    await expect(badWheel).rejects.toThrow();
+  });
+
+  test('the admin member list pages', async ({ browser }) => {
+    const suffix = crypto.randomUUID().slice(0, 8);
+    const admin = await seedSignedInUser(`Pagekeeper ${suffix}`);
+    await testDb().update(userTable).set({ isAdmin: true }).where(eq(userTable.id, admin.user.id));
+    // 51 members older than anyone else, so they need at least two pages.
+    // Members other tests add meanwhile are newer and can't break the order.
+    const names = Array.from({ length: 51 }, (_, i) => `Pager ${suffix} ${String(i).padStart(2, '0')}`);
+    await testDb().insert(userTable).values(
+      names.map((name, i) => ({
+        id: `page-${suffix}-${i}`,
+        name,
+        email: `page-${suffix}-${i}@example.test`,
+        createdAt: new Date(Date.UTC(2000, 0, 1) + i * 1000),
+      })),
+    );
+    const context = await browser.newContext();
+    await context.addCookies(admin.cookies);
+    const page = await context.newPage();
+    await page.goto('/admin');
+    const members = page.getByRole('region', { name: /^Members/ });
+    const seen: string[] = [];
+    for (let pages = 1; ; pages++) {
+      const items = members.getByRole('listitem');
+      expect(await items.count()).toBeLessThanOrEqual(50);
+      for (const text of await items.allInnerTexts()) {
+        const name = names.find(n => text.includes(n));
+        if (name) seen.push(name);
+      }
+      const older = page.getByRole('link', { name: 'Older members →' });
+      if ((await older.count()) === 0) break;
+      expect(pages).toBeLessThan(100);
+      const current = page.url();
+      await older.click();
+      await page.waitForURL(url => url.toString() !== current);
     }
-    const visits = () => testDb().select().from(visitLog).where(eq(visitLog.userId, user.id));
-    await expect.poll(async () => (await visits()).map(v => v.count)).toEqual([2]);
+    // Every member exactly once, newest first.
+    expect(seen).toEqual([...names].reverse());
     await context.close();
   });
 
