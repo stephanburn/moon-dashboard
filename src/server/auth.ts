@@ -65,6 +65,10 @@ function createAuth() {
     },
     session: {
       expiresIn: 60 * 60 * 24 * SESSION_DAYS,
+      // Membership is only checked at sign-in, so sessions must not renew
+      // themselves: everyone signs in again after SESSION_DAYS, and anyone
+      // who has left the Discord server is refused then.
+      disableSessionRefresh: true,
     },
     databaseHooks: {
       // A new session is only ever created by a successful sign-in.
