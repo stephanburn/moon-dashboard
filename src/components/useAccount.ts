@@ -1,8 +1,15 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ACCOUNTS_ENABLED, type AccountUser, type MeResponse, type SaveResult } from '@/lib/account';
-import { canonicalZone } from '@/lib/timezones';
+import {
+  ACCOUNTS_ENABLED,
+  announceAccountChange,
+  onAccountChange,
+  type AccountUser,
+  type MeResponse,
+  type SaveResult,
+} from '@/lib/account';
+import { AUTO_TIMEZONE, canonicalZone } from '@/lib/timezones';
 import type { WheelChoice } from '@/lib/wheel';
 import { saveTimezone, saveWheel } from '@/server/actions';
 
@@ -23,9 +30,15 @@ export interface SyncedPreferences {
 }
 
 const RETRY_MS = 3000;
+// A tab shown again re-checks the account at most this often.
+const RECHECK_MS = 10 * 60_000;
+// Another tab's sign-out may still be on its way to the server when it
+// announces it, so a second check follows the first.
+const ANNOUNCE_FOLLOW_UP_MS = 2000;
 
-async function fetchMe(): Promise<MeResponse> {
-  const res = await fetch('/api/me');
+// `check` asks /api/me not to count a visit: the page didn't load again.
+async function fetchMe(check = false): Promise<MeResponse> {
+  const res = await fetch(check ? '/api/me?check=1' : '/api/me');
   if (!res.ok) throw new Error(`/api/me answered ${res.status}`);
   return res.json();
 }
@@ -51,8 +64,12 @@ export function useAccount(prefs: SyncedPreferences) {
   const pickedEarly = useRef({ timezone: false, wheel: false });
   const prefsRef = useRef(prefs);
   const failedSave = useRef<(() => Promise<SaveResult>) | null>(null);
+  // When the account was last fetched, and its status as of the last render.
+  const lastCheck = useRef(0);
+  const statusRef = useRef(account.status);
   useEffect(() => {
     prefsRef.current = prefs;
+    statusRef.current = account.status;
   });
 
   // Server Actions run one at a time per page, so results arrive in order
@@ -62,7 +79,10 @@ export function useAccount(prefs: SyncedPreferences) {
       result => {
         failedSave.current = null;
         setSyncFailed(false);
-        if (result === 'signed-out') setAccount({ status: 'signed-out' });
+        if (result === 'signed-out') {
+          setAccount({ status: 'signed-out' });
+          announceAccountChange();
+        }
       },
       () => {
         failedSave.current = save;
@@ -72,7 +92,7 @@ export function useAccount(prefs: SyncedPreferences) {
   }, []);
   const pushTimezone = useCallback(
     (tz: string) => {
-      if (canonicalZone(tz)) push(() => saveTimezone(tz));
+      if (tz === AUTO_TIMEZONE || canonicalZone(tz)) push(() => saveTimezone(tz));
     },
     [push],
   );
@@ -91,6 +111,7 @@ export function useAccount(prefs: SyncedPreferences) {
             return;
           }
           setAccount({ status: 'signed-in', user: me.user });
+          lastCheck.current = Date.now();
           const shown = prefsRef.current;
           if (me.timezone && !pickedEarly.current.timezone) shown.applyTimezone(me.timezone);
           else pushTimezone(shown.timezone);
@@ -115,6 +136,44 @@ export function useAccount(prefs: SyncedPreferences) {
     setAccount({ status: 'loading' });
     setAttempt(n => n + 1);
   }, []);
+
+  // Checks again, without counting a visit, when the tab is shown after a
+  // while or another tab announces a change. A sign-in elsewhere gets the
+  // full load, so the account's settings are applied; otherwise only the
+  // signed-in state and profile are refreshed, so a local choice whose save
+  // failed isn't overwritten.
+  const recheck = useCallback(() => {
+    const status = statusRef.current;
+    if (status !== 'signed-in' && status !== 'signed-out') return;
+    lastCheck.current = Date.now();
+    fetchMe(true).then(
+      me => {
+        if (!me.user) setAccount({ status: 'signed-out' });
+        else if (statusRef.current === 'signed-in') setAccount({ status: 'signed-in', user: me.user });
+        else retry();
+      },
+      () => {},
+    );
+  }, [retry]);
+
+  useEffect(() => {
+    if (!ACCOUNTS_ENABLED) return;
+    let followUp: ReturnType<typeof setTimeout> | undefined;
+    const onVisible = () => {
+      if (document.visibilityState === 'visible' && Date.now() - lastCheck.current > RECHECK_MS) recheck();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    const stopListening = onAccountChange(() => {
+      recheck();
+      clearTimeout(followUp);
+      followUp = setTimeout(recheck, ANNOUNCE_FOLLOW_UP_MS);
+    });
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      stopListening();
+      clearTimeout(followUp);
+    };
+  }, [recheck]);
 
   // Coming back to an unavailable page tries again by itself.
   const unavailable = account.status === 'unavailable';

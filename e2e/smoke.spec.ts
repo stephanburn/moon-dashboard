@@ -50,7 +50,8 @@ for (const timezoneId of ['UTC', 'America/Los_Angeles', 'Australia/Sydney']) {
   });
 }
 
-// First visit, nothing saved: the page should follow the browser's zone.
+// First visit, nothing saved: the page follows the browser's zone, shown as
+// the selector's "Automatic" option.
 // Asia/Calcutta is the legacy name Chrome reports for India; the selector
 // lists Asia/Kolkata. Phoenix has no listed equivalent (no DST), and UTC is
 // treated as a privacy setting.
@@ -67,7 +68,9 @@ for (const [timezoneId, expected] of [
     test(`selects ${expected}`, async ({ page }) => {
       await page.goto('/');
       await expect(page.getByRole('heading', { level: 2 })).toHaveText(PHASE_NAME);
-      await expect(page.getByLabel('Timezone')).toHaveValue(expected);
+      const select = page.getByLabel('Timezone');
+      await expect(select).toHaveValue('auto');
+      await expect(select.locator('option:checked')).toHaveText(`Automatic (${expected.replace(/_/g, ' ')})`);
     });
   });
 }
@@ -78,12 +81,30 @@ test.describe('first visit from a zone outside the list', () => {
   test('offers it as "your timezone" and can switch back to it', async ({ page }) => {
     await page.goto('/');
     const select = page.getByLabel('Timezone');
-    await expect(select.locator('option:checked')).toHaveText('America/Phoenix (your timezone)');
+    await expect(select.locator('option:checked')).toHaveText('Automatic (America/Phoenix)');
+    await expect(select.locator('option[value="America/Phoenix"]')).toHaveText('America/Phoenix (your timezone)');
     await select.selectOption('America/Denver');
     await select.selectOption('America/Phoenix');
     await page.reload();
     await expect(select).toHaveValue('America/Phoenix');
   });
+});
+
+test('choosing Automatic follows the device again', async ({ page, browser }) => {
+  await page.goto('/');
+  const select = page.getByLabel('Timezone');
+  await select.selectOption('Asia/Tokyo');
+  await select.selectOption('auto');
+  const storageState = await page.context().storageState();
+
+  // A later visit from another zone uses that zone, not Tokyo.
+  const elsewhere = await browser.newContext({ timezoneId: 'Australia/Sydney', storageState });
+  const later = await elsewhere.newPage();
+  await later.goto(page.url());
+  const laterSelect = later.getByLabel('Timezone');
+  await expect(laterSelect).toHaveValue('auto');
+  await expect(laterSelect.locator('option:checked')).toHaveText('Automatic (Australia/Sydney)');
+  await elsewhere.close();
 });
 
 test.describe('a saved choice', () => {

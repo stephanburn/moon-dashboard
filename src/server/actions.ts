@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import type { SaveResult } from '@/lib/account';
-import { canonicalZone, listedZoneFor } from '@/lib/timezones';
+import { AUTO_TIMEZONE, canonicalZone, listedZoneFor } from '@/lib/timezones';
 import { WHEEL_CHOICES, type WheelChoice } from '@/lib/wheel';
 import { accountsEnabled, getAuth, getCurrentUser, requireAdmin, requireUser } from './auth';
 import { getDb } from './db';
@@ -42,11 +42,13 @@ export async function deleteAccount(): Promise<void> {
 // Called when a signed-in user picks a zone. 'signed-out' means the session
 // has gone (expired or revoked); the choice is still kept in localStorage.
 // Database failures throw, so callers can tell them apart.
+// `timezone` is an IANA zone or AUTO_TIMEZONE (follow each device).
 export async function saveTimezone(timezone: string): Promise<SaveResult> {
-  if (typeof timezone !== 'string' || timezone.length > 64 || !canonicalZone(timezone)) return 'invalid';
+  const valid = timezone === AUTO_TIMEZONE || (typeof timezone === 'string' && timezone.length <= 64 && !!canonicalZone(timezone));
+  if (!valid) return 'invalid';
   const user = await getCurrentUser();
   if (!user) return 'signed-out';
-  await setUserTimezone(user.id, listedZoneFor(timezone) ?? timezone);
+  await setUserTimezone(user.id, timezone === AUTO_TIMEZONE ? timezone : (listedZoneFor(timezone) ?? timezone));
   return 'saved';
 }
 

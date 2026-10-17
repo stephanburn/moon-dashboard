@@ -18,3 +18,28 @@ export interface MeResponse {
   timezone: string | null; // the account's zone, once it has one
   wheel: WheelChoice | null; // the account's seasonal wheel, once chosen
 }
+
+// Tabs tell each other when the account changes (sign-out, deletion, a save
+// that found the session gone), so every open dashboard checks again.
+const ACCOUNT_CHANNEL = 'moon-dashboard-account';
+
+export function announceAccountChange(): void {
+  try {
+    const channel = new BroadcastChannel(ACCOUNT_CHANNEL);
+    channel.postMessage('changed');
+    channel.close();
+  } catch {
+    // BroadcastChannel unavailable: other tabs catch up when next shown.
+  }
+}
+
+/** Calls `onChange` when another tab announces an account change. */
+export function onAccountChange(onChange: () => void): () => void {
+  try {
+    const channel = new BroadcastChannel(ACCOUNT_CHANNEL);
+    channel.onmessage = onChange;
+    return () => channel.close();
+  } catch {
+    return () => {};
+  }
+}

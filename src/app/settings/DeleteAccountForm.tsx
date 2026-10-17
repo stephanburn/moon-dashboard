@@ -1,5 +1,6 @@
 'use client';
 
+import { announceAccountChange } from '@/lib/account';
 import { deleteAccount } from '@/server/actions';
 
 export default function DeleteAccountForm() {
@@ -8,6 +9,7 @@ export default function DeleteAccountForm() {
       action={deleteAccount}
       onSubmit={e => {
         if (!window.confirm('Delete your account and everything saved with it?')) e.preventDefault();
+        else announceAccountChange();
       }}
     >
       <button

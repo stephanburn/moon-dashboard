@@ -81,7 +81,10 @@ function hashDay(day: CalendarDay): number {
 }
 
 function choose(ctx: CraftContext, seed: number, excludeId?: string): CraftPick {
-  const pool = CRAFT_ACTIVITIES.filter(a => a.id !== excludeId && isEligible(a, ctx));
+  const eligible = CRAFT_ACTIVITIES.filter(a => isEligible(a, ctx));
+  // Re-rolling with only one activity eligible keeps it rather than failing.
+  const others = eligible.filter(a => a.id !== excludeId);
+  const pool = others.length > 0 ? others : eligible;
   const total = pool.reduce((sum, a) => sum + (a.weight ?? 1), 0);
   let roll = mix(seed) % total;
   for (const a of pool) {
@@ -112,6 +115,11 @@ export function resolvePick(saved: SavedCraftPick | null, ctx: CraftContext): Cr
   return saved && activity && isEligible(activity, ctx) ? { id: saved.id, seed: saved.seed } : dailyPick(ctx);
 }
 
+// Seeds are 32-bit unsigned integers; anything else in storage is corrupt.
+function isSeed(n: unknown): n is number {
+  return typeof n === 'number' && Number.isInteger(n) && n >= 0 && n < 2 ** 32;
+}
+
 export function parseSavedPick(raw: string | null): SavedCraftPick | null {
   if (!raw) return null;
   try {
@@ -120,7 +128,8 @@ export function parseSavedPick(raw: string | null): SavedCraftPick | null {
       v && typeof v === 'object'
       && 'day' in v && typeof v.day === 'string'
       && 'id' in v && typeof v.id === 'string'
-      && 'seed' in v && typeof v.seed === 'number'
+      && 'seed' in v && isSeed(v.seed)
+      && /^\d{4}-\d{2}-\d{2}$/.test(v.day)
     ) {
       return { day: v.day as CalendarDay, id: v.id, seed: v.seed };
     }

@@ -4,8 +4,8 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { accountsEnabled, requireUser } from '@/server/auth';
 import { getUserSettings } from '@/server/settings';
-import { signOut } from '@/server/actions';
 import DeleteAccountForm from './DeleteAccountForm';
+import SignOutForm from './SignOutForm';
 import TimezoneSetting from './TimezoneSetting';
 import WheelSetting from './WheelSetting';
 
@@ -53,9 +53,7 @@ export default async function SettingsPage() {
       </section>
 
       <section className="card p-5 space-y-3">
-        <form action={signOut}>
-          <button type="submit" className={buttonClass}>Sign out</button>
-        </form>
+        <SignOutForm buttonClass={buttonClass} />
       </section>
 
       <section className="card p-5 space-y-3">
