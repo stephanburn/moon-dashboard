@@ -3,6 +3,10 @@
 Baseline review at commit `0b8a824` (24 Sep 2026), ahead of expanding the app.
 The fix plan is in [implementation-plan-2026-09.md](implementation-plan-2026-09.md).
 
+> Superseded by [full-app-review-2026-10-17.md](full-app-review-2026-10-17.md).
+> The "fixed" statuses and the clean `npm audit` below were true on 24 Sep 2026
+> only; they are not a current security statement.
+
 ## Status (updated 24 Sep 2026)
 
 Every finding has been fixed on branch `claude/eager-dirac-yjncnt`:
