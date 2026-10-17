@@ -65,11 +65,7 @@ for (const [timezoneId, expected] of [
   test.describe(`first visit from ${timezoneId}`, () => {
     test.use({ timezoneId });
 
-    test(`selects ${expected}`, async ({ page, browserName }) => {
-      // WebKit's Intl keeps legacy zone names as given instead of
-      // canonicalising them, so canonicalZone can't match Asia/Calcutta to
-      // the listed Asia/Kolkata there.
-      test.fixme(browserName === 'webkit' && timezoneId === 'Asia/Calcutta', 'legacy zone names unmatched in WebKit');
+    test(`selects ${expected}`, async ({ page }) => {
       await page.goto('/');
       await expect(page.getByRole('heading', { level: 2 })).toHaveText(PHASE_NAME);
       const select = page.getByLabel('Timezone');

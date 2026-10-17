@@ -211,9 +211,19 @@ export function canonicalZone(tz: string): string | null {
 
 let listedByCanonical: Map<string, string> | null = null;
 
+// Old names of listed zones. Chrome and Firefox canonicalise these through
+// Intl, but WebKit returns a zone name exactly as given, so canonicalZone
+// alone can't match them there.
+const LISTED_ZONE_ALIASES: Readonly<Record<string, string>> = {
+  'Asia/Calcutta': 'Asia/Kolkata',
+  'Europe/Kiev': 'Europe/Kyiv',
+  'America/Argentina/Buenos_Aires': 'America/Buenos_Aires',
+};
+
 /** The selector's spelling of `tz` if it names a listed zone, else undefined. */
 export function listedZoneFor(tz: string): string | undefined {
   if (SUPPORTED_TIMEZONES.has(tz)) return tz;
+  if (Object.hasOwn(LISTED_ZONE_ALIASES, tz)) return LISTED_ZONE_ALIASES[tz];
   if (!listedByCanonical) {
     listedByCanonical = new Map();
     for (const zone of SUPPORTED_TIMEZONES) {
