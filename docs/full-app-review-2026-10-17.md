@@ -28,8 +28,8 @@ Added after the review; the report below is unchanged.
 | A11Y-01 contrast | Fixed | #9 |
 | MATH-01 seasonal wheel preference | Northern / Southern / from timezone, synced | #10 |
 | DOC-01 documentation | README, accounts plan, AGENTS.md | #11 |
-| SEC-03 headers, Discord timeout | Referrer, frame, nosniff headers; CSP report-only (not enforcing yet); 5 s Discord deadline | #PR (partly: shared rate limits, log field bounds not addressed) |
-| SEC-05 auth API surface | `/api/auth` allowlist (stock routes such as `/update-user` answer 404); `server-only` on server modules | #PR |
+| SEC-03 headers, Discord timeout | Referrer, frame, nosniff headers; CSP report-only (not enforcing yet); 5 s Discord deadline | #13 (partly: shared rate limits, log field bounds not addressed) |
+| SEC-05 auth API surface | `/api/auth` allowlist (stock routes such as `/update-user` answer 404); `server-only` on server modules | #13 |
 
 Not yet addressed: SEC-03 (enforcing CSP, shared rate limits, log field bounds), SEC-04 (deletion lifecycle), DB-03, MATH-03, FUNC-05, OPS-03 monitoring and runbook, content safety notes, asset licences, and the extension requirements in sections 4 and 12.
 
