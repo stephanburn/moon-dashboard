@@ -175,3 +175,31 @@ test('daily craft shows an activity and draws another', async ({ page }) => {
   await expect(page.locator('#spine-panel-craft p[aria-live]')).toHaveText(second!);
   expect(errors).toEqual([]);
 });
+
+test('an active Mercury retrograde opens from the Now node', async ({ page }) => {
+  // Mercury stationed retrograde on 24 Oct 2026, so its spine event has passed.
+  await page.clock.setFixedTime(new Date('2026-11-01T12:00:00Z'));
+  await page.goto('/');
+  const trigger = page.getByRole('button', { name: /^Mercury ℞ retrograde · until / });
+  await trigger.click();
+  const panel = page.locator('#spine-panel-mercury');
+  await expect(panel).toContainText('Retrograde');
+});
+
+test('closing a panel returns focus to its trigger', async ({ page }) => {
+  await page.goto('/');
+  const trigger = page.getByRole('button', { name: /^Moon in / });
+  await trigger.click();
+  await page.getByRole('button', { name: 'Close panel' }).click();
+  await expect(trigger).toBeFocused();
+  await expect(trigger).toHaveAttribute('aria-expanded', 'false');
+});
+
+test('detail panels do not animate with reduced motion', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  await page.getByRole('button', { name: /^Moon in / }).click();
+  const duration = await page.locator('#detail-panel-hero-sign')
+    .evaluate(el => getComputedStyle(el).transitionDuration);
+  expect(duration).toBe('0s');
+});

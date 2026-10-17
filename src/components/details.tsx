@@ -41,7 +41,8 @@ function CorrespondenceRow({ label, items }: { label: string; items: string[] })
 
 export interface CurrentMoon {
   illumination: number; // 0-100
-  ageInDays: number;    // 0-29.5
+  ageInDays: number;    // days since the preceding new moon
+  lunationDays: number; // length of this lunation
   moonSignChanges: MoonSignChange[];
   timezone: string;
 }
@@ -60,7 +61,7 @@ export function MoonPhaseDetail({ phase, current }: { phase: PhaseName; current?
           <span className="text-white/15">{' · '}</span>
           Day{' '}
           <span className="text-amber-light text-sm font-medium">{current.ageInDays}</span>
-          {' '}of 29.5
+          {' '}of {current.lunationDays}
         </p>
       )}
 
