@@ -68,3 +68,23 @@ export function addDays(day: CalendarDay, n: number): CalendarDay {
 export function diffDays(a: CalendarDay, b: CalendarDay): number {
   return Math.round((dayToUTCMs(a) - dayToUTCMs(b)) / DAY_MS);
 }
+
+// No zone is more than 14 hours from UTC, so a day starts within this much of
+// its UTC midnight.
+const MAX_OFFSET_MS = 15 * 60 * 60 * 1000;
+
+/**
+ * The first instant of `day` in `timezone`, to the millisecond. Usually local
+ * midnight, but found by search rather than offset arithmetic, so days that
+ * start at 01:00 (DST at midnight) or are 23 or 25 hours long come out right.
+ */
+export function startOfDay(day: CalendarDay, timezone: string): Date {
+  let lo = dayToUTCMs(day) - MAX_OFFSET_MS; // before the day starts
+  let hi = dayToUTCMs(day) + MAX_OFFSET_MS; // after it has started
+  while (hi - lo > 1) {
+    const mid = Math.floor((lo + hi) / 2);
+    if (dayOf(new Date(mid), timezone) >= day) hi = mid;
+    else lo = mid;
+  }
+  return new Date(hi);
+}

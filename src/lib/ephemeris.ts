@@ -16,6 +16,19 @@ export const HOUR_MS = 60 * 60 * 1000;
 export const DAY_MS = 24 * HOUR_MS;
 const MINUTE_MS = 60 * 1000;
 
+// The years the searches are meant for. astronomy-engine stays accurate well
+// beyond them, but the app's results have only been checked against published
+// almanac values in this century, so wider ranges are refused rather than
+// trusted silently.
+export const SUPPORTED_YEARS = { from: 1900, to: 2100 } as const;
+
+function assertSupported(from: Date, to: Date): void {
+  const ok = (t: Date) => t.getUTCFullYear() >= SUPPORTED_YEARS.from && t.getUTCFullYear() <= SUPPORTED_YEARS.to;
+  if (!ok(from) || !ok(to)) {
+    throw new RangeError(`Searches cover ${SUPPORTED_YEARS.from} to ${SUPPORTED_YEARS.to} only`);
+  }
+}
+
 /**
  * Geocentric apparent ecliptic longitude of date (the tropical zodiac), in
  * degrees 0–360.
@@ -73,6 +86,7 @@ export interface SignChange {
  * cusp: 3 h for the Moon, 12 h for Mercury, 1 day for Venus and the Sun.
  */
 export function findSignChanges(body: Body, from: Date, to: Date, stepMs: number): SignChange[] {
+  assertSupported(from, to);
   const results: SignChange[] = [];
   const signIndex = (t: number) => signIndexOf(eclipticLongitude(body, new Date(t)));
   let prevT = from.getTime();
@@ -100,6 +114,7 @@ export interface Station {
 
 /** Every station between `from` and `to`, scanning daily. */
 export function findStations(body: Body, from: Date, to: Date): Station[] {
+  assertSupported(from, to);
   const results: Station[] = [];
   const direction = (t: number) => Math.sign(dailyMotion(body, new Date(t)));
   let prevT = from.getTime();
@@ -134,10 +149,15 @@ export function findLongitudeCrossing(
   to: Date,
   stepMs = 6 * HOUR_MS,
 ): Date | null {
+  assertSupported(from, to);
   const offset = (t: number) => angleDiff(eclipticLongitude(body, new Date(t)), longitude);
+  const end = to.getTime();
   let prevT = from.getTime();
   let prev = offset(prevT);
-  for (let t = prevT + stepMs; t <= to.getTime(); t += stepMs) {
+  // The last step is shortened to land on `to`, so a crossing near the end
+  // of a short window is still found.
+  while (prevT < end) {
+    const t = Math.min(prevT + stepMs, end);
     const cur = offset(t);
     // Crossing from just behind to just ahead; ignore the ±180° wrap.
     if (prev < 0 && cur >= 0 && cur - prev < 90) {

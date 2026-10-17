@@ -13,7 +13,8 @@ import type { SignName } from './names';
 // Mercury retrogrades and Venus ingresses, computed from astronomy-engine.
 //
 // Each search covers a window around the current UTC day and is cached for
-// that day, so the dashboard's periodic refresh costs almost nothing.
+// that day, so the dashboard's periodic refresh costs almost nothing. Ranges
+// that reach past the window are scanned in full instead of being cut short.
 
 // Back far enough to find the retrograde behind a shadow period in progress;
 // ahead far enough to cover the spine's 180-day horizon.
@@ -66,7 +67,7 @@ export function mercuryRetrogradeSigns(p: MercuryRetrogradePeriod): string {
 // Mercury's shadow runs up to ~5 weeks either side of the retrograde.
 const SHADOW_SEARCH_DAYS = 50;
 
-const mercuryPeriods = cachedByDay((from, to): MercuryRetrogradePeriod[] => {
+function computeMercuryPeriods(from: Date, to: Date): MercuryRetrogradePeriod[] {
   const stations = findStations(
     Body.Mercury,
     new Date(from.getTime() - SHADOW_SEARCH_DAYS * DAY_MS),
@@ -93,7 +94,15 @@ const mercuryPeriods = cachedByDay((from, to): MercuryRetrogradePeriod[] => {
     });
   });
   return periods;
-});
+}
+
+const mercuryPeriods = cachedByDay(computeMercuryPeriods);
+
+/** True when [from, to] fits inside the cached window for `from`. */
+function inCachedWindow(from: Date, to: Date): boolean {
+  const window = windowFor(from);
+  return from >= window.from && to <= window.to;
+}
 
 export type MercuryStatus = 'retrograde' | 'pre-shadow' | 'post-shadow' | 'direct';
 
@@ -111,23 +120,32 @@ export function getMercuryStatus(now: Date): MercuryInfo {
   return { status: 'direct', period: null };
 }
 
-/** Retrogrades that begin between `from` and `to`. */
+/**
+ * Retrogrades that begin between `from` and `to`. Ranges inside the daily
+ * window come from the cache; longer ones are scanned in full.
+ */
 export function getUpcomingMercuryRetrogrades(from: Date, to: Date): MercuryRetrogradePeriod[] {
-  return mercuryPeriods(from).filter(p => p.retrogradeStart >= from && p.retrogradeStart <= to);
+  const periods = inCachedWindow(from, to) ? mercuryPeriods(from) : computeMercuryPeriods(from, to);
+  return periods.filter(p => p.retrogradeStart >= from && p.retrogradeStart <= to);
 }
 
 // ── Venus ──────────────────────────────────────────────────────────────────
 
 export type VenusIngress = SignChange; // { at, sign, retrograde }
 
-const venusIngresses = cachedByDay((from, to) =>
-  findSignChanges(Body.Venus, from, to, PLANET_SCAN_STEP_MS));
+const computeVenusIngresses = (from: Date, to: Date) => findSignChanges(Body.Venus, from, to, PLANET_SCAN_STEP_MS);
+const venusIngresses = cachedByDay(computeVenusIngresses);
 
 export function getCurrentVenusSign(now: Date): SignName {
   return signAt(Body.Venus, now);
 }
 
-/** Venus sign changes between `from` and `to`, including retrograde re-entries. */
+/**
+ * Venus sign changes between `from` and `to`, including retrograde re-entries.
+ * Ranges inside the daily window come from the cache; longer ones are scanned
+ * in full.
+ */
 export function getUpcomingVenusIngresses(from: Date, to: Date): VenusIngress[] {
-  return venusIngresses(from).filter(v => v.at >= from && v.at <= to);
+  const ingresses = inCachedWindow(from, to) ? venusIngresses(from) : computeVenusIngresses(from, to);
+  return ingresses.filter(v => v.at >= from && v.at <= to);
 }

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { addDays, dayOf, dayParts, diffDays, makeDay } from '../days';
+import { addDays, dayOf, dayParts, diffDays, makeDay, startOfDay } from '../days';
 
 describe('makeDay / dayParts', () => {
   it('round-trips and zero-pads', () => {
@@ -47,5 +47,31 @@ describe('addDays / diffDays', () => {
     expect(diffDays(makeDay(2027, 1, 1), makeDay(2026, 12, 25))).toBe(7);
     expect(diffDays(makeDay(2026, 12, 25), makeDay(2027, 1, 1))).toBe(-7);
     expect(diffDays(makeDay(2026, 11, 1), makeDay(2026, 3, 1))).toBe(245);
+  });
+});
+
+describe('startOfDay', () => {
+  const hours = (day: string, tz: string) => {
+    const d = day as ReturnType<typeof makeDay>;
+    return (startOfDay(addDays(d, 1), tz).getTime() - startOfDay(d, tz).getTime()) / 3_600_000;
+  };
+
+  it('finds local midnight', () => {
+    expect(startOfDay(makeDay(2026, 10, 24), 'Europe/London').toISOString()).toBe('2026-10-23T23:00:00.000Z');
+    expect(startOfDay(makeDay(2026, 10, 25), 'Asia/Tokyo').toISOString()).toBe('2026-10-24T15:00:00.000Z');
+  });
+
+  it('measures 23- and 25-hour days', () => {
+    expect(hours('2026-10-25', 'Europe/London')).toBe(25);
+    expect(hours('2026-03-29', 'Europe/London')).toBe(23);
+    expect(hours('2026-10-24', 'Europe/London')).toBe(24);
+  });
+
+  // Chile moves its clocks at midnight, so 6 Sep 2026 starts at 01:00.
+  it('handles a day that starts after a skipped midnight', () => {
+    const start = startOfDay(makeDay(2026, 9, 6), 'America/Santiago');
+    expect(start.toISOString()).toBe('2026-09-06T04:00:00.000Z');
+    expect(dayOf(start, 'America/Santiago')).toBe('2026-09-06');
+    expect(dayOf(new Date(start.getTime() - 1), 'America/Santiago')).toBe('2026-09-05');
   });
 });

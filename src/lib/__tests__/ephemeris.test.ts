@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { Body } from 'astronomy-engine';
 import { getCurrentSunSign, getUpcomingSunIngresses, getCurrentMoonSign, getUpcomingMoonSignChanges } from '../astro';
 import { getMercuryStatus, getUpcomingMercuryRetrogrades, getUpcomingVenusIngresses, mercuryRetrogradeSigns } from '../planets';
-import { findStations } from '../ephemeris';
+import { findLongitudeCrossing, findSignChanges, findStations } from '../ephemeris';
 
 // Fixtures are PUBLISHED values, not this code's own output, so these tests
 // check the implementation against an independent source. Published station
@@ -120,5 +120,38 @@ describe('performance', () => {
     getUpcomingVenusIngresses(utc('2031-05-01T00:00'), utc('2031-11-01T00:00'));
     getUpcomingMercuryRetrogrades(utc('2031-05-01T00:00'), utc('2031-11-01T00:00'));
     expect(performance.now() - start).toBeLessThan(1500);
+  });
+});
+
+describe('search ranges', () => {
+  it('finds a crossing in the last, shortened step of a short window', () => {
+    // The Sun reaches 0° Libra at the September 2026 equinox, 23 Sep 00:05 UTC
+    // (USNO). A five-hour window with the crossing four hours in, scanned in
+    // six-hour steps, must still find it.
+    const equinox = Date.parse('2026-09-23T00:05:00Z');
+    const crossing = findLongitudeCrossing(Body.Sun, 180, new Date(equinox - 4 * 3_600_000), new Date(equinox + 3_600_000));
+    expect(crossing).not.toBeNull();
+    expect(Math.abs(crossing!.getTime() - equinox)).toBeLessThan(2 * 60_000);
+  });
+
+  it('returns every Venus ingress in a range longer than the daily cache', () => {
+    const from = new Date('2026-01-01T00:00:00Z');
+    const to = new Date('2028-01-01T00:00:00Z');
+    const direct = findSignChanges(Body.Venus, from, to, 12 * 3_600_000);
+    const ingresses = getUpcomingVenusIngresses(from, to);
+    expect(ingresses).toEqual(direct);
+    expect(ingresses.length).toBeGreaterThan(20);
+  });
+
+  it('returns every Mercury retrograde in a two-year range', () => {
+    // Mercury turns retrograde three or four times a year.
+    const rx = getUpcomingMercuryRetrogrades(new Date('2026-01-01T00:00:00Z'), new Date('2028-01-01T00:00:00Z'));
+    expect(rx.length).toBeGreaterThanOrEqual(6);
+    expect(rx.at(-1)!.retrogradeStart.getUTCFullYear()).toBe(2027);
+  });
+
+  it('refuses years outside the supported range', () => {
+    expect(() => findStations(Body.Mercury, new Date('1850-01-01T00:00:00Z'), new Date('1851-01-01T00:00:00Z')))
+      .toThrow(RangeError);
   });
 });
