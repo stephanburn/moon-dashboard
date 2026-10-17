@@ -1,12 +1,14 @@
 'use server';
 
 import { eq } from 'drizzle-orm';
+import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { canonicalZone } from '@/lib/timezones';
-import { accountsEnabled, getAuth, getCurrentUser, requireUser } from './auth';
+import type { SaveTimezoneResult } from '@/lib/account';
+import { canonicalZone, listedZoneFor } from '@/lib/timezones';
+import { accountsEnabled, getAuth, getCurrentUser, requireAdmin, requireUser } from './auth';
 import { getDb } from './db';
-import { user as userTable } from './db/schema';
+import { session as sessionTable, user as userTable } from './db/schema';
 import { setUserTimezone } from './settings';
 
 export async function signInWithDiscord(): Promise<void> {
@@ -35,11 +37,23 @@ export async function deleteAccount(): Promise<void> {
   redirect('/');
 }
 
-// Called from the dashboard when a signed-in user picks a zone. Silently
-// ignores signed-out callers: the choice is still kept in localStorage.
-export async function saveTimezone(timezone: string): Promise<void> {
-  if (typeof timezone !== 'string' || timezone.length > 64 || !canonicalZone(timezone)) return;
+// Called when a signed-in user picks a zone. 'signed-out' means the session
+// has gone (expired or revoked); the choice is still kept in localStorage.
+// Database failures throw, so callers can tell them apart.
+export async function saveTimezone(timezone: string): Promise<SaveTimezoneResult> {
+  if (typeof timezone !== 'string' || timezone.length > 64 || !canonicalZone(timezone)) return 'invalid';
   const user = await getCurrentUser();
-  if (!user) return;
-  await setUserTimezone(user.id, timezone);
+  if (!user) return 'signed-out';
+  await setUserTimezone(user.id, listedZoneFor(timezone) ?? timezone);
+  return 'saved';
+}
+
+// Signs a member out on every device. Revoking access for good also needs
+// them out of the Discord server, since sign-in checks membership.
+export async function revokeSessions(formData: FormData): Promise<void> {
+  await requireAdmin();
+  const userId = formData.get('userId');
+  if (typeof userId !== 'string' || !userId) return;
+  await getDb().delete(sessionTable).where(eq(sessionTable.userId, userId));
+  revalidatePath('/admin');
 }

@@ -220,7 +220,8 @@ export default function Dashboard() {
     return safeTz;
   }, []);
   // Signed-in users get their saved zone on every device.
-  const { user, timezoneChosen } = useAccount(timezone, applyTimezone);
+  const { account, syncFailed, retry, retrySync, timezoneChosen } = useAccount(timezone, applyTimezone);
+  const user = account.status === 'signed-in' ? account.user : null;
 
   const handleTimezoneChange = useCallback((tz: string) => {
     timezoneChosen(applyTimezone(tz));
@@ -309,6 +310,13 @@ export default function Dashboard() {
 
       <main className="flex-1 px-4 sm:px-8 pt-4 pb-8 max-w-xl mx-auto w-full space-y-4">
 
+        {syncFailed && (
+          <p role="status" className="text-center text-xs text-text-secondary">
+            Couldn&apos;t save this timezone to your account. It&apos;s kept on this device.{' '}
+            <button type="button" onClick={retrySync} className="underline hover:text-foreground">Try again</button>
+          </p>
+        )}
+
         {/* Discoverability hint: name the gesture above the fold until the
             user has opened something in the timeline. */}
         {showHint && (
@@ -335,7 +343,13 @@ export default function Dashboard() {
         <p className="text-xs text-silver/55">
           Calculated locally. Anonymous usage counts{ACCOUNTS_ENABLED ? ', plus sign-in and visit logs for members' : ' only'}.
         </p>
-        {user === null && (
+        {account.status === 'unavailable' && (
+          <p role="status" className="text-xs text-text-secondary">
+            Members&apos; accounts can&apos;t be reached right now.{' '}
+            <button type="button" onClick={retry} className="underline hover:text-foreground">Try again</button>
+          </p>
+        )}
+        {account.status === 'signed-out' && (
           <p className="fade-in text-xs text-silver/55">
             <Link href="/signin" className="underline hover:text-text-secondary">Members&apos; sign in</Link>
           </p>
