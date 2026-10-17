@@ -25,11 +25,12 @@ they are used under. Update this file whenever an asset is added or replaced.
   can't read the variable font. The page itself loads the same family through
   `next/font/google` (`src/app/layout.tsx`), which self-hosts it at build
   time.
-- **Copyright:** 2015 Christian Thalmann and the Cormorant Project Authors,
-  <https://github.com/CatharsisFonts/Cormorant>.
-- **Licence:** SIL Open Font License 1.1. The OFL asks that the licence text
-  travel with the font files. **To do:** add `assets/OFL.txt`, copied
-  verbatim from the Cormorant repository.
+- **Copyright:** 2015 the Cormorant Project Authors
+  (<https://github.com/CatharsisFonts/Cormorant>; designer Christian
+  Thalmann).
+- **Licence:** SIL Open Font License 1.1, which requires the licence to
+  travel with the font files: `assets/OFL.txt`, copied unchanged from the
+  Cormorant repository.
 
 ## The code
 
