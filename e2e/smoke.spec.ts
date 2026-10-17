@@ -281,3 +281,17 @@ test('sends the security headers and breaks no content security rule', async ({ 
   await page.waitForLoadState('networkidle');
   expect(await page.evaluate(() => (window as unknown as { cspViolations: string[] }).cspViolations)).toEqual([]);
 });
+
+test('the Open Graph image is a 1200x630 PNG', async ({ page, request }) => {
+  await page.goto('/');
+  const url = await page.locator('meta[property="og:image"]').getAttribute('content');
+  expect(url).toBeTruthy();
+  const res = await request.get(new URL(url!).pathname);
+  expect(res.status()).toBe(200);
+  expect(res.headers()['content-type']).toBe('image/png');
+  const png = await res.body();
+  // PNG signature, then the IHDR chunk's width and height.
+  expect(png.subarray(1, 4).toString()).toBe('PNG');
+  expect(png.readUInt32BE(16)).toBe(1200);
+  expect(png.readUInt32BE(20)).toBe(630);
+});

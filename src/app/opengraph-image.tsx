@@ -6,7 +6,6 @@ import { getCurrentMoonSign, getCurrentSunSign } from '@/lib/astro';
 import { getUpcomingSabbats } from '@/lib/sabbats';
 import { moonGeometry } from '@/lib/moonDisc';
 import { addDays, dayOf, diffDays, type CalendarDay } from '@/lib/days';
-import { SIGN_SYMBOLS } from '@/lib/names';
 import { MOON_CORRESPONDENCES } from '@/data/moonCorrespondences';
 
 const alt = 'Current moon phase, zodiac transit, and the next sabbat';
@@ -29,7 +28,8 @@ export function generateImageMetadata() {
 }
 
 // The OG card is shared generically, so it is rendered for the northern
-// hemisphere in UTC rather than any one viewer's zone.
+// hemisphere in UTC rather than any one viewer's zone. No zodiac glyphs:
+// Cormorant has none, and Satori would fall back to colour emoji.
 const TZ = 'UTC';
 const DAY_MS = 86_400_000;
 
@@ -93,7 +93,7 @@ export default async function Image() {
             <div style={{ fontSize: 96, fontWeight: 600, lineHeight: 1.0, marginTop: 4 }}>{moon.name}</div>
 
             <div style={{ fontSize: 42, color: '#dad6f4', marginTop: 14 }}>
-              {`In ${moonSign} ${SIGN_SYMBOLS[moonSign]} · ${nextPhase.name} ${inDays(dayOf(nextPhase.date, TZ), today)}`}
+              {`In ${moonSign} · ${nextPhase.name} ${inDays(dayOf(nextPhase.date, TZ), today)}`}
             </div>
 
             {energy && (
