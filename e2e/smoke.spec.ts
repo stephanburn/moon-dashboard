@@ -221,3 +221,33 @@ test('the seasonal wheel can be chosen apart from the timezone', async ({ page }
   await page.getByRole('button', { name: /^Beltane/ }).click();
   await expect(page.getByRole('combobox', { name: 'Seasonal wheel' })).toHaveValue('south');
 });
+
+test.describe('event panels', () => {
+  test.use({ timezoneId: 'Europe/London' });
+
+  // Expected times are USNO's published values: Full Moon 26 Sep 2026 16:49
+  // UTC, September equinox 23 Sep 00:05 UTC, New Moon 11 Sep (so the Deipnon
+  // is today). The hero, not the spine, shows the New Moon itself.
+  test('show when the event happens in the selected timezone', async ({ page }) => {
+    await page.clock.setFixedTime(new Date('2026-09-10T12:00:00Z'));
+    await page.goto('/');
+    const spine = page.getByRole('region', { name: 'Cycle of sacred time' });
+
+    await spine.getByRole('button', { name: /^Full Moon/ }).click();
+    await expect(page.locator('.detail-panel time')).toHaveText('Saturday 26 September 2026 at 17:49 BST');
+
+    await spine.getByRole('button', { name: /^Autumn Equinox/ }).click();
+    await expect(page.locator('.detail-panel time'))
+      .toHaveText('Wednesday 23 September 2026, equinox at 01:05 BST');
+
+    // An all-day observance shows the date alone.
+    await spine.getByRole('button', { name: "Hekate's Deipnon Today" }).click();
+    await expect(page.locator('.detail-panel time')).toHaveText('Thursday 10 September 2026');
+  });
+});
+
+test('the footer explains how dates are calculated', async ({ page }) => {
+  await page.goto('/');
+  await page.getByText('How dates are calculated').click();
+  await expect(page.getByText(/calendar day before the astronomical new moon/)).toBeVisible();
+});

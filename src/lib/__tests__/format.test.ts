@@ -1,6 +1,59 @@
 import { describe, it, expect } from 'vitest';
-import { formatDay, formatDayAndTime, formatPeakText, formatRelativeDays, formatTime } from '../format';
+import {
+  formatDay,
+  formatDayAndTime,
+  formatDayWithMoment,
+  formatLongDay,
+  formatLongDayAndTime,
+  formatPeakText,
+  formatRelativeDays,
+  formatTime,
+  formatTimeWithZone,
+} from '../format';
 import { makeDay } from '../days';
+
+describe('formatLongDay', () => {
+  it('spells out the weekday, day, month and year, whatever the device zone', () => {
+    expect(formatLongDay(makeDay(2026, 10, 31))).toBe('Saturday 31 October 2026');
+    expect(formatLongDay(makeDay(2027, 1, 1))).toBe('Friday 1 January 2027');
+  });
+});
+
+describe('formatLongDayAndTime', () => {
+  const fullMoon = new Date('2026-09-26T16:49:32Z'); // USNO: 16:49 UTC
+
+  it('dates and times the instant in the selected zone, with its abbreviation', () => {
+    expect(formatLongDayAndTime(fullMoon, 'Europe/London')).toBe('Saturday 26 September 2026 at 17:49 BST');
+    expect(formatLongDayAndTime(fullMoon, 'UTC')).toBe('Saturday 26 September 2026 at 16:49 UTC');
+  });
+
+  it('moves to the next calendar day across the date line', () => {
+    expect(formatLongDayAndTime(fullMoon, 'Pacific/Kiritimati')).toBe('Sunday 27 September 2026 at 06:49 GMT+14');
+  });
+
+  it('tells the two passes through the repeated hour apart', () => {
+    expect(formatLongDayAndTime(new Date('2026-10-25T00:30:00Z'), 'Europe/London'))
+      .toBe('Sunday 25 October 2026 at 01:30 BST');
+    expect(formatLongDayAndTime(new Date('2026-10-25T01:30:00Z'), 'Europe/London'))
+      .toBe('Sunday 25 October 2026 at 01:30 GMT');
+  });
+});
+
+describe('formatTimeWithZone', () => {
+  it('always names the zone', () => {
+    expect(formatTimeWithZone(new Date('2026-09-26T16:49:00Z'), 'Europe/London')).toBe('17:49 BST');
+    expect(formatTimeWithZone(new Date('2026-12-21T20:50:00Z'), 'Europe/London')).toBe('20:50 GMT');
+  });
+});
+
+describe('formatDayWithMoment', () => {
+  it('gives the observance day and the astronomical moment', () => {
+    // The Sep 2026 equinox, 00:05 UTC on the 23rd, falls on the 22nd in New York.
+    const equinox = new Date('2026-09-23T00:05:00Z');
+    expect(formatDayWithMoment(makeDay(2026, 9, 22), 'equinox', equinox, 'America/New_York'))
+      .toBe('Tuesday 22 September 2026, equinox at 20:05 GMT-4');
+  });
+});
 
 describe('formatRelativeDays', () => {
   const today = makeDay(2026, 6, 29);

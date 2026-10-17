@@ -9,6 +9,7 @@ import CycleSpine from './CycleSpine';
 import DetailPanel from './DetailPanel';
 import DashboardSkeleton from './DashboardSkeleton';
 import AccountButton from './AccountButton';
+import HowDatesAreCalculated from './HowDatesAreCalculated';
 import { useAccount } from './useAccount';
 import { MoonPhaseDetail, MoonSignDetail } from './details';
 import Link from 'next/link';
@@ -369,6 +370,7 @@ export default function Dashboard() {
         <p className="text-xs text-text-tertiary">
           Calculated locally. Anonymous usage counts{ACCOUNTS_ENABLED ? ', plus sign-in and visit logs for members' : ' only'}.
         </p>
+        <HowDatesAreCalculated />
         {account.status === 'unavailable' && (
           <p role="status" className="text-xs text-text-secondary">
             Members&apos; accounts can&apos;t be reached right now.{' '}

@@ -50,21 +50,53 @@ function isRepeatedWallTime(instant: Date, timezone: string): boolean {
   return DST_SHIFTS_MS.some(d => wallClock(t - d, timezone) === wall || wallClock(t + d, timezone) === wall);
 }
 
+function bareTime(instant: Date, timezone: string): string {
+  return instant.toLocaleTimeString('en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: timezone,
+  });
+}
+
+function withZone(time: string, instant: Date, timezone: string): string {
+  const zone = new Intl.DateTimeFormat('en-GB', { timeZone: timezone, timeZoneName: 'short' })
+    .formatToParts(instant)
+    .find(p => p.type === 'timeZoneName')?.value;
+  // Recent Chrome names London's winter time "GMT+0" where Node says "GMT".
+  return zone ? `${time} ${zone === 'GMT+0' ? 'GMT' : zone}` : time;
+}
+
 /**
  * "14:05". In the repeated hour after clocks go back, the zone is appended
  * ("01:30 BST" vs "01:30 GMT") so the two occurrences can be told apart.
  */
 export function formatTime(instant: Date, timezone: string): string {
-  const time = instant.toLocaleTimeString('en-GB', {
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: timezone,
-  });
-  if (!isRepeatedWallTime(instant, timezone)) return time;
-  const zone = new Intl.DateTimeFormat('en-GB', { timeZone: timezone, timeZoneName: 'short' })
-    .formatToParts(instant)
-    .find(p => p.type === 'timeZoneName')?.value;
-  return zone ? `${time} ${zone}` : time;
+  const time = bareTime(instant, timezone);
+  return isRepeatedWallTime(instant, timezone) ? withZone(time, instant, timezone) : time;
+}
+
+/** "14:05 BST": always with the zone, which also tells the repeated hour apart. */
+export function formatTimeWithZone(instant: Date, timezone: string): string {
+  return withZone(bareTime(instant, timezone), instant, timezone);
+}
+
+/** "Saturday 31 October 2026", for an all-day observance. */
+export function formatLongDay(day: CalendarDay): string {
+  const weekday = formatDay(day, { weekday: 'long' });
+  return `${weekday} ${formatDay(day, { day: 'numeric', month: 'long', year: 'numeric' })}`;
+}
+
+/** "Saturday 26 September 2026 at 17:49 BST": an instant, dated in `timezone`. */
+export function formatLongDayAndTime(instant: Date, timezone: string): string {
+  return `${formatLongDay(dayOf(instant, timezone))} at ${formatTimeWithZone(instant, timezone)}`;
+}
+
+/**
+ * "Tuesday 22 September 2026, equinox at 20:05 GMT-4": an all-day observance
+ * kept on the calendar day of an astronomical moment.
+ */
+export function formatDayWithMoment(day: CalendarDay, moment: string, instant: Date, timezone: string): string {
+  return `${formatLongDay(day)}, ${moment} at ${formatTimeWithZone(instant, timezone)}`;
 }
 
 /** "Thu 24 Sept, 14:05" — used for moon-sign ingress times. */

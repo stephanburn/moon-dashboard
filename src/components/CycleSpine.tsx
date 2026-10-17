@@ -2,7 +2,7 @@
 
 import Chevron from './Chevron';
 import DetailPanel from './DetailPanel';
-import { DailyCraftDetail, MercuryRetroDetail, SabbatDetail, VenusDetail, ZodiacDetail } from './details';
+import { DailyCraftDetail, MercuryRetroDetail, VenusDetail, ZodiacDetail } from './details';
 import { EventDetail, eventIcon, eventTitle, type EventContext } from './eventKinds';
 import type { SpineEvent } from '@/lib/events';
 import type { SunSignInfo } from '@/lib/astro';
@@ -196,7 +196,10 @@ export default function CycleSpine({
               </button>
               {expandedKey === 'sabbat' && (
                 <DetailPanel id="spine-panel-sabbat" onClose={onClose}>
-                  <SabbatDetail sabbat={sabbatToday.name} ctx={ctx} />
+                  <EventDetail
+                    event={{ kind: 'sabbat', key: 'sabbat-today', day: sabbatToday.day, sabbat: sabbatToday }}
+                    ctx={ctx}
+                  />
                 </DetailPanel>
               )}
             </>
