@@ -1,3 +1,4 @@
+import 'server-only';
 import { tryGetCurrentAuthEndpointContext } from '@better-auth/core/context';
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';

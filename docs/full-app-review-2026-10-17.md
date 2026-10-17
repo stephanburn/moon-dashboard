@@ -27,9 +27,11 @@ Added after the review; the report below is unchanged.
 | OPS-03 error screen | Timezone advice only where it can help | #9 |
 | A11Y-01 contrast | Fixed | #9 |
 | MATH-01 seasonal wheel preference | Northern / Southern / from timezone, synced | #10 |
-| DOC-01 documentation | README, accounts plan, AGENTS.md | this PR |
+| DOC-01 documentation | README, accounts plan, AGENTS.md | #11 |
+| SEC-03 headers, Discord timeout | Referrer, frame, nosniff headers; CSP report-only (not enforcing yet); 5 s Discord deadline | #PR (partly: shared rate limits, log field bounds not addressed) |
+| SEC-05 auth API surface | `/api/auth` allowlist (stock routes such as `/update-user` answer 404); `server-only` on server modules | #PR |
 
-Not yet addressed: SEC-03 (CSP and headers, shared rate limits, Discord timeouts), SEC-04 (deletion lifecycle), SEC-05 (auth API surface, `server-only`), DB-03, MATH-03, FUNC-05, OPS-03 monitoring and runbook, content safety notes, asset licences, and the extension requirements in sections 4 and 12.
+Not yet addressed: SEC-03 (enforcing CSP, shared rate limits, log field bounds), SEC-04 (deletion lifecycle), DB-03, MATH-03, FUNC-05, OPS-03 monitoring and runbook, content safety notes, asset licences, and the extension requirements in sections 4 and 12.
 
 This is a review, not an implementation. No application code, dependencies, schema, or deployment configuration was changed. Production account data and database contents were not accessed. Only this report was added to the repository; builds and tests also generated their normal ignored output.
 

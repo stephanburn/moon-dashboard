@@ -1,3 +1,4 @@
+import 'server-only';
 import { desc, eq, sql } from 'drizzle-orm';
 import { getDb } from './db';
 import { session, signInLog, user, userSettings, visitLog } from './db/schema';
