@@ -34,5 +34,8 @@ they are used under. Update this file whenever an asset is added or replaced.
 
 ## The code
 
-No licence: the repository is private and `package.json` is marked
-`"private": true`. Choose one before making the repository public.
+No licence. The repository is public on GitHub, so anyone can read the code,
+but without a licence the default copyright applies: nobody may reuse,
+modify or redistribute it without permission. (`"private": true` in
+`package.json` only stops it being published to npm.) Add a `LICENSE` file
+if others should be able to reuse it.
