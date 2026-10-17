@@ -7,7 +7,7 @@ const SIZE = 200;
 const C = SIZE / 2;
 const R = 92; // leaves a little breathing room inside the viewBox for the limb glow
 
-// The NASA full-moon photo (public domain) is a centred disc filling 46.875% of
+// The NASA full-moon photo (source and credit: docs/asset-sources.md) is a centred disc filling 46.875% of
 // the frame's half-width. Map that disc exactly onto our radius-R circle so the
 // phase shadow lines up with the photographed limb. Derived from the image's
 // luminance bounding box (centre ≈ frame centre, radius ≈ 0.46875·width).

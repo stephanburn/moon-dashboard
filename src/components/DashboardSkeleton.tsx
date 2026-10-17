@@ -12,6 +12,11 @@ function Bar({ className }: { className: string }) {
 export default function DashboardSkeleton() {
   return (
     <div aria-busy="true" aria-label="Calculating the sky" className="space-y-4">
+      <noscript>
+        <p className="text-center text-sm text-text-secondary px-4">
+          The moon, the dates and everything else here are calculated in your browser, so this page needs JavaScript.
+        </p>
+      </noscript>
       <section className="space-y-1">
         <div className="text-center space-y-4 px-4 pt-2 pb-2">
           <div className="inline-flex items-center justify-center">
