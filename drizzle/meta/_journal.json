@@ -36,6 +36,13 @@
       "when": 1792215038748,
       "tag": "0004_seasonal_wheel",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1792234834441,
+      "tag": "0005_check_constraints",
+      "breakpoints": true
     }
   ]
 }

@@ -1,0 +1,3 @@
+ALTER TABLE "sign_in_log" ADD CONSTRAINT "sign_in_log_outcome_check" CHECK ("sign_in_log"."outcome" in ('signed-in', 'refused'));--> statement-breakpoint
+ALTER TABLE "user_settings" ADD CONSTRAINT "user_settings_wheel_check" CHECK ("user_settings"."wheel" in ('auto', 'north', 'south'));--> statement-breakpoint
+ALTER TABLE "visit_log" ADD CONSTRAINT "visit_log_count_check" CHECK ("visit_log"."count" > 0);
