@@ -6,6 +6,7 @@ import { ZODIAC_CORRESPONDENCES } from '@/data/zodiacCorrespondences';
 import { SABBAT_CORRESPONDENCES } from '@/data/sabbatCorrespondences';
 import { MOON_SIGN_CORRESPONDENCES } from '@/data/moonSignCorrespondences';
 import { VENUS_CORRESPONDENCES } from '@/data/venusCorrespondences';
+import { HERB_NOTE } from '@/data/cautions';
 import type { MoonSignChange } from '@/lib/astro';
 import { MERCURY_RETROGRADE_CORRESPONDENCES } from '@/data/mercuryRetrogradeCorrespondences';
 import { mercuryRetrogradeSigns, type MercuryRetrogradePeriod } from '@/lib/planets';
@@ -29,11 +30,12 @@ import WheelSelector from './WheelSelector';
 // The body of each detail panel. DetailPanel supplies the chrome (animation,
 // close button); these supply the content.
 
-function CorrespondenceRow({ label, items }: { label: string; items: string[] }) {
+function CorrespondenceRow({ label, items, note }: { label: string; items: string[]; note?: string }) {
   return (
     <div>
       <p className="text-amber/85 text-xs uppercase tracking-wider mb-0.5">{label}</p>
       <p className="text-text-secondary text-sm leading-relaxed">{items.join(', ')}</p>
+      {note && <p className="text-text-tertiary text-xs leading-relaxed mt-1">{note}</p>}
     </div>
   );
 }
@@ -75,7 +77,7 @@ export function MoonPhaseDetail({ phase, current }: { phase: PhaseName; current?
         <CorrespondenceRow label="Workings"  items={data.magicalWorkings} />
         <CorrespondenceRow label="Colours"   items={data.colours} />
         <CorrespondenceRow label="Crystals"  items={data.crystals} />
-        <CorrespondenceRow label="Herbs"     items={data.herbs} />
+        <CorrespondenceRow label="Herbs"     items={data.herbs} note={HERB_NOTE} />
       </div>
 
       {data.esbat && data.esbatNote && (
@@ -168,7 +170,7 @@ export function ZodiacDetail({ sign }: { sign: SignName }) {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-white/5">
         <CorrespondenceRow label="Colours"  items={data.colours} />
         <CorrespondenceRow label="Crystals" items={data.crystals} />
-        <CorrespondenceRow label="Herbs"    items={data.herbs} />
+        <CorrespondenceRow label="Herbs"    items={data.herbs} note={HERB_NOTE} />
       </div>
     </div>
   );
@@ -199,7 +201,7 @@ export function SabbatDetail({ sabbat, ctx }: { sabbat: SabbatName; ctx: EventCo
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-white/5">
         <CorrespondenceRow label="Colours"  items={data.colours} />
         <CorrespondenceRow label="Crystals" items={data.crystals} />
-        <CorrespondenceRow label="Herbs"    items={data.herbs} />
+        <CorrespondenceRow label="Herbs"    items={data.herbs} note={HERB_NOTE} />
         <CorrespondenceRow label="Foods"    items={data.foods} />
       </div>
 
@@ -308,7 +310,9 @@ export function DeipnonDetail() {
         <p className="text-xs text-text-tertiary uppercase tracking-wider mb-1">Observance</p>
         <p className="text-sm text-text-secondary leading-relaxed">
           Cleanse and release, give the offering after dark, and do not look back
-          on the way home.
+          on the way home. A doorstep or household shrine serves where a crossroads
+          isn&apos;t safe to reach. Food left outdoors can harm animals (garlic, onions
+          and chocolate are poisonous to dogs and cats), so clear it away by morning.
         </p>
       </div>
     </div>
