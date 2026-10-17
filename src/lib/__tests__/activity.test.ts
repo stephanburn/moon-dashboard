@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { requestInfo } from '@/server/activity';
+import { boundedInfo, MAX_USER_AGENT_LENGTH, requestInfo } from '@/server/activity';
 
 describe('requestInfo', () => {
   it("takes the visitor's address, the first in x-forwarded-for", () => {
@@ -10,5 +10,18 @@ describe('requestInfo', () => {
   it('copes with missing headers', () => {
     expect(requestInfo(new Headers())).toEqual({ ipAddress: null, userAgent: null });
     expect(requestInfo(undefined)).toEqual({ ipAddress: null, userAgent: null });
+  });
+});
+
+describe('boundedInfo', () => {
+  it('drops anything that is not an IP address', () => {
+    expect(boundedInfo({ ipAddress: '2001:db8::1', userAgent: null }).ipAddress).toBe('2001:db8::1');
+    expect(boundedInfo({ ipAddress: 'not-an-ip', userAgent: null }).ipAddress).toBeNull();
+    expect(requestInfo(new Headers({ 'x-forwarded-for': '<script>' })).ipAddress).toBeNull();
+  });
+
+  it('cuts the user agent short', () => {
+    const { userAgent } = boundedInfo({ ipAddress: null, userAgent: 'x'.repeat(5000) });
+    expect(userAgent).toHaveLength(MAX_USER_AGENT_LENGTH);
   });
 });

@@ -11,7 +11,7 @@ export interface AccountUser {
   image: string | null;
 }
 
-export type SaveResult = 'saved' | 'signed-out' | 'invalid';
+export type SaveResult = 'saved' | 'signed-out' | 'invalid' | 'rate-limited';
 
 export interface MeResponse {
   user: AccountUser | null;

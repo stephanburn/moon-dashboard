@@ -71,6 +71,17 @@ function createAuth() {
       // who has left the Discord server is refused then.
       disableSessionRefresh: true,
     },
+    // Counted in the database, so the limits hold across serverless instances.
+    // The address comes from x-forwarded-for, which Vercel sets. These cover
+    // only requests to /api/auth; Server Actions are limited in rateLimit.ts.
+    rateLimit: {
+      storage: 'database',
+      customRules: {
+        '/sign-in/social': { window: 60, max: 10 },
+        // Each callback calls Discord twice.
+        '/callback/discord': { window: 60, max: 10 },
+      },
+    },
     databaseHooks: {
       // A new session is only ever created by a successful sign-in.
       session: {

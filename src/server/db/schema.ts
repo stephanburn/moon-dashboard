@@ -1,5 +1,5 @@
-// Database schema. The first four tables are the ones Better Auth expects
-// (user, session, account, verification); app tables follow. Every app table
+// Database schema. The first five tables are the ones Better Auth expects
+// (user, session, account, verification, rate_limit); app tables follow. Every app table
 // references user.id with ON DELETE CASCADE, so deleting an account removes
 // all of its data.
 //
@@ -11,7 +11,7 @@
 // secrets. The connection (./index.ts) is server-only.
 
 import { sql } from 'drizzle-orm';
-import { boolean, check, index, integer, pgTable, primaryKey, text, timestamp, unique } from 'drizzle-orm/pg-core';
+import { bigint, boolean, check, index, integer, pgTable, primaryKey, text, timestamp, unique } from 'drizzle-orm/pg-core';
 
 export const user = pgTable('user', {
   id: text('id').primaryKey(),
@@ -72,6 +72,17 @@ export const verification = pgTable('verification', {
   expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+// Request counts for rate limiting, shared by every serverless instance.
+// Better Auth keeps its /api/auth limits here (`rateLimit.storage:
+// 'database'`), and server/rateLimit.ts the app's own, under keys starting
+// with `app:`. `last_request` is in milliseconds since the epoch.
+export const rateLimit = pgTable('rate_limit', {
+  id: text('id').primaryKey(),
+  key: text('key').notNull().unique(),
+  count: integer('count').notNull(),
+  lastRequest: bigint('last_request', { mode: 'number' }).notNull(),
 });
 
 // ── App tables ─────────────────────────────────────────────────────────────

@@ -27,7 +27,9 @@ export default async function SignInPage({
           <p role="alert" className="text-sm text-amber-light">
             {error === 'unable_to_get_user_info'
               ? "That Discord account isn't in our server, or Discord couldn't confirm it. If you have more than one Discord account, check which one Discord shows on the next screen and switch if needed, then try again."
-              : 'Sign-in didn\'t complete. Please try again.'}
+              : error === 'rate_limited'
+                ? 'Too many sign-in attempts. Please wait a minute, then try again.'
+                : 'Sign-in didn\'t complete. Please try again.'}
           </p>
         )}
         <form action={signInWithDiscord}>

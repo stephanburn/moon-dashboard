@@ -1,8 +1,9 @@
 import 'server-only';
+import { isIP } from 'node:net';
 import { lt, sql } from 'drizzle-orm';
 import { addDays, dayOf, type CalendarDay } from '@/lib/days';
 import { getDb, type Db } from './db';
-import { signInLog, visitLog } from './db/schema';
+import { rateLimit, signInLog, visitLog } from './db/schema';
 
 // Logging must never break sign-in or the dashboard, so failures are only
 // reported to the server log.
@@ -19,21 +20,34 @@ export interface RequestInfo {
   userAgent: string | null;
 }
 
+export const MAX_USER_AGENT_LENGTH = 512;
+
+// The address is trusted only because Vercel sets x-forwarded-for itself,
+// with the visitor's address first. Anything that isn't an IP address is
+// dropped, and the user agent is cut short, before either is stored.
 export function requestInfo(headers: Headers | undefined): RequestInfo {
-  return {
-    // Vercel puts the visitor's address first.
+  return boundedInfo({
     ipAddress: headers?.get('x-forwarded-for')?.split(',')[0]?.trim() || null,
     userAgent: headers?.get('user-agent') || null,
+  });
+}
+
+export function boundedInfo({ ipAddress, userAgent }: RequestInfo): RequestInfo {
+  return {
+    ipAddress: ipAddress && isIP(ipAddress) ? ipAddress : null,
+    userAgent: userAgent?.slice(0, MAX_USER_AGENT_LENGTH) || null,
   };
 }
 
 export function recordSignIn(userId: string, info: RequestInfo): Promise<void> {
-  return quietly('sign-in', () => getDb().insert(signInLog).values({ outcome: 'signed-in', userId, ...info }));
+  return quietly('sign-in', () =>
+    getDb().insert(signInLog).values({ outcome: 'signed-in', userId, ...boundedInfo(info) }),
+  );
 }
 
 export function recordRefusedSignIn(discordId: string | null, discordName: string | null, info: RequestInfo): Promise<void> {
   return quietly('refused sign-in', () =>
-    getDb().insert(signInLog).values({ outcome: 'refused', discordId, discordName, ...info }),
+    getDb().insert(signInLog).values({ outcome: 'refused', discordId, discordName, ...boundedInfo(info) }),
   );
 }
 
@@ -68,14 +82,20 @@ export function logCutoffs(now: Date): { signInBefore: Date; visitDayBefore: Cal
   };
 }
 
+// Rate-limit rows hold addresses and user ids but matter for a minute at
+// most. Better Auth prunes them only while its own routes are busy, so the
+// daily purge clears whatever is left from before yesterday.
+const RATE_LIMIT_KEEP_MS = 24 * 60 * 60 * 1000;
+
 // Unlike the writes above, this throws on failure, so the cron run shows as
 // failed.
 export async function purgeOldLogs(
   now: Date = new Date(),
   db: Db = getDb(),
-): Promise<{ signIns: number; visits: number }> {
+): Promise<{ signIns: number; visits: number; rateLimits: number }> {
   const { signInBefore, visitDayBefore } = logCutoffs(now);
   const signIns = await db.delete(signInLog).where(lt(signInLog.at, signInBefore));
   const visits = await db.delete(visitLog).where(lt(visitLog.day, visitDayBefore));
-  return { signIns: signIns.rowCount ?? 0, visits: visits.rowCount ?? 0 };
+  const rateLimits = await db.delete(rateLimit).where(lt(rateLimit.lastRequest, now.getTime() - RATE_LIMIT_KEEP_MS));
+  return { signIns: signIns.rowCount ?? 0, visits: visits.rowCount ?? 0, rateLimits: rateLimits.rowCount ?? 0 };
 }
