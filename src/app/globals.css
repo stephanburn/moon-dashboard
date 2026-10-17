@@ -183,6 +183,7 @@ body::after {
 
 /* Detail panel slide animation */
 .detail-panel {
+  transition: grid-template-rows 0.3s ease, opacity 0.25s ease;
   will-change: grid-template-rows, opacity;
 }
 

@@ -2,11 +2,12 @@
 
 import Chevron from './Chevron';
 import DetailPanel from './DetailPanel';
-import { DailyCraftDetail, SabbatDetail, VenusDetail, ZodiacDetail } from './details';
+import { DailyCraftDetail, MercuryRetroDetail, SabbatDetail, VenusDetail, ZodiacDetail } from './details';
 import { EventDetail, eventIcon, eventTitle, type EventContext } from './eventKinds';
 import type { SpineEvent } from '@/lib/events';
 import type { SunSignInfo } from '@/lib/astro';
 import type { CraftContext } from '@/lib/craft';
+import type { MercuryNow } from '@/lib/dashboardModel';
 import type { Sabbat } from '@/lib/sabbats';
 import { dayOf, type CalendarDay } from '@/lib/days';
 import { SIGN_SYMBOLS, type SignName } from '@/lib/names';
@@ -20,6 +21,7 @@ interface Props {
   todayLabel: string;
   sunSign: SunSignInfo;
   venusSign: SignName;
+  mercuryNow: MercuryNow | null;
   sabbatToday: Sabbat | null;
   events: SpineEvent[];
   craft: CraftContext;
@@ -71,6 +73,7 @@ export default function CycleSpine({
   todayLabel,
   sunSign,
   venusSign,
+  mercuryNow,
   sabbatToday,
   events,
   craft,
@@ -134,6 +137,28 @@ export default function CycleSpine({
               </span>
               <Chevron open={expandedKey === 'craft'} />
             </button>
+
+            {mercuryNow && (
+              <button
+                type="button"
+                onClick={() => onToggle('mercuryNow', 'mercury-rx-now')}
+                aria-expanded={expandedKey === 'mercuryNow'}
+                aria-controls="spine-panel-mercury"
+                className="inline-flex items-center gap-2 text-left disclosure-base disclosure-row rounded-xl px-3 py-1 min-h-[44px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/40"
+              >
+                <span className="text-sm text-foreground">
+                  <span className="text-text-tertiary">Mercury</span>{' '}
+                  <span className="whitespace-nowrap">
+                    {mercuryNow.status === 'retrograde' ? <><span className="text-amber-light/80">℞</span> retrograde</> : 'post-shadow'}
+                  </span>
+                  <span className="text-text-tertiary whitespace-nowrap">
+                    {' · until '}
+                    {formatDay(dayOf(mercuryNow.until, ctx.timezone))}
+                  </span>
+                </span>
+                <Chevron open={expandedKey === 'mercuryNow'} />
+              </button>
+            )}
           </div>
 
           {expandedKey === 'sunSign' && (
@@ -149,6 +174,11 @@ export default function CycleSpine({
           {expandedKey === 'craft' && (
             <DetailPanel id="spine-panel-craft" onClose={onClose}>
               <DailyCraftDetail craft={craft} />
+            </DetailPanel>
+          )}
+          {expandedKey === 'mercuryNow' && mercuryNow && (
+            <DetailPanel id="spine-panel-mercury" onClose={onClose}>
+              <MercuryRetroDetail period={mercuryNow.period} timezone={ctx.timezone} />
             </DetailPanel>
           )}
 

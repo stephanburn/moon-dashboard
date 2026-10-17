@@ -12,7 +12,8 @@ export interface MoonPhaseInfo {
   name: PhaseName;
   illumination: number; // 0-100
   fraction: number;     // 0-1 un-rounded illuminated fraction (for drawing the disc)
-  ageInDays: number;    // 0-29.5
+  ageInDays: number;    // days since the preceding new moon
+  lunationDays: number; // length of the current lunation, new moon to new moon
   phase: number;        // 0-1 cycle position (0 = New, 0.5 = Full)
 }
 
@@ -32,8 +33,22 @@ const DAY  = 24 * HOUR;
 // One synodic month, used to bracket the previous occurrence of a phase.
 const SYNODIC_DAYS = 29.53;
 
-function getMoonAgeInDays(phase: number): number {
-  return phase * SYNODIC_DAYS;
+/**
+ * Age (days since the preceding new moon) and the length of the current
+ * lunation. Measured from the actual new moons: a lunation runs from about
+ * 29.3 to 29.8 days, so scaling the phase angle by a mean month is out by up
+ * to a day.
+ */
+function getLunation(now: Date): { ageInDays: number; lunationDays: number } {
+  const prev = SearchMoonPhase(0, now, -40);
+  const next = SearchMoonPhase(0, now, 40);
+  if (!prev || !next) {
+    return { ageInDays: (MoonPhase(now) / 360) * SYNODIC_DAYS, lunationDays: SYNODIC_DAYS };
+  }
+  return {
+    ageInDays: (now.getTime() - prev.date.getTime()) / DAY,
+    lunationDays: (next.date.getTime() - prev.date.getTime()) / DAY,
+  };
 }
 
 /**
@@ -124,6 +139,9 @@ const TRANSITIONAL_NEXT: Partial<Record<PhaseName, typeof MAJOR_PHASES[number]>>
  */
 export function getMoonPhaseInfo(now: Date = new Date()): MoonPhaseInfo {
   const { phase, fraction } = getIllumination(now);
+  const lunation = getLunation(now);
+  const ageInDays = parseFloat(lunation.ageInDays.toFixed(1));
+  const lunationDays = parseFloat(lunation.lunationDays.toFixed(1));
 
   // Check each major phase window against a single shared peak scan
   const peakTimes = findNearestPeakTimes(now);
@@ -134,7 +152,8 @@ export function getMoonPhaseInfo(now: Date = new Date()): MoonPhaseInfo {
         name: mp.name,
         illumination: Math.round(fraction * 100),
         fraction,
-        ageInDays: parseFloat(getMoonAgeInDays(phase).toFixed(1)),
+        ageInDays,
+        lunationDays,
         phase,
       };
     }
@@ -151,7 +170,8 @@ export function getMoonPhaseInfo(now: Date = new Date()): MoonPhaseInfo {
     name,
     illumination: Math.round(fraction * 100),
     fraction,
-    ageInDays: parseFloat(getMoonAgeInDays(phase).toFixed(1)),
+    ageInDays,
+    lunationDays,
     phase,
   };
 }

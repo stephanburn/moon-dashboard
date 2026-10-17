@@ -10,8 +10,9 @@ interface Props {
 
 /**
  * The expandable panel chrome shared by every disclosure: enter animation and
- * close button. The content comes from components/details.tsx. Rendered only
- * while open, so the enter animation replays on each open.
+ * close button. The transition lives in globals.css so its reduced-motion
+ * rule can turn it off. The content comes from components/details.tsx.
+ * Rendered only while open, so the enter animation replays on each open.
  */
 export default function DetailPanel({ id, onClose, children }: Props) {
   const [visible, setVisible] = useState(false);
@@ -20,6 +21,14 @@ export default function DetailPanel({ id, onClose, children }: Props) {
     const frame = requestAnimationFrame(() => setVisible(true));
     return () => cancelAnimationFrame(frame);
   }, []);
+
+  // The panel unmounts on close, which would drop keyboard focus to <body>;
+  // hand it back to the disclosure that opened it.
+  const close = () => {
+    const trigger = id ? document.querySelector<HTMLElement>(`[aria-controls="${id}"]`) : null;
+    onClose();
+    trigger?.focus();
+  };
 
   return (
     // grid-template-rows: 0fr → 1fr animates to natural content height without
@@ -31,7 +40,6 @@ export default function DetailPanel({ id, onClose, children }: Props) {
         display: 'grid',
         gridTemplateRows: visible ? '1fr' : '0fr',
         opacity: visible ? 1 : 0,
-        transition: 'grid-template-rows 0.3s ease, opacity 0.25s ease',
       }}
     >
       <div className="overflow-hidden">
@@ -44,7 +52,7 @@ export default function DetailPanel({ id, onClose, children }: Props) {
         >
           {/* Close button — min 44px touch target */}
           <button
-            onClick={onClose}
+            onClick={close}
             className="absolute top-2 right-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-silver/50 hover:text-text-secondary transition-colors text-lg leading-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/40 focus-visible:rounded"
             aria-label="Close panel"
           >

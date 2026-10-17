@@ -12,6 +12,7 @@ import AccountButton from './AccountButton';
 import { useAccount } from './useAccount';
 import { MoonPhaseDetail, MoonSignDetail } from './details';
 import Link from 'next/link';
+import { ACCOUNTS_ENABLED } from '@/lib/account';
 import { buildDashboardModel, type DashboardModel } from '@/lib/dashboardModel';
 import { DEFAULT_TZ } from '@/lib/config';
 import { dayOf } from '@/lib/days';
@@ -158,6 +159,7 @@ function DashboardContent({
               current={{
                 illumination: moon.illumination,
                 ageInDays: moon.ageInDays,
+                lunationDays: moon.lunationDays,
                 moonSignChanges: model.moonSignChanges,
                 timezone,
               }}
@@ -181,6 +183,7 @@ function DashboardContent({
           todayLabel={model.todayLabel}
           sunSign={model.sunSign}
           venusSign={model.venusSign}
+          mercuryNow={model.mercuryNow}
           sabbatToday={model.sabbatToday}
           events={model.events}
           craft={model.craft}
@@ -329,7 +332,9 @@ export default function Dashboard() {
       </main>
 
       <footer className="px-6 py-5 text-center border-t border-white/5 space-y-1">
-        <p className="text-xs text-silver/55">Calculated locally. Anonymous usage counts only.</p>
+        <p className="text-xs text-silver/55">
+          Calculated locally. Anonymous usage counts{ACCOUNTS_ENABLED ? ', plus sign-in and visit logs for members' : ' only'}.
+        </p>
         {user === null && (
           <p className="fade-in text-xs text-silver/55">
             <Link href="/signin" className="underline hover:text-text-secondary">Members&apos; sign in</Link>

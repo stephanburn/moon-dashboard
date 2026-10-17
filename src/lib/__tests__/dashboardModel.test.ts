@@ -28,4 +28,30 @@ describe('buildDashboardModel', () => {
   it('flips the hemisphere with the timezone', () => {
     expect(buildDashboardModel(now, 'Australia/Sydney').hemisphere).toBe('south');
   });
+
+  // Mercury stations retrograde on 24 Oct 2026 and direct on 13 Nov 2026.
+  describe('the Mercury period under way', () => {
+    const hasRxEvent = (d: string) =>
+      buildDashboardModel(new Date(d), 'Europe/London').events.some(e => e.kind === 'mercury-rx');
+
+    it('is left to the spine event before the station', () => {
+      const model = buildDashboardModel(new Date('2026-10-15T12:00:00Z'), 'Europe/London');
+      expect(model.mercury.status).toBe('pre-shadow');
+      expect(model.mercuryNow).toBeNull();
+      expect(hasRxEvent('2026-10-15T12:00:00Z')).toBe(true);
+    });
+
+    it('is carried by the Now node once the station has passed', () => {
+      const model = buildDashboardModel(new Date('2026-11-01T12:00:00Z'), 'Europe/London');
+      expect(hasRxEvent('2026-11-01T12:00:00Z')).toBe(false);
+      expect(model.mercuryNow?.status).toBe('retrograde');
+      expect(model.mercuryNow?.until).toEqual(model.mercury.period?.retrogradeEnd);
+    });
+
+    it('stays on the Now node through the post-shadow', () => {
+      const model = buildDashboardModel(new Date('2026-11-20T12:00:00Z'), 'Europe/London');
+      expect(model.mercuryNow?.status).toBe('post-shadow');
+      expect(model.mercuryNow?.until).toEqual(model.mercury.period?.shadowEnd);
+    });
+  });
 });

@@ -23,6 +23,18 @@ describe('getMoonPhaseInfo', () => {
     expect(info.illumination).toBeLessThan(5);
   });
 
+  // Published new moons (USNO, Phases of the Moon 2026): 10 Oct 2026 15:50 UT
+  // and 9 Nov 2026 07:02 UT. The phase-angle estimate gave 10.9 days here.
+  it('measures age from the preceding new moon', () => {
+    const newMoon = Date.parse('2026-10-10T15:50:00Z');
+    const nextNewMoon = Date.parse('2026-11-09T07:02:00Z');
+    const now = new Date('2026-10-22T12:00:00Z');
+    const info = getMoonPhaseInfo(now);
+    expect(info.ageInDays).toBeCloseTo((now.getTime() - newMoon) / DAY, 1);
+    expect(info.ageInDays).toBe(11.8);
+    expect(info.lunationDays).toBeCloseTo((nextNewMoon - newMoon) / DAY, 1);
+  });
+
   it('returns structurally valid info across a lunar month', () => {
     const start = new Date('2026-06-01T12:00:00Z').getTime();
     for (let day = 0; day < 30; day++) {
@@ -31,7 +43,7 @@ describe('getMoonPhaseInfo', () => {
       expect(info.illumination).toBeGreaterThanOrEqual(0);
       expect(info.illumination).toBeLessThanOrEqual(100);
       expect(info.ageInDays).toBeGreaterThanOrEqual(0);
-      expect(info.ageInDays).toBeLessThanOrEqual(29.53);
+      expect(info.ageInDays).toBeLessThanOrEqual(info.lunationDays);
     }
   });
 
