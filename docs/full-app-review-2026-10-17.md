@@ -36,6 +36,8 @@ Added after the review; the report below is unchanged.
 
 Not yet addressed: SEC-03 (enforcing CSP, shared rate limits, log field bounds), SEC-04 (deletion lifecycle), DB-03, FUNC-05, OPS-03 monitoring and runbook, asset licences, and the extension requirements in sections 4 and 12.
 
+The plan for all of these is in [implementation-plan-2026-10.md](implementation-plan-2026-10.md).
+
 This is a review, not an implementation. No application code, dependencies, schema, or deployment configuration was changed. Production account data and database contents were not accessed. Only this report was added to the repository; builds and tests also generated their normal ignored output.
 
 ## 1. Executive assessment
