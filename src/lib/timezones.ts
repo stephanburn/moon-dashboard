@@ -3,6 +3,11 @@ import { DEFAULT_TZ } from './config';
 // Persisted in localStorage by Dashboard (via lib/storage).
 export const STORAGE_KEY = 'moon-dashboard-timezone';
 
+// The timezone choice that follows the device instead of fixing a zone. Not
+// an IANA name, so it can never be mistaken for one. Locally it is stored as
+// no saved zone at all; an account stores it as this string.
+export const AUTO_TIMEZONE = 'auto';
+
 // The IANA zones offered in the selector. This is the single source of truth:
 // both the selector UI and the stored-value validation derive from it.
 export const TIMEZONE_GROUPS: { label: string; zones: string[] }[] = [
@@ -239,12 +244,21 @@ export function detectBrowserTimezone(reported?: string): string | null {
  * The zone to show: the viewer's saved choice, else the browser's zone, else
  * DEFAULT_TZ, in the selector's spelling when listed. The detected zone is
  * deliberately never saved, so it follows the device and picks up tz database
- * updates on every visit.
+ * updates on every visit. A saved AUTO_TIMEZONE means the same as none.
  */
 export function resolveTimezone(saved: string | null, detected: string | null): string {
-  if (saved && canonicalZone(saved)) return listedZoneFor(saved) ?? saved;
+  if (saved && saved !== AUTO_TIMEZONE && canonicalZone(saved)) return listedZoneFor(saved) ?? saved;
   if (detected && canonicalZone(detected)) return listedZoneFor(detected) ?? detected;
   return DEFAULT_TZ;
+}
+
+/**
+ * A stored timezone as a selector choice: the zone (in the selector's
+ * spelling when listed), or AUTO_TIMEZONE when nothing valid is stored.
+ */
+export function zoneChoiceFrom(saved: string | null): string {
+  if (!saved || saved === AUTO_TIMEZONE || !canonicalZone(saved)) return AUTO_TIMEZONE;
+  return listedZoneFor(saved) ?? saved;
 }
 
 /** UTC offset of `tz` at `instant`, in minutes (east positive). */

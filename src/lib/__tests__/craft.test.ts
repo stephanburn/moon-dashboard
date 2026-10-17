@@ -146,3 +146,25 @@ describe('activity text', () => {
     expect(contexts.some(c => c.sabbatToday)).toBe(true);
   });
 });
+
+describe('saved picks and the activity data', () => {
+  const saved = (seed: unknown, day = '2026-09-26') => JSON.stringify({ day, id: 'sigil', seed });
+
+  it('rejects seeds that rerolling could never have produced', () => {
+    for (const seed of [-1, 1.5, 2 ** 32, 'NaN', null, 1e300]) {
+      expect(parseSavedPick(saved(seed)), String(seed)).toBeNull();
+    }
+    expect(parseSavedPick(saved(2 ** 32 - 1))).not.toBeNull();
+  });
+
+  it('rejects a malformed day', () => {
+    expect(parseSavedPick(saved(3, 'yesterday'))).toBeNull();
+  });
+
+  it('has positive weights and always more than one activity to reroll to', () => {
+    for (const a of CRAFT_ACTIVITIES) {
+      expect(Number.isFinite(a.weight ?? 1) && (a.weight ?? 1) > 0, a.id).toBe(true);
+    }
+    expect(CRAFT_ACTIVITIES.filter(a => a.when === undefined).length).toBeGreaterThanOrEqual(2);
+  });
+});

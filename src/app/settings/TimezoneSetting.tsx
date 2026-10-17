@@ -3,8 +3,8 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import TimezoneSelector from '@/components/TimezoneSelector';
-import { safeGet, safeSet } from '@/lib/storage';
-import { STORAGE_KEY, detectBrowserTimezone, normalizeTimezone, resolveTimezone } from '@/lib/timezones';
+import { safeGet, safeRemove, safeSet } from '@/lib/storage';
+import { AUTO_TIMEZONE, STORAGE_KEY, detectBrowserTimezone, normalizeTimezone, resolveTimezone } from '@/lib/timezones';
 import { saveTimezone } from '@/server/actions';
 
 const label = (zone: string) => zone.replace(/_/g, ' ');
@@ -27,16 +27,21 @@ export default function TimezoneSetting({ saved: initialSaved }: { saved: string
   }, []);
 
   const save = async (tz: string) => {
-    const safeTz = normalizeTimezone(tz);
+    const choice = tz === AUTO_TIMEZONE ? AUTO_TIMEZONE : normalizeTimezone(tz);
     setError(null);
     try {
-      if ((await saveTimezone(safeTz)) === 'signed-out') {
+      if ((await saveTimezone(choice)) === 'signed-out') {
         setError('signed-out');
         return;
       }
-      safeSet(STORAGE_KEY, safeTz);
-      setSaved(safeTz);
-      setDeviceZone(safeTz);
+      if (choice === AUTO_TIMEZONE) {
+        safeRemove(STORAGE_KEY);
+        setDeviceZone(resolveTimezone(null, detectedZone));
+      } else {
+        safeSet(STORAGE_KEY, choice);
+        setDeviceZone(choice);
+      }
+      setSaved(choice);
     } catch {
       setError('failed');
     }
@@ -46,7 +51,12 @@ export default function TimezoneSetting({ saved: initialSaved }: { saved: string
 
   return (
     <div className="space-y-3">
-      {saved ? (
+      {saved === AUTO_TIMEZONE ? (
+        <p className="text-sm text-text-secondary">
+          Automatic: each device uses its own timezone.
+          {deviceZone && <> This one is using <span className="text-foreground">{label(deviceZone)}</span>.</>}
+        </p>
+      ) : saved ? (
         <p className="text-sm text-text-secondary">
           <span className="text-foreground">{label(saved)}</span>, used on every device you sign in on.
         </p>

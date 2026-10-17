@@ -9,6 +9,8 @@ import {
   listedZoneFor,
   canonicalZone,
   SOUTHERN_NO_DST_TIMEZONES,
+  AUTO_TIMEZONE,
+  zoneChoiceFrom,
 } from '../timezones';
 import { DEFAULT_TZ } from '../config';
 
@@ -157,5 +159,19 @@ describe('hemisphere of zones outside the list', () => {
       expect(SUPPORTED_TIMEZONES.has(zone), zone).toBe(false);
       expect(offset(zone, new Date('2026-01-15T12:00:00Z')), zone).toBe(offset(zone, new Date('2026-07-15T12:00:00Z')));
     }
+  });
+});
+
+describe('automatic timezone', () => {
+  it('reads nothing saved, junk or "auto" as automatic', () => {
+    expect(zoneChoiceFrom(null)).toBe(AUTO_TIMEZONE);
+    expect(zoneChoiceFrom('Not/AZone')).toBe(AUTO_TIMEZONE);
+    expect(zoneChoiceFrom(AUTO_TIMEZONE)).toBe(AUTO_TIMEZONE);
+    expect(zoneChoiceFrom('Asia/Calcutta')).toBe('Asia/Kolkata');
+  });
+
+  it('follows the browser when automatic', () => {
+    expect(resolveTimezone(AUTO_TIMEZONE, 'America/Phoenix')).toBe('America/Phoenix');
+    expect(resolveTimezone(AUTO_TIMEZONE, null)).toBe(DEFAULT_TZ);
   });
 });

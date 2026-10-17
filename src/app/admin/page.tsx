@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import { DEFAULT_TZ } from '@/lib/config';
 import { dayOf } from '@/lib/days';
 import { formatDay, formatDayAndTime } from '@/lib/format';
+import { AUTO_TIMEZONE } from '@/lib/timezones';
 import { describeUserAgent } from '@/lib/userAgent';
 import { revokeSessions } from '@/server/actions';
 import { LOG_RETENTION_DAYS, VISIT_GAP_MINUTES } from '@/server/activity';
@@ -69,7 +70,7 @@ export default async function AdminPage({
                 </p>
                 <p className="text-xs text-text-tertiary">
                   {m.visits} {m.visits === 1 ? 'visit' : 'visits'} on {m.daysVisited} {m.daysVisited === 1 ? 'day' : 'days'}
-                  {m.timezone && ` · ${m.timezone.replace(/_/g, ' ')}`}
+                  {m.timezone && ` · ${m.timezone === AUTO_TIMEZONE ? 'automatic timezone' : m.timezone.replace(/_/g, ' ')}`}
                 </p>
               </div>
               {m.activeSessions > 0 && (
