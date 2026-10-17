@@ -1,5 +1,5 @@
-# Weekly dependency updates. Major versions of Next (and its ESLint config)
-# and drizzle-kit are upgraded by hand, following their migration guides.
+# Weekly dependency updates. Major versions of the build and test tooling
+# below are upgraded by hand, following their migration guides.
 version: 2
 updates:
   - package-ecosystem: npm
@@ -15,6 +15,17 @@ updates:
       - dependency-name: eslint-config-next
         update-types: [version-update:semver-major]
       - dependency-name: drizzle-kit
+        update-types: [version-update:semver-major]
+      # Majors that need their tooling to catch up or a deliberate upgrade:
+      # ESLint 10 breaks eslint-config-next's React rules, typescript-eslint
+      # doesn't support TypeScript 7, and @types/node follows .nvmrc.
+      - dependency-name: eslint
+        update-types: [version-update:semver-major]
+      - dependency-name: typescript
+        update-types: [version-update:semver-major]
+      - dependency-name: "@types/node"
+        update-types: [version-update:semver-major]
+      - dependency-name: vitest
         update-types: [version-update:semver-major]
       # Pinned to the version whose Chromium the e2e setup is known to work with.
       - dependency-name: "@playwright/test"
