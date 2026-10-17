@@ -7,6 +7,8 @@ import {
   detectBrowserTimezone,
   resolveTimezone,
   listedZoneFor,
+  canonicalZone,
+  SOUTHERN_NO_DST_TIMEZONES,
 } from '../timezones';
 import { DEFAULT_TZ } from '../config';
 
@@ -92,6 +94,24 @@ describe('resolveTimezone', () => {
   it('falls back to DEFAULT_TZ with no usable signal', () => {
     expect(resolveTimezone(null, null)).toBe(DEFAULT_TZ);
   });
+
+  // Otherwise the selector has no <option> matching the value it is given.
+  it('gives a saved alias the selector spelling', () => {
+    expect(resolveTimezone('Asia/Calcutta', null)).toBe('Asia/Kolkata');
+    expect(resolveTimezone('America/Argentina/Buenos_Aires', null)).toBe('America/Buenos_Aires');
+    expect(resolveTimezone('america/lima', null)).toBe('America/Lima');
+    expect(normalizeTimezone('Europe/Kiev')).toBe('Europe/Kyiv');
+  });
+});
+
+describe('hemisphere of listed zones in other spellings', () => {
+  const at = new Date('2026-10-17T12:00:00Z');
+
+  it('follows the listed zone', () => {
+    expect(hemisphereFromTimezone('America/Argentina/Buenos_Aires', at)).toBe('south');
+    expect(hemisphereFromTimezone('america/lima', at)).toBe('south');
+    expect(hemisphereFromTimezone('Asia/Calcutta', at)).toBe('north');
+  });
 });
 
 describe('hemisphere of zones outside the list', () => {
@@ -110,10 +130,32 @@ describe('hemisphere of zones outside the list', () => {
     expect(hemisphereFromTimezone('Australia/Brisbane', at)).toBe('south');
     expect(hemisphereFromTimezone('Africa/Maputo', at)).toBe('south');
     expect(hemisphereFromTimezone('America/Asuncion', at)).toBe('south');
+    for (const zone of ['Asia/Makassar', 'Asia/Jayapura', 'Pacific/Tahiti', 'Africa/Dar_es_Salaam']) {
+      expect(hemisphereFromTimezone(zone, at), zone).toBe('south');
+    }
+  });
+
+  it('places all of Antarctica south, including Troll and its European summer time', () => {
+    expect(hemisphereFromTimezone('Antarctica/Casey', at)).toBe('south');
+    expect(hemisphereFromTimezone('Antarctica/Troll', at)).toBe('south');
   });
 
   it('defaults other zones without DST to north', () => {
     expect(hemisphereFromTimezone('America/Phoenix', at)).toBe('north');
     expect(hemisphereFromTimezone('Asia/Kathmandu', at)).toBe('north');
+    // Within 2° of the equator: neither wheel fits, so the default stands.
+    expect(hemisphereFromTimezone('Africa/Nairobi', at)).toBe('north');
+  });
+
+  it('lists only zones the engine knows, none of which keep DST', () => {
+    const offset = (zone: string, instant: Date) =>
+      new Intl.DateTimeFormat('en', { timeZone: zone, timeZoneName: 'longOffset' })
+        .formatToParts(instant)
+        .find(part => part.type === 'timeZoneName')?.value;
+    for (const zone of SOUTHERN_NO_DST_TIMEZONES) {
+      expect(canonicalZone(zone), zone).not.toBeNull();
+      expect(SUPPORTED_TIMEZONES.has(zone), zone).toBe(false);
+      expect(offset(zone, new Date('2026-01-15T12:00:00Z')), zone).toBe(offset(zone, new Date('2026-07-15T12:00:00Z')));
+    }
   });
 });

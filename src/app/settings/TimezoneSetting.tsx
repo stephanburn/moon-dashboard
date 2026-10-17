@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import TimezoneSelector from '@/components/TimezoneSelector';
 import { safeGet, safeSet } from '@/lib/storage';
@@ -16,7 +17,7 @@ export default function TimezoneSetting({ saved: initialSaved }: { saved: string
   // This device's zone and the browser's own, known only after mount.
   const [deviceZone, setDeviceZone] = useState<string | null>(null);
   const [detectedZone, setDetectedZone] = useState<string | null>(null);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<'failed' | 'signed-out' | null>(null);
 
   useEffect(() => {
     const detected = detectBrowserTimezone();
@@ -27,14 +28,17 @@ export default function TimezoneSetting({ saved: initialSaved }: { saved: string
 
   const save = async (tz: string) => {
     const safeTz = normalizeTimezone(tz);
-    setError(false);
+    setError(null);
     try {
-      await saveTimezone(safeTz);
+      if ((await saveTimezone(safeTz)) === 'signed-out') {
+        setError('signed-out');
+        return;
+      }
       safeSet(STORAGE_KEY, safeTz);
       setSaved(safeTz);
       setDeviceZone(safeTz);
     } catch {
-      setError(true);
+      setError('failed');
     }
   };
 
@@ -66,8 +70,14 @@ export default function TimezoneSetting({ saved: initialSaved }: { saved: string
           <TimezoneSelector value={shown} detectedZone={detectedZone} onChange={save} />
         </div>
       )}
-      {error && (
+      {error === 'failed' && (
         <p role="alert" className="text-sm text-amber-light">Couldn&apos;t save that. Please try again.</p>
+      )}
+      {error === 'signed-out' && (
+        <p role="alert" className="text-sm text-amber-light">
+          You&apos;ve been signed out, so that wasn&apos;t saved.{' '}
+          <Link href="/signin" className="underline hover:text-foreground">Sign in again</Link>
+        </p>
       )}
     </div>
   );

@@ -1,6 +1,6 @@
 import { desc, eq, sql } from 'drizzle-orm';
 import { getDb } from './db';
-import { signInLog, user, userSettings, visitLog } from './db/schema';
+import { session, signInLog, user, userSettings, visitLog } from './db/schema';
 
 export async function listMembers() {
   return getDb()
@@ -14,6 +14,7 @@ export async function listMembers() {
       lastSeenAt: sql<Date | null>`max(${visitLog.lastAt})`.mapWith(v => (v ? new Date(v) : null)),
       daysVisited: sql<number>`count(${visitLog.day})`.mapWith(Number),
       visits: sql<number>`coalesce(sum(${visitLog.count}), 0)`.mapWith(Number),
+      activeSessions: sql<number>`(select count(*) from ${session} where ${session.userId} = ${user.id} and ${session.expiresAt} > now())`.mapWith(Number),
     })
     .from(user)
     .leftJoin(userSettings, eq(userSettings.userId, user.id))

@@ -6,6 +6,7 @@ import { DEFAULT_TZ } from '@/lib/config';
 import { dayOf } from '@/lib/days';
 import { formatDay, formatDayAndTime } from '@/lib/format';
 import { describeUserAgent } from '@/lib/userAgent';
+import { revokeSessions } from '@/server/actions';
 import { listMembers, recentSignIns } from '@/server/admin';
 import { accountsEnabled, requireAdmin } from '@/server/auth';
 import { getUserSettings } from '@/server/settings';
@@ -61,6 +62,18 @@ export default async function AdminPage() {
                   {m.timezone && ` · ${m.timezone.replace(/_/g, ' ')}`}
                 </p>
               </div>
+              {m.activeSessions > 0 && (
+                <form action={revokeSessions} className="ml-auto flex-shrink-0">
+                  <input type="hidden" name="userId" value={m.id} />
+                  <button
+                    type="submit"
+                    aria-label={`Sign out everywhere: ${m.name}`}
+                    className="min-h-[44px] px-3 rounded-lg border border-white/10 text-xs text-text-secondary hover:text-foreground hover:border-white/25 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber/40"
+                  >
+                    Sign out everywhere
+                  </button>
+                </form>
+              )}
             </li>
           ))}
         </ul>

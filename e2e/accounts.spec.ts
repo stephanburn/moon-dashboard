@@ -1,7 +1,7 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page, type Route } from '@playwright/test';
 import { eq } from 'drizzle-orm';
 import { purgeOldLogs } from '../src/server/activity';
-import { signInLog, userSettings, user as userTable, visitLog } from '../src/server/db/schema';
+import { session as sessionTable, signInLog, userSettings, user as userTable, visitLog } from '../src/server/db/schema';
 import { E2E_DATABASE_URL, seedSignedInUser, testDb } from './accounts';
 
 // Runs only when E2E_DATABASE_URL points at a migrated Postgres (CI sets it).
@@ -204,6 +204,120 @@ test.describe('signed in', () => {
     await expect(page).toHaveURL(/\/$/);
     const rows = await testDb().select().from(userTable).where(eq(userTable.id, user.id));
     expect(rows).toEqual([]);
+    await context.close();
+  });
+
+  test('sessions do not renew, so membership is checked again after 30 days', async ({ browser }) => {
+    const { user, cookies } = await seedSignedInUser('Bronwen');
+    // 29 days in: a renewing session would be pushed out to 30 days again.
+    const day = 24 * 60 * 60 * 1000;
+    const expiresAt = new Date(Date.now() + day);
+    await testDb()
+      .update(sessionTable)
+      .set({ expiresAt, createdAt: new Date(Date.now() - 29 * day), updatedAt: new Date(Date.now() - 29 * day) })
+      .where(eq(sessionTable.userId, user.id));
+    const context = await browser.newContext();
+    await context.addCookies(cookies);
+    const me = await (await context.request.get('/api/me')).json();
+    expect(me.user?.name).toBe('Bronwen');
+    const [row] = await testDb().select().from(sessionTable).where(eq(sessionTable.userId, user.id));
+    expect(row.expiresAt.getTime()).toBe(expiresAt.getTime());
+    await context.close();
+  });
+
+  test('an admin can sign a member out everywhere', async ({ browser }) => {
+    const suffix = crypto.randomUUID().slice(0, 8);
+    const member = await seedSignedInUser(`Gwen ${suffix}`);
+    const admin = await seedSignedInUser(`Admin ${suffix}`);
+    await testDb().update(userTable).set({ isAdmin: true }).where(eq(userTable.id, admin.user.id));
+    const context = await browser.newContext();
+    await context.addCookies(admin.cookies);
+    const page = await context.newPage();
+    await page.goto('/admin');
+    const revoke = page.getByRole('button', { name: `Sign out everywhere: Gwen ${suffix}` });
+    await revoke.click();
+    await expect(revoke).toHaveCount(0);
+    const sessions = await testDb().select().from(sessionTable).where(eq(sessionTable.userId, member.user.id));
+    expect(sessions).toEqual([]);
+    await context.close();
+  });
+
+  test('a save that finds the session gone signs the dashboard out', async ({ browser }) => {
+    const { user, cookies } = await seedSignedInUser('Linnea');
+    const context = await browser.newContext();
+    await context.addCookies(cookies);
+    const page = await context.newPage();
+    await page.goto('/');
+    await expect(page.getByRole('link', { name: 'Account: Linnea' })).toBeVisible();
+    await testDb().delete(sessionTable).where(eq(sessionTable.userId, user.id));
+    await page.getByRole('combobox', { name: 'Timezone' }).selectOption('Asia/Tokyo');
+    await expect(page.getByRole('link', { name: "Members' sign in" })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Account: Linnea' })).toHaveCount(0);
+    await context.close();
+  });
+
+  test('settings says so when a save finds the session cookie expired', async ({ browser }) => {
+    const { cookies } = await seedSignedInUser('Eira');
+    const context = await browser.newContext();
+    await context.addCookies(cookies);
+    const page = await context.newPage();
+    await page.goto('/settings');
+    await expect(page.getByRole('heading', { name: 'Eira' })).toBeVisible();
+    await context.clearCookies();
+    await page.getByRole('combobox', { name: 'Timezone' }).selectOption('Asia/Tokyo');
+    await expect(page.getByRole('alert').filter({ hasText: "You've been signed out" })).toBeVisible();
+    await context.close();
+  });
+
+  // Better Auth clears the cookie of a session it can't find, which makes
+  // Next re-render the page, and settings then sends the visitor to sign in.
+  test('settings sends a revoked session to sign in on the next save', async ({ browser }) => {
+    const { user, cookies } = await seedSignedInUser('Carys');
+    const context = await browser.newContext();
+    await context.addCookies(cookies);
+    const page = await context.newPage();
+    await page.goto('/settings');
+    await expect(page.getByRole('heading', { name: 'Carys' })).toBeVisible();
+    await testDb().delete(sessionTable).where(eq(sessionTable.userId, user.id));
+    await page.getByRole('combobox', { name: 'Timezone' }).selectOption('Asia/Tokyo');
+    await expect(page).toHaveURL(/\/signin$/);
+    await context.close();
+  });
+
+  test('an account check that keeps failing says so and can be retried', async ({ browser }) => {
+    const { cookies } = await seedSignedInUser('Saoirse');
+    const context = await browser.newContext();
+    await context.addCookies(cookies);
+    await context.route('**/api/me', route => route.fulfill({ status: 503, body: '' }));
+    const page = await context.newPage();
+    await page.goto('/');
+    await expect(page.getByText("Members' accounts can't be reached right now.")).toBeVisible({ timeout: 10_000 });
+    await context.unroute('**/api/me');
+    await page.getByRole('button', { name: 'Try again' }).click();
+    await expect(page.getByRole('link', { name: 'Account: Saoirse' })).toBeVisible();
+    await context.close();
+  });
+
+  test('a timezone that fails to sync says so and can be retried', async ({ browser }) => {
+    const { user, cookies } = await seedSignedInUser('Morwenna');
+    const context = await browser.newContext({ timezoneId: 'Europe/London' });
+    await context.addCookies(cookies);
+    const page = await context.newPage();
+    await page.goto('/');
+    await expect(page.getByRole('link', { name: 'Account: Morwenna' })).toBeVisible();
+    await expect.poll(() => syncedTimezone(user.id)).toBe('Europe/London');
+
+    const failActions = (route: Route) =>
+      route.request().headers()['next-action'] ? route.abort() : route.fallback();
+    await page.route('**/*', failActions);
+    await page.getByRole('combobox', { name: 'Timezone' }).selectOption('Asia/Tokyo');
+    const notice = page.getByRole('status').filter({ hasText: "Couldn't save this timezone" });
+    await expect(notice).toBeVisible();
+
+    await page.unroute('**/*', failActions);
+    await notice.getByRole('button', { name: 'Try again' }).click();
+    await expect.poll(() => syncedTimezone(user.id)).toBe('Asia/Tokyo');
+    await expect(notice).toHaveCount(0);
     await context.close();
   });
 });

@@ -9,6 +9,8 @@ export interface AccountUser {
   image: string | null;
 }
 
+export type SaveTimezoneResult = 'saved' | 'signed-out' | 'invalid';
+
 export interface MeResponse {
   user: AccountUser | null;
   timezone: string | null; // the user's synced choice, if they have made one
