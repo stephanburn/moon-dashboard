@@ -1,3 +1,4 @@
+import 'server-only';
 import { eq } from 'drizzle-orm';
 import { getDb } from './db';
 import type { WheelChoice } from '@/lib/wheel';

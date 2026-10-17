@@ -5,6 +5,10 @@
 //
 // After changing this file, run `npm run db:generate` to write a migration
 // into drizzle/ and commit it.
+//
+// The one module here without `import 'server-only'`: drizzle-kit and the e2e
+// seeder load it outside Next, and it holds table definitions, not data or
+// secrets. The connection (./index.ts) is server-only.
 
 import { boolean, index, integer, pgTable, primaryKey, text, timestamp, unique } from 'drizzle-orm/pg-core';
 

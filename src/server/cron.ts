@@ -1,3 +1,4 @@
+import 'server-only';
 import { timingSafeEqual } from 'node:crypto';
 
 // Vercel Cron sends `Authorization: Bearer $CRON_SECRET`. With no secret

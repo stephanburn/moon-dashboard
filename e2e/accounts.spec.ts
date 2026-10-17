@@ -1,8 +1,10 @@
 import { test, expect, type Page, type Route } from '@playwright/test';
 import { eq } from 'drizzle-orm';
+import './serverOnly';
 import { purgeOldLogs } from '../src/server/activity';
 import { session as sessionTable, signInLog, userSettings, user as userTable, visitLog } from '../src/server/db/schema';
 import { E2E_DATABASE_URL, seedSignedInUser, testDb } from './accounts';
+import { E2E_PORT } from './env';
 
 // Runs only when E2E_DATABASE_URL points at a migrated Postgres (CI sets it).
 test.skip(!E2E_DATABASE_URL, 'E2E_DATABASE_URL not set');
@@ -12,7 +14,8 @@ function watchForErrors(page: Page): string[] {
   page.on('pageerror', e => errors.push(`pageerror: ${e.message}`));
   page.on('console', msg => {
     if (msg.type() !== 'error') return;
-    if (msg.location().url.includes('/_vercel/insights')) return;
+    // With nosniff, Chrome also reports the 404 as a script it refused to run.
+    if (msg.location().url.includes('/_vercel/insights') || msg.text().includes('/_vercel/insights')) return;
     if (msg.text().startsWith('Failed to load resource')) return;
     errors.push(`console: ${msg.text()}`);
   });
@@ -345,6 +348,31 @@ test.describe('signed in', () => {
     await expect.poll(() => syncedTimezone(user.id)).toBe('Asia/Tokyo');
     await expect(notice).toHaveCount(0);
     await context.close();
+  });
+});
+
+test.describe('auth API surface', () => {
+  test('a signed-in user cannot change their profile through Better Auth directly', async ({ request }) => {
+    const { user, cookies } = await seedSignedInUser('Wren');
+    // Sent the way a browser on the site would send it, so only the route
+    // allowlist stands in the way.
+    const res = await request.post('/api/auth/update-user', {
+      headers: {
+        cookie: cookies.map(c => `${c.name}=${c.value}`).join('; '),
+        origin: `http://localhost:${E2E_PORT}`,
+      },
+      data: { name: 'Not Wren', image: 'https://example.test/me.png' },
+    });
+    expect(res.status()).toBe(404);
+    const [row] = await testDb().select().from(userTable).where(eq(userTable.id, user.id));
+    expect(row.name).toBe('Wren');
+    expect(row.image ?? null).toBe(user.image ?? null);
+  });
+
+  test('routes the app does not use answer 404', async ({ request }) => {
+    for (const path of ['/api/auth/delete-user', '/api/auth/list-sessions', '/api/auth/ok']) {
+      expect((await request.get(path)).status(), path).toBe(404);
+    }
   });
 });
 
