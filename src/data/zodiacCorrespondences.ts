@@ -92,7 +92,7 @@ export const ZODIAC_CORRESPONDENCES: Record<SignName, ZodiacCorrespondence> = {
     rulingPlanet: 'Mercury',
     qualities: ['analytical', 'precise', 'helpful', 'discerning', 'health-conscious'],
     transitEnergy:
-      'The Sun in Virgo brings a quieter, more thoughtful energy: order, refinement, and service. It is a fine time to tend to health, organise the home or workspace, and refine your craft with care. The harvest season calls us to be discerning about what we cultivate and what we must cull.',
+      'The Sun in Virgo brings a quieter, more thoughtful energy: order, refinement, and service. It is a fine time to tend to health, organise the home or workspace, and refine your craft with care. Virgo\'s old image of the maiden holding an ear of wheat calls us to be discerning about what we cultivate and what we must cull.',
     colours: ['navy blue', 'deep grey', 'forest green', 'rich brown'],
     crystals: ['peridot', 'sapphire', 'amazonite', 'moss agate'],
     herbs: ['dill', 'oregano', 'caraway', 'chrysanthemum', 'valerian'],
@@ -148,7 +148,7 @@ export const ZODIAC_CORRESPONDENCES: Record<SignName, ZodiacCorrespondence> = {
     rulingPlanet: 'Saturn',
     qualities: ['disciplined', 'ambitious', 'patient', 'pragmatic', 'resilient'],
     transitEnergy:
-      'The Sun in Capricorn calls for focused effort, discipline, and the patient building of lasting structures. The depth of winter demands we conserve energy and work methodically toward meaningful goals. Tradition, responsibility, and the wisdom of elders carry special weight in this season.',
+      'The Sun in Capricorn calls for focused effort, discipline, and the patient building of lasting structures. Beginning at the December solstice, it asks us to conserve energy and work methodically toward meaningful goals. Tradition, responsibility, and the wisdom of elders carry special weight under this sign.',
     colours: ['charcoal grey', 'forest green', 'black', 'dark earth brown'],
     crystals: ['garnet', 'onyx', 'jet', 'smoky quartz', 'tiger\'s eye'],
     herbs: ['comfrey', 'horsetail', 'shepherd\'s purse', 'bistort', 'thyme'],

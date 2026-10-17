@@ -104,29 +104,91 @@ export const SOUTHERN_TIMEZONES: ReadonlySet<string> = new Set([
 
 // Southern zones with no daylight saving, for detected zones outside the
 // selector list (DST zones are placed by the direction of their DST instead).
-// Australia/* is matched by prefix.
-const SOUTHERN_NO_DST_TIMEZONES: ReadonlySet<string> = new Set([
+// A zone counts as southern when its city lies more than 2° south of the
+// equator; nearer than that (Nairobi, Kigali, Belém, Nauru) fits neither
+// wheel and stays with the northern default. Australia/* and Antarctica/*
+// are matched by prefix.
+export const SOUTHERN_NO_DST_TIMEZONES: ReadonlySet<string> = new Set([
+  'Africa/Blantyre',
+  'Africa/Brazzaville',
+  'Africa/Bujumbura',
+  'Africa/Dar_es_Salaam',
   'Africa/Gaborone',
   'Africa/Harare',
+  'Africa/Kinshasa',
+  'Africa/Lubumbashi',
   'Africa/Luanda',
   'Africa/Lusaka',
   'Africa/Maputo',
   'Africa/Maseru',
+  'Africa/Mbabane',
   'Africa/Windhoek',
+  'America/Araguaina',
+  'America/Argentina/Catamarca',
+  'America/Argentina/Cordoba',
+  'America/Argentina/Jujuy',
+  'America/Argentina/La_Rioja',
+  'America/Argentina/Mendoza',
+  'America/Argentina/Rio_Gallegos',
+  'America/Argentina/Salta',
+  'America/Argentina/San_Juan',
+  'America/Argentina/San_Luis',
+  'America/Argentina/Tucuman',
+  'America/Argentina/Ushuaia',
   'America/Asuncion',
+  'America/Bahia',
+  'America/Campo_Grande',
+  'America/Cuiaba',
+  'America/Eirunepe',
+  'America/Fortaleza',
+  'America/Guayaquil',
   'America/La_Paz',
+  'America/Maceio',
   'America/Manaus',
   'America/Montevideo',
+  'America/Noronha',
+  'America/Porto_Velho',
+  'America/Punta_Arenas',
   'America/Recife',
+  'America/Rio_Branco',
+  'America/Santarem',
+  'Asia/Dili',
   'Asia/Jakarta',
+  'Asia/Jayapura',
+  'Asia/Makassar',
+  'Atlantic/South_Georgia',
+  'Atlantic/St_Helena',
+  'Atlantic/Stanley',
   'Indian/Antananarivo',
+  'Indian/Chagos',
+  'Indian/Christmas',
+  'Indian/Cocos',
+  'Indian/Comoro',
+  'Indian/Kerguelen',
+  'Indian/Mahe',
   'Indian/Mauritius',
+  'Indian/Mayotte',
   'Indian/Reunion',
   'Pacific/Apia',
+  'Pacific/Bougainville',
+  'Pacific/Efate',
+  'Pacific/Fakaofo',
+  'Pacific/Funafuti',
+  'Pacific/Gambier',
+  'Pacific/Guadalcanal',
+  'Pacific/Kanton',
+  'Pacific/Marquesas',
+  'Pacific/Niue',
   'Pacific/Noumea',
+  'Pacific/Pago_Pago',
   'Pacific/Port_Moresby',
+  'Pacific/Rarotonga',
+  'Pacific/Tahiti',
   'Pacific/Tongatapu',
+  'Pacific/Wallis',
 ]);
+
+const SOUTHERN_PREFIXES = ['Australia/', 'Antarctica/'];
 
 /**
  * The engine's canonical spelling of `tz`, or null if Intl rejects it. Engines
@@ -174,13 +236,13 @@ export function detectBrowserTimezone(reported?: string): string | null {
 }
 
 /**
- * The zone to show: the viewer's saved choice, else the browser's zone (in
- * the selector's spelling when listed), else DEFAULT_TZ. The detected zone is
+ * The zone to show: the viewer's saved choice, else the browser's zone, else
+ * DEFAULT_TZ, in the selector's spelling when listed. The detected zone is
  * deliberately never saved, so it follows the device and picks up tz database
  * updates on every visit.
  */
 export function resolveTimezone(saved: string | null, detected: string | null): string {
-  if (saved && canonicalZone(saved)) return saved;
+  if (saved && canonicalZone(saved)) return listedZoneFor(saved) ?? saved;
   if (detected && canonicalZone(detected)) return listedZoneFor(detected) ?? detected;
   return DEFAULT_TZ;
 }
@@ -199,22 +261,28 @@ function utcOffsetMinutes(tz: string, instant: Date): number {
 }
 
 /**
- * Listed zones use the explicit table. Any other zone that observes daylight
- * saving is placed by when its clocks go forward: a larger offset in January
- * than in July means southern summer time. Zones without DST fall back to a
- * list of southern zones; everything else (including the equatorial zones,
- * which fit neither wheel) is northern.
+ * Listed zones (in any spelling) use the explicit table, and Antarctica is
+ * always southern (Troll keeps Norwegian summer time). Any other zone that
+ * observes daylight saving is placed by when its clocks go forward: a larger
+ * offset in January than in July means southern summer time. Zones without
+ * DST fall back to a list of southern zones; everything else (including the
+ * equatorial zones, which fit neither wheel) is northern.
  */
 export function hemisphereFromTimezone(tz: string, at: Date = new Date()): Hemisphere {
-  if (SUPPORTED_TIMEZONES.has(tz)) return SOUTHERN_TIMEZONES.has(tz) ? 'south' : 'north';
+  const listed = listedZoneFor(tz);
+  if (listed) return SOUTHERN_TIMEZONES.has(listed) ? 'south' : 'north';
+  const canonical = canonicalZone(tz) ?? tz;
+  const names = [tz, canonical];
+  if (names.some(z => z.startsWith('Antarctica/'))) return 'south';
 
   const year = at.getUTCFullYear();
   const jan = utcOffsetMinutes(tz, new Date(Date.UTC(year, 0, 15)));
   const jul = utcOffsetMinutes(tz, new Date(Date.UTC(year, 6, 15)));
   if (jan !== jul) return jan > jul ? 'south' : 'north';
 
-  const canonical = canonicalZone(tz) ?? tz;
-  const isSouthern = [tz, canonical].some(z => SOUTHERN_NO_DST_TIMEZONES.has(z) || z.startsWith('Australia/'));
+  const isSouthern = names.some(
+    z => SOUTHERN_NO_DST_TIMEZONES.has(z) || SOUTHERN_PREFIXES.some(prefix => z.startsWith(prefix)),
+  );
   return isSouthern ? 'south' : 'north';
 }
 
@@ -222,8 +290,8 @@ export function hemisphereFromTimezone(tz: string, at: Date = new Date()): Hemis
  * Coerce a possibly-untrusted timezone (e.g. a stale or hand-edited localStorage
  * value) to a known-good one. Anything Intl rejects falls back to DEFAULT_TZ,
  * so it can never reach Intl.DateTimeFormat and throw a RangeError that would
- * blank the page.
+ * blank the page. A listed zone comes back in the selector's spelling.
  */
 export function normalizeTimezone(tz: string | null | undefined): string {
-  return tz && canonicalZone(tz) ? tz : DEFAULT_TZ;
+  return tz && canonicalZone(tz) ? (listedZoneFor(tz) ?? tz) : DEFAULT_TZ;
 }
