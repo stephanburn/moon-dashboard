@@ -14,6 +14,8 @@ const eslintConfig = defineConfig([
     "next-env.d.ts",
     // node_modules is a symlink to this iCloud-excluded folder.
     "node_modules.nosync/**",
+    // Other Claude sessions' git worktrees, each a full copy of the repo.
+    ".claude/**",
   ]),
 ]);
 
