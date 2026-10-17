@@ -1,6 +1,7 @@
 'use server';
 
 import 'server-only';
+import { normalizeIP } from '@better-auth/core/utils/ip';
 import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
@@ -15,13 +16,14 @@ import { session as sessionTable, user as userTable } from './db/schema';
 import { consumeRateLimit, RATE_LIMITS } from './rateLimit';
 import { setUserTimezone, setUserWheel } from './settings';
 
-// Each sign-in stores a state row, so it is limited per address. Locally there
-// may be no x-forwarded-for; on Vercel there always is.
+// Each sign-in stores a state row, so it is limited per address, counting an
+// IPv6 /64 (what one visitor usually holds) as one address, as Better Auth
+// does. Locally there may be no x-forwarded-for; on Vercel there always is.
 export async function signInWithDiscord(): Promise<void> {
   if (!accountsEnabled()) redirect('/');
   const requestHeaders = await headers();
   const { ipAddress } = requestInfo(requestHeaders);
-  if (ipAddress && !(await consumeRateLimit(`sign-in:${ipAddress}`, RATE_LIMITS.signIn))) {
+  if (ipAddress && !(await consumeRateLimit(`sign-in:${normalizeIP(ipAddress)}`, RATE_LIMITS.signIn))) {
     redirect('/signin?error=rate_limited');
   }
   const { url } = await getAuth().api.signInSocial({
