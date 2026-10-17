@@ -134,7 +134,13 @@ test('every disclosure shows a visible chevron and opens a panel', async ({ page
     await expect(button.locator('[data-chevron]')).toBeVisible();
     await button.click();
     await expect(button).toHaveAttribute('aria-expanded', 'true');
-    await expect(page.locator(`#${await button.getAttribute('aria-controls')}`)).toBeVisible();
+    const panel = page.locator(`#${await button.getAttribute('aria-controls')}`);
+    await expect(panel).toBeVisible();
+    // Let the panel finish opening before the next click. At the bottom of the
+    // page, scroll anchoring holds the next row still for a few frames of the
+    // transition and then lets it move, so a click there can pass Playwright's
+    // stability check and still have its pointerup land off the button.
+    await panel.evaluate(el => Promise.all(el.getAnimations().map(a => a.finished)));
   }
 });
 
