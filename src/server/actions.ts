@@ -8,16 +8,25 @@ import { redirect } from 'next/navigation';
 import type { SaveResult } from '@/lib/account';
 import { AUTO_TIMEZONE, canonicalZone, listedZoneFor } from '@/lib/timezones';
 import { WHEEL_CHOICES, type WheelChoice } from '@/lib/wheel';
+import { requestInfo } from './activity';
 import { accountsEnabled, getAuth, getCurrentUser, requireAdmin, requireUser } from './auth';
 import { getDb } from './db';
 import { session as sessionTable, user as userTable } from './db/schema';
+import { consumeRateLimit, RATE_LIMITS } from './rateLimit';
 import { setUserTimezone, setUserWheel } from './settings';
 
+// Each sign-in stores a state row, so it is limited per address. Locally there
+// may be no x-forwarded-for; on Vercel there always is.
 export async function signInWithDiscord(): Promise<void> {
   if (!accountsEnabled()) redirect('/');
+  const requestHeaders = await headers();
+  const { ipAddress } = requestInfo(requestHeaders);
+  if (ipAddress && !(await consumeRateLimit(`sign-in:${ipAddress}`, RATE_LIMITS.signIn))) {
+    redirect('/signin?error=rate_limited');
+  }
   const { url } = await getAuth().api.signInSocial({
     body: { provider: 'discord', callbackURL: '/', errorCallbackURL: '/signin' },
-    headers: await headers(),
+    headers: requestHeaders,
   });
   if (!url) throw new Error('Discord sign-in URL missing');
   redirect(url);
@@ -41,6 +50,7 @@ export async function deleteAccount(): Promise<void> {
 
 // Called when a signed-in user picks a zone. 'signed-out' means the session
 // has gone (expired or revoked); the choice is still kept in localStorage.
+// 'rate-limited' means too many saves in a row (the client tries again).
 // Database failures throw, so callers can tell them apart.
 // `timezone` is an IANA zone or AUTO_TIMEZONE (follow each device).
 export async function saveTimezone(timezone: string): Promise<SaveResult> {
@@ -48,6 +58,7 @@ export async function saveTimezone(timezone: string): Promise<SaveResult> {
   if (!valid) return 'invalid';
   const user = await getCurrentUser();
   if (!user) return 'signed-out';
+  if (!(await consumeRateLimit(`timezone:${user.id}`, RATE_LIMITS.saveSetting))) return 'rate-limited';
   await setUserTimezone(user.id, timezone === AUTO_TIMEZONE ? timezone : (listedZoneFor(timezone) ?? timezone));
   return 'saved';
 }
@@ -56,6 +67,7 @@ export async function saveWheel(wheel: WheelChoice): Promise<SaveResult> {
   if (!WHEEL_CHOICES.includes(wheel)) return 'invalid';
   const user = await getCurrentUser();
   if (!user) return 'signed-out';
+  if (!(await consumeRateLimit(`wheel:${user.id}`, RATE_LIMITS.saveSetting))) return 'rate-limited';
   await setUserWheel(user.id, wheel);
   return 'saved';
 }

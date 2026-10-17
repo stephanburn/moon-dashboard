@@ -30,6 +30,9 @@ export interface SyncedPreferences {
 }
 
 const RETRY_MS = 3000;
+// A save refused for coming too fast is sent again after the server's window
+// (RATE_LIMITS.saveSetting), unless a newer one has gone through by then.
+const RATE_LIMITED_RETRY_MS = 10_000;
 // A tab shown again re-checks the account at most this often.
 const RECHECK_MS = 10 * 60_000;
 // Another tab's sign-out may still be on its way to the server when it
@@ -74,9 +77,16 @@ export function useAccount(prefs: SyncedPreferences) {
 
   // Server Actions run one at a time per page, so results arrive in order
   // and the last one decides the state.
-  const push = useCallback((save: () => Promise<SaveResult>) => {
+  const push = useCallback(function push(save: () => Promise<SaveResult>) {
     save().then(
       result => {
+        if (result === 'rate-limited') {
+          failedSave.current = save;
+          setTimeout(() => {
+            if (failedSave.current === save) push(save);
+          }, RATE_LIMITED_RETRY_MS);
+          return;
+        }
         failedSave.current = null;
         setSyncFailed(false);
         if (result === 'signed-out') {

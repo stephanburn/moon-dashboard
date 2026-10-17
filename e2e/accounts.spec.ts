@@ -2,7 +2,8 @@ import { test, expect, type Page, type Route } from '@playwright/test';
 import { eq } from 'drizzle-orm';
 import './serverOnly';
 import { purgeOldLogs } from '../src/server/activity';
-import { session as sessionTable, signInLog, userSettings, user as userTable, visitLog } from '../src/server/db/schema';
+import { consumeRateLimit } from '../src/server/rateLimit';
+import { rateLimit, session as sessionTable, signInLog, userSettings, user as userTable, visitLog } from '../src/server/db/schema';
 import { E2E_DATABASE_URL, seedSignedInUser, testDb } from './accounts';
 import { E2E_PORT } from './env';
 
@@ -443,6 +444,34 @@ test.describe('auth API surface', () => {
   });
 });
 
+test.describe('rate limits', () => {
+  test('a key is refused past its limit until the window has passed', async () => {
+    const key = `e2e:${crypto.randomUUID()}`;
+    const rule = { window: 10, max: 3 };
+    // An hour ahead, where Better Auth's own pruning (of rows over a minute
+    // old) can't remove the row while other tests run.
+    const start = Date.now() + 60 * 60_000;
+    const at = (seconds: number) => consumeRateLimit(key, rule, start + seconds * 1000, testDb());
+    expect([await at(0), await at(1), await at(2), await at(3)]).toEqual([true, true, true, false]);
+    expect(await consumeRateLimit(`${key}:other`, rule, start + 3000, testDb())).toBe(true);
+    expect(await at(13)).toBe(true);
+  });
+
+  test('Discord callbacks from one address are limited', async ({ request }) => {
+    // A fresh address (Better Auth counts IPv6 per /64) each run, so earlier
+    // runs don't count.
+    const hex = () => Math.floor(Math.random() * 0x10000).toString(16);
+    const ip = `2001:db8:${hex()}:${hex()}::1`;
+    const statuses: number[] = [];
+    for (let i = 0; i < 11; i++) {
+      const res = await request.get('/api/auth/callback/discord', { headers: { 'x-forwarded-for': ip }, maxRedirects: 0 });
+      statuses.push(res.status());
+    }
+    expect(statuses.slice(0, 10)).not.toContain(429);
+    expect(statuses[10]).toBe(429);
+  });
+});
+
 test.describe('log retention', () => {
   test('the purge endpoint refuses requests without the cron secret', async ({ request }) => {
     // The server under test has no CRON_SECRET, so even this is refused.
@@ -466,6 +495,23 @@ test.describe('log retention', () => {
     expect(signIns.map(r => r.at.toISOString())).toEqual(['2026-07-19T13:00:00.000Z']);
     const visits = await testDb().select().from(visitLog).where(eq(visitLog.userId, user.id));
     expect(visits.map(r => r.day)).toEqual(['2026-07-19']);
+  });
+
+  test('rate-limit counts older than a day are purged', async () => {
+    // A purge run long ago, so it can't touch rows other tests are using.
+    const now = new Date('2026-01-01T12:00:00Z');
+    const key = (name: string) => `e2e-purge:${crypto.randomUUID()}:${name}`;
+    const stale = key('stale');
+    const fresh = key('fresh');
+    await testDb().insert(rateLimit).values([
+      { id: crypto.randomUUID(), key: stale, count: 1, lastRequest: Date.parse('2025-12-31T11:59:00Z') },
+      // In the future, out of reach of Better Auth's own pruning.
+      { id: crypto.randomUUID(), key: fresh, count: 1, lastRequest: Date.now() + 60 * 60_000 },
+    ]);
+    await purgeOldLogs(now, testDb());
+    const keys = (await testDb().select({ key: rateLimit.key }).from(rateLimit)).map(r => r.key);
+    expect(keys).not.toContain(stale);
+    expect(keys).toContain(fresh);
   });
 
   test('Automatic is kept on the account and each device follows its own zone', async ({ browser }) => {
