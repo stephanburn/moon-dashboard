@@ -159,3 +159,19 @@ describe('hemisphere of zones outside the list', () => {
     }
   });
 });
+
+describe('old names of listed zones', () => {
+  // WebKit hands these back unchanged, so they are matched without Intl.
+  it('maps each alias to a listed zone', () => {
+    expect(listedZoneFor('Asia/Calcutta')).toBe('Asia/Kolkata');
+    expect(listedZoneFor('Europe/Kiev')).toBe('Europe/Kyiv');
+    expect(listedZoneFor('America/Argentina/Buenos_Aires')).toBe('America/Buenos_Aires');
+    for (const listed of ['Asia/Kolkata', 'Europe/Kyiv', 'America/Buenos_Aires']) {
+      expect(SUPPORTED_TIMEZONES.has(listed)).toBe(true);
+    }
+  });
+
+  it('ignores inherited object keys', () => {
+    expect(listedZoneFor('constructor')).toBeUndefined();
+  });
+});
