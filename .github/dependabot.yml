@@ -1,0 +1,24 @@
+# Weekly dependency updates. Major versions of Next (and its ESLint config)
+# and drizzle-kit are upgraded by hand, following their migration guides.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    groups:
+      minor-and-patch:
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: next
+        update-types: [version-update:semver-major]
+      - dependency-name: eslint-config-next
+        update-types: [version-update:semver-major]
+      - dependency-name: drizzle-kit
+        update-types: [version-update:semver-major]
+      # Pinned to the version whose Chromium the e2e setup is known to work with.
+      - dependency-name: "@playwright/test"
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
