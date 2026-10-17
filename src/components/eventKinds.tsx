@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import type { SpineEvent, SpineEventKind } from '@/lib/events';
 import type { Hemisphere } from '@/lib/timezones';
+import type { WheelChoice } from '@/lib/wheel';
 import { SIGN_SYMBOLS, type MajorPhaseName } from '@/lib/names';
 import {
   DeipnonDetail,
@@ -16,7 +17,10 @@ import {
 
 export interface EventContext {
   timezone: string;
-  hemisphere: Hemisphere;
+  hemisphere: Hemisphere; // the timezone's
+  wheel: Hemisphere; // the Wheel of the Year followed
+  wheelChoice: WheelChoice;
+  onWheelChange: (choice: WheelChoice) => void;
 }
 
 type EventOf<K extends SpineEventKind> = Extract<SpineEvent, { kind: K }>;
@@ -53,7 +57,7 @@ const EVENT_KINDS: { [K in SpineEventKind]: KindSpec<K> } = {
   'sabbat': {
     icon: () => '☉',
     title: e => e.sabbat.displayName,
-    Detail: ({ event, ctx }) => <SabbatDetail sabbat={event.sabbat.name} hemisphere={ctx.hemisphere} />,
+    Detail: ({ event, ctx }) => <SabbatDetail sabbat={event.sabbat.name} ctx={ctx} />,
   },
   'venus-ingress': {
     icon: () => '♀︎',

@@ -13,6 +13,7 @@ import { getCraftContext, type CraftContext } from './craft';
 import { dayOf, type CalendarDay } from './days';
 import { formatDay, formatPeakText } from './format';
 import { hemisphereFromTimezone, type Hemisphere } from './timezones';
+import { resolveWheel, type WheelChoice } from './wheel';
 import type { SignName } from './names';
 
 /** A Mercury period under way whose retrograde station has already passed. */
@@ -25,7 +26,8 @@ export interface MercuryNow {
 /** Everything the dashboard shows, for one instant as seen from one timezone. */
 export interface DashboardModel {
   timezone: string;
-  hemisphere: Hemisphere;
+  hemisphere: Hemisphere; // the timezone's, for drawing the moon
+  wheel: Hemisphere; // the Wheel of the Year followed, for sabbats
   today: CalendarDay;
   todayLabel: string; // "Thu 24 Sept"
   moon: MoonPhaseInfo;
@@ -57,15 +59,16 @@ function getMercuryNow({ status, period }: MercuryInfo): MercuryNow | null {
   return null;
 }
 
-export function buildDashboardModel(now: Date, timezone: string): DashboardModel {
+export function buildDashboardModel(now: Date, timezone: string, wheelChoice: WheelChoice = 'auto'): DashboardModel {
   const hemisphere = hemisphereFromTimezone(timezone, now);
+  const wheel = resolveWheel(wheelChoice, timezone, now);
   const today = dayOf(now, timezone);
   const moon = getMoonPhaseInfo(now);
   const moonPeak = getMoonPhasePeak(now, moon.name);
 
   // The hero already announces the current/next phase peak, so drop the spine
   // node for that same peak. Fetch one extra event to keep the spine full.
-  const upcoming = getUpcomingEvents(now, timezone, hemisphere, SPINE_EVENT_COUNT + 1);
+  const upcoming = getUpcomingEvents(now, timezone, wheel, SPINE_EVENT_COUNT + 1);
   const heroPeakIndex = upcoming.findIndex(e =>
     e.kind === 'moon-phase'
     && e.phase === moonPeak.phaseName
@@ -77,6 +80,7 @@ export function buildDashboardModel(now: Date, timezone: string): DashboardModel
   return {
     timezone,
     hemisphere,
+    wheel,
     today,
     todayLabel: formatDay(today, { weekday: 'short', day: 'numeric', month: 'short' }),
     moon,
@@ -88,8 +92,8 @@ export function buildDashboardModel(now: Date, timezone: string): DashboardModel
     venusSign: getCurrentVenusSign(now),
     mercury,
     mercuryNow: getMercuryNow(mercury),
-    sabbatToday: getSabbatContext(today, hemisphere, timezone).today,
+    sabbatToday: getSabbatContext(today, wheel, timezone).today,
     events,
-    craft: getCraftContext(now, timezone, hemisphere),
+    craft: getCraftContext(now, timezone, wheel),
   };
 }

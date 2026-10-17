@@ -7,6 +7,7 @@ import { getUserSettings } from '@/server/settings';
 import { signOut } from '@/server/actions';
 import DeleteAccountForm from './DeleteAccountForm';
 import TimezoneSetting from './TimezoneSetting';
+import WheelSetting from './WheelSetting';
 
 export const metadata: Metadata = { title: 'Account · Moon Dashboard' };
 
@@ -16,7 +17,7 @@ const buttonClass =
 export default async function SettingsPage() {
   if (!accountsEnabled()) notFound();
   const user = await requireUser();
-  const { timezone } = await getUserSettings(user.id);
+  const { timezone, wheel } = await getUserSettings(user.id);
 
   return (
     <main className="relative z-10 min-h-dvh px-4 sm:px-8 py-8 max-w-xl mx-auto w-full space-y-4">
@@ -44,6 +45,11 @@ export default async function SettingsPage() {
       <section className="card p-5 space-y-2">
         <h2 className="text-xs uppercase tracking-widest text-text-tertiary">Timezone</h2>
         <TimezoneSetting saved={timezone} />
+      </section>
+
+      <section className="card p-5 space-y-2">
+        <h2 className="text-xs uppercase tracking-widest text-text-tertiary">Seasons</h2>
+        <WheelSetting saved={wheel} timezone={timezone} />
       </section>
 
       <section className="card p-5 space-y-3">

@@ -20,6 +20,7 @@ import { formatDay } from '@/lib/format';
 import { SIGN_SYMBOLS } from '@/lib/names';
 import { safeGet, safeSet } from '@/lib/storage';
 import { STORAGE_KEY, detectBrowserTimezone, normalizeTimezone, resolveTimezone } from '@/lib/timezones';
+import { WHEEL_STORAGE_KEY, parseWheelChoice, type WheelChoice } from '@/lib/wheel';
 
 // Stable IDs linking each disclosure trigger to its detail panel via aria-controls.
 const PANEL_HERO = 'detail-panel-hero';
@@ -73,12 +74,16 @@ function Disclosure({
 
 function DashboardContent({
   model,
+  wheelChoice,
+  onWheelChange,
   expandedKey,
   onToggle,
   onClose,
   nudge,
 }: {
   model: DashboardModel;
+  wheelChoice: WheelChoice;
+  onWheelChange: (choice: WheelChoice) => void;
   expandedKey: string | null;
   onToggle: (key: string, kind: string) => void;
   onClose: () => void;
@@ -187,7 +192,7 @@ function DashboardContent({
           sabbatToday={model.sabbatToday}
           events={model.events}
           craft={model.craft}
-          ctx={{ timezone, hemisphere: model.hemisphere }}
+          ctx={{ timezone, hemisphere: model.hemisphere, wheel: model.wheel, wheelChoice, onWheelChange }}
           expandedKey={expandedKey}
           onToggle={onToggle}
           onClose={onClose}
@@ -202,6 +207,7 @@ function DashboardContent({
 
 export default function Dashboard() {
   const [timezone, setTimezone] = useState(DEFAULT_TZ);
+  const [wheelChoice, setWheelChoice] = useState<WheelChoice>('auto');
   const [detectedZone, setDetectedZone] = useState<string | null>(null);
   // null during the server render and hydration: everything shown depends on
   // the current time, so it is only computed in the browser (finding P0-2).
@@ -209,8 +215,11 @@ export default function Dashboard() {
   const [expandedKey, setExpandedKey] = useState<string | null>(null);
   const [showHint, setShowHint] = useState(false);
 
-  // Everything shown is derived from (now, timezone) in one pure step.
-  const model = useMemo(() => (now ? buildDashboardModel(now, timezone) : null), [now, timezone]);
+  // Everything shown is derived from (now, timezone, wheel) in one pure step.
+  const model = useMemo(
+    () => (now ? buildDashboardModel(now, timezone, wheelChoice) : null),
+    [now, timezone, wheelChoice],
+  );
   const mercury = model?.mercury;
 
   const applyTimezone = useCallback((tz: string) => {
@@ -219,13 +228,27 @@ export default function Dashboard() {
     safeSet(STORAGE_KEY, safeTz);
     return safeTz;
   }, []);
-  // Signed-in users get their saved zone on every device.
-  const { account, syncFailed, retry, retrySync, timezoneChosen } = useAccount(timezone, applyTimezone);
+  const applyWheel = useCallback((choice: WheelChoice) => {
+    setWheelChoice(choice);
+    safeSet(WHEEL_STORAGE_KEY, choice);
+  }, []);
+  // Signed-in users get their saved zone and wheel on every device.
+  const { account, syncFailed, retry, retrySync, timezoneChosen, wheelChosen } = useAccount({
+    timezone,
+    applyTimezone,
+    wheel: wheelChoice,
+    applyWheel,
+  });
   const user = account.status === 'signed-in' ? account.user : null;
 
   const handleTimezoneChange = useCallback((tz: string) => {
     timezoneChosen(applyTimezone(tz));
   }, [applyTimezone, timezoneChosen]);
+
+  const handleWheelChange = useCallback((choice: WheelChoice) => {
+    applyWheel(choice);
+    wheelChosen(choice);
+  }, [applyWheel, wheelChosen]);
 
   // First client render: pick the zone (saved choice, else the browser's) and
   // start the clock in the same pass, so the first real frame already uses the
@@ -237,6 +260,7 @@ export default function Dashboard() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setDetectedZone(detected);
     setTimezone(resolveTimezone(safeGet(STORAGE_KEY), detected));
+    setWheelChoice(parseWheelChoice(safeGet(WHEEL_STORAGE_KEY)));
     setNow(new Date());
     // Show the tap hint only to users who haven't dismissed it before.
     if (safeGet(HINT_DISMISSED_KEY) !== '1') {
@@ -312,7 +336,7 @@ export default function Dashboard() {
 
         {syncFailed && (
           <p role="status" className="text-center text-xs text-text-secondary">
-            Couldn&apos;t save this timezone to your account. It&apos;s kept on this device.{' '}
+            Couldn&apos;t save that to your account. It&apos;s kept on this device.{' '}
             <button type="button" onClick={retrySync} className="underline hover:text-foreground">Try again</button>
           </p>
         )}
@@ -328,6 +352,8 @@ export default function Dashboard() {
         {model ? (
           <DashboardContent
             model={model}
+            wheelChoice={wheelChoice}
+            onWheelChange={handleWheelChange}
             expandedKey={expandedKey}
             onToggle={handleToggle}
             onClose={closePanel}

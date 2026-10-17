@@ -29,6 +29,13 @@
       "when": 1792214389495,
       "tag": "0003_log_retention_and_auth_indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1792215038748,
+      "tag": "0004_seasonal_wheel",
+      "breakpoints": true
     }
   ]
 }

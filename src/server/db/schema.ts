@@ -71,12 +71,14 @@ export const verification = pgTable('verification', {
 
 // ── App tables ─────────────────────────────────────────────────────────────
 
-// Preferences that follow the user across devices. `timezone` is only ever an
-// explicit choice from the selector, never the browser-detected zone (the same
-// rule as the localStorage copy).
+// Preferences that follow the user across devices. `timezone` is the zone the
+// dashboard showed on the first signed-in visit, then whatever the user picks.
+// `wheel` is the seasonal wheel ('auto' follows the timezone); null until the
+// user first chooses one.
 export const userSettings = pgTable('user_settings', {
   userId: text('user_id').primaryKey().references(() => user.id, { onDelete: 'cascade' }),
   timezone: text('timezone'),
+  wheel: text('wheel', { enum: ['auto', 'north', 'south'] }),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
 

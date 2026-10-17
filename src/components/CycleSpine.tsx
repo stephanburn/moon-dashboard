@@ -196,7 +196,7 @@ export default function CycleSpine({
               </button>
               {expandedKey === 'sabbat' && (
                 <DetailPanel id="spine-panel-sabbat" onClose={onClose}>
-                  <SabbatDetail sabbat={sabbatToday.name} hemisphere={ctx.hemisphere} />
+                  <SabbatDetail sabbat={sabbatToday.name} ctx={ctx} />
                 </DetailPanel>
               )}
             </>
