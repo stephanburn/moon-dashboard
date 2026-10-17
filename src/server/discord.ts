@@ -3,6 +3,7 @@
 // `guilds.members.read` scope, so no bot is needed.
 
 import 'server-only';
+import { reportProblem } from './ops';
 
 const DISCORD_API = 'https://discord.com/api/v10';
 // A stalled Discord call would otherwise hold the sign-in callback open for
@@ -24,7 +25,7 @@ export async function isGuildMember(
   timeoutMs = DISCORD_TIMEOUT_MS,
 ): Promise<boolean> {
   if (!guildId) {
-    console.error('DISCORD_GUILD_ID is not set; refusing all sign-ins');
+    reportProblem('discord-guild-unset');
     return false;
   }
   try {
@@ -34,11 +35,11 @@ export async function isGuildMember(
     });
     // 404 is Discord's answer for "not a member of this server".
     if (res.status !== 200 && res.status !== 404) {
-      console.error(`Discord membership check failed with HTTP ${res.status}`);
+      reportProblem('discord-check-failed', { status: res.status });
     }
     return res.status === 200;
   } catch (err) {
-    console.error('Discord membership check failed', err);
+    reportProblem('discord-check-failed', {}, err);
     return false;
   }
 }
