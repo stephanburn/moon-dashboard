@@ -84,7 +84,7 @@ export const SABBAT_CORRESPONDENCES: Record<SabbatName, SabbatCorrespondence> = 
     herbs: ['St John\'s wort', 'lavender', 'chamomile', 'elder flower', 'oak', 'rose'],
     foods: ['summer fruits', 'strawberries', 'honey mead', 'garden salads', 'fire-cooked foods'],
     ritualFocus:
-      'Rise early and watch the dawn. At the solstice the sun rises at its most northerly point and the light has a particular quality. Spend time outdoors at the height of the day. Gather herbs and flowers at their peak and dry them for later use. In the evening, light a fire or candles and sit with what has grown and flourished this season, knowing the wheel is already turning.',
+      'Rise early and watch the dawn. At the solstice the sun rises at the far end of its yearly swing along the horizon and the light has a particular quality. Spend time outdoors at the height of the day. Gather herbs and flowers at their peak and dry them for later use. In the evening, light a fire or candles and sit with what has grown and flourished this season, knowing the wheel is already turning.',
   },
 
   Lughnasadh: {
@@ -113,7 +113,7 @@ export const SABBAT_CORRESPONDENCES: Record<SabbatName, SabbatCorrespondence> = 
       south: 'Astronomical: the March equinox (approximately 20–21 March in the Southern Hemisphere)',
     },
     mythology:
-      'Mabon is the autumn equinox, the second of the year\'s two balance points, when day and night stand briefly equal before the dark takes the lead. This is a real astronomical event, and harvest festivals and thanksgivings cluster around it across many cultures. The name Mabon, though, is a modern invention. It was coined in 1970 by Aidan Kelly, borrowing a figure from Welsh myth, Mabon ap Modron, who has no traditional connection to the equinox at all. The older reality is simpler: a gathered harvest, turning leaves, and a slant golden light that belongs to no other time of year.',
+      'Mabon is the autumn equinox, the second of the year\'s two balance points, when day and night stand briefly near equal before the dark takes the lead. This is a real astronomical event, and harvest festivals and thanksgivings cluster around it across many cultures. The name Mabon, though, is a modern invention. It was coined in 1970 by Aidan Kelly, borrowing a figure from Welsh myth, Mabon ap Modron, who has no traditional connection to the equinox at all. The older reality is simpler: a gathered harvest, turning leaves, and a slant golden light that belongs to no other time of year.',
     themes: ['balance', 'gratitude', 'completion', 'preparation', 'letting go', 'turning inward'],
     colours: ['deep red', 'burnt orange', 'harvest gold', 'brown', 'russet'],
     crystals: ['smoky quartz', 'amber', 'carnelian', 'jasper', 'peridot'],
