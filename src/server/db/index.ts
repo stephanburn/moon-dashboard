@@ -1,6 +1,7 @@
 import 'server-only';
 import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { Pool } from 'pg';
+import { reportProblem } from '../ops';
 import * as schema from './schema';
 
 export type Db = NodePgDatabase<typeof schema>;
@@ -22,11 +23,9 @@ export function getDb(): Db {
       statement_timeout: 15_000,
     });
     // An idle client can lose its connection (e.g. Neon suspending); without a
-    // listener that error would crash the process. Log only the message and
-    // code, never the config, so the connection string stays out of the logs.
-    pool.on('error', (err: Error & { code?: string }) => {
-      console.error('Postgres pool error', err.code ?? '', err.message);
-    });
+    // listener that error would crash the process. Only the redacted message
+    // and code are logged, never the config.
+    pool.on('error', err => reportProblem('db-pool-error', {}, err));
     db = drizzle(pool, { schema });
   }
   return db;

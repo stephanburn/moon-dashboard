@@ -3,15 +3,16 @@ import { isIP } from 'node:net';
 import { lt, sql } from 'drizzle-orm';
 import { addDays, dayOf, type CalendarDay } from '@/lib/days';
 import { getDb, type Db } from './db';
+import { reportProblem } from './ops';
 import { rateLimit, signInLog, visitLog } from './db/schema';
 
 // Logging must never break sign-in or the dashboard, so failures are only
-// reported to the server log.
+// reported to the server log (redacted, as `activity-write-failed`).
 async function quietly(what: string, write: () => Promise<unknown>): Promise<void> {
   try {
     await write();
   } catch (err) {
-    console.error(`Could not record ${what}`, err);
+    reportProblem('activity-write-failed', { what }, err);
   }
 }
 
