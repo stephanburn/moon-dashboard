@@ -40,3 +40,8 @@ A personal moon / sabbat dashboard. The dashboard itself has no backend and no e
 - `.next/` sometimes accumulates duplicate `* 2.ts` / `* 3.ts` files (Finder/iCloud) that break `tsc`; delete `.next` if you see a spurious `Duplicate identifier` error.
 
 **Before committing:** run `npx tsc --noEmit` (must be clean), `npx eslint`, `npm run test:tz`, and `npm run test:e2e` for UI changes. CI runs all of these. The account e2e tests (`e2e/accounts.spec.ts`) skip unless `E2E_DATABASE_URL` points at a Postgres database (CI provides one); they seed sessions directly, so no Discord is needed.
+
+## Session sync (local and cloud)
+Work on this repo happens both on Stephan's laptop and in Claude Code cloud sessions, and each side only sees what is pushed to GitHub. Cloud sessions start from the default branch, so unmerged PR branches and unpushed local commits are invisible to them.
+- **At the start of a session:** run `git fetch`, then check whether the current branch is behind or ahead of its remote, whether the working tree has uncommitted changes, and whether there are open PRs (`gh pr list`) from other sessions. Report anything out of line before changing code. (Local sessions get this from a SessionStart hook; cloud sessions must do it themselves.)
+- **Before ending a session:** commit and push the work, or open a PR, so the other side can see it. If anything is left uncommitted or unpushed, say so.
